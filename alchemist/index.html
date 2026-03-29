@@ -1,0 +1,3784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Mr. Favors' Alchemist's Apprentice: Factor Fusion – Master AC/X-Method factoring of quadratic trinomials">
+  <title>Mr. Favors' Alchemist's Apprentice: Factor Fusion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOM PROPERTIES
+       ============================================================ */
+    :root {
+      --c-bg:       #080c17;
+      --c-surface:  #111827;
+      --c-surface2: #1c2840;
+      --c-teal:     #2ab8b8;
+      --c-navy:     #0d1520;
+      --c-gold:     #f5c842;
+      --c-text:     #e8eeff;
+      --c-muted:    #7a8fb5;
+      --c-bottle:   #c084d1;
+      --c-success:  #38c172;
+      --c-error:    #e53e3e;
+      --c-warn:     #f6ad55;
+      --c-coin:     #f5c842;
+      --radius:     10px;
+      --shadow:     0 6px 24px rgba(0,0,0,.7);
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: inherit;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+    button:focus-visible {
+      outline: 3px solid var(--c-warn);
+      outline-offset: 2px;
+    }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    /* ============================================================
+       SCREEN MANAGEMENT
+       ============================================================ */
+    .screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; }
+    .screen.active { display: flex; }
+
+    /* ============================================================
+       START SCREEN
+       ============================================================ */
+    #startScreen {
+      background: radial-gradient(ellipse at top, #1a3a5c 0%, var(--c-bg) 70%);
+      padding: 2rem 1rem 3rem;
+      gap: 1.5rem;
+    }
+    .start-title {
+      text-align: center;
+      margin-top: 1rem;
+      background: rgba(5, 2, 18, 0.78);
+      padding: 1rem 2.5rem 1.25rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 184, 64, 0.14);
+    }
+    .start-title h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--c-warn) 0%, var(--c-gold) 60%, #fff8d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,.92));
+    }
+    .start-title p {
+      color: var(--c-muted);
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    .start-hud {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      font-size: 1rem;
+    }
+    .coins-badge {
+      background: var(--c-surface);
+      border: 1px solid var(--c-gold);
+      border-radius: 20px;
+      padding: 0.35rem 0.9rem;
+      color: var(--c-coin);
+      font-weight: 700;
+    }
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 600px;
+    }
+    .level-btn {
+      background: var(--c-surface);
+      border: 2px solid var(--c-teal);
+      border-radius: var(--radius);
+      padding: 1rem 0.75rem;
+      text-align: center;
+      transition: transform .15s, border-color .15s, box-shadow .15s;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+    .level-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      border-color: var(--c-warn);
+      box-shadow: 0 6px 20px rgba(201,145,93,.3);
+    }
+    .level-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: #2a3a4a;
+    }
+    .level-btn .lvl-num { font-size: 1.4rem; font-weight: 900; color: var(--c-gold); }
+    .level-btn .lvl-name { font-size: 0.75rem; color: var(--c-muted); }
+    .level-btn .lvl-lock { font-size: 1rem; }
+    .level-btn.boss-btn { border-color: var(--c-error); grid-column: 1 / -1; }
+    .level-btn.boss-btn .lvl-num { color: var(--c-error); font-size: 1.6rem; }
+    .start-nav {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ============================================================
+       SHARED BUTTON STYLES
+       ============================================================ */
+    .btn {
+      border-radius: var(--radius);
+      padding: 0.65rem 1.4rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      min-height: 44px;
+      transition: transform .12s, box-shadow .12s, opacity .12s;
+      letter-spacing: .5px;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn--primary { background: var(--c-teal); color: #fff; }
+    .btn--danger  { background: var(--c-error); color: #fff; }
+    .btn--ghost   {
+      background: transparent;
+      border: 1.5px solid var(--c-muted);
+      color: var(--c-text);
+    }
+    .btn--ghost:hover:not(:disabled) { border-color: var(--c-text); }
+    .btn--warn    { background: var(--c-warn); color: #111; }
+    .btn--gold    { background: var(--c-gold); color: #111; }
+    .icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--c-surface);
+      border: 1.5px solid var(--c-surface2);
+      font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      min-width: 40px;
+    }
+    .icon-btn:hover { border-color: var(--c-muted); }
+
+    /* ============================================================
+       GAME SCREEN
+       ============================================================ */
+    #gameScreen {
+      position: relative;
+      overflow: hidden;
+      padding: 0;
+      justify-content: flex-start;
+      background: radial-gradient(ellipse at top, #142540 0%, var(--c-bg) 100%);
+    }
+    #gameScreen > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Top bar */
+    .game-header {
+      width: 100%;
+      background: var(--c-surface);
+      border-bottom: 1px solid var(--c-surface2);
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      min-height: 56px;
+    }
+    .game-header .level-label {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--c-gold);
+      min-width: 80px;
+    }
+    .streak-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1;
+      min-width: 120px;
+    }
+    .streak-label { font-size: 0.75rem; color: var(--c-muted); white-space: nowrap; }
+    .streak-meter {
+      flex: 1;
+      height: 10px;
+      background: rgba(255,255,255,.1);
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,.15);
+      overflow: hidden;
+      max-width: 160px;
+    }
+    .streak-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2D8B8B, #00FF00);
+      border-radius: 5px;
+      transition: width .3s ease;
+    }
+    .streak-fill.on-fire {
+      background: linear-gradient(90deg, #ff6600, #ffaa00);
+      animation: fireGlow 0.5s ease-in-out infinite alternate;
+    }
+    .timer-display {
+      background: var(--c-surface2);
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--c-warn);
+      min-width: 52px;
+      text-align: center;
+    }
+    .timer-display.urgent { color: var(--c-error); animation: pulse 0.5s ease-in-out infinite alternate; }
+    .coins-mini {
+      color: var(--c-coin);
+      font-weight: 700;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .hint-btn {
+      background: var(--c-surface2);
+      border: 1.5px solid var(--c-warn);
+      color: var(--c-warn);
+      border-radius: 6px;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      min-height: 36px;
+    }
+    .hint-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .puzzle-progress {
+      font-size: 0.75rem;
+      color: var(--c-muted);
+      white-space: nowrap;
+    }
+
+    /* Game area layout */
+    .game-area {
+      width: 100%;
+      max-width: 700px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Boss context strip */
+    .boss-context {
+      background: var(--c-surface);
+      border: 2px solid var(--c-error);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.25rem;
+      text-align: center;
+      width: 100%;
+    }
+    .boss-expression {
+      font-size: clamp(1.2rem, 3vw, 1.7rem);
+      font-weight: 900;
+      color: var(--c-text);
+      letter-spacing: 1px;
+    }
+    .boss-steps {
+      font-size: 0.85rem;
+      color: var(--c-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* X Board */
+    .x-board {
+      background: var(--c-surface);
+      border: 2px solid var(--c-teal);
+      border-radius: var(--radius);
+      padding: 0.75rem 2rem;
+      text-align: center;
+      min-width: 200px;
+      position: relative;
+    }
+    .x-board__label {
+      font-size: 0.65rem;
+      color: var(--c-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .x-board__product {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 900;
+      color: var(--c-text);
+      line-height: 1;
+    }
+    .x-board__cross {
+      font-size: 1.2rem;
+      color: var(--c-error);
+      font-weight: 900;
+      margin: 0.1rem 0;
+    }
+    .x-board__sum {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 900;
+      color: var(--c-text);
+      line-height: 1;
+    }
+    .x-board__hint {
+      font-size: 0.7rem;
+      color: var(--c-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* Cauldron */
+    .cauldron-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .cauldron {
+      position: relative;
+      width: 100px;
+      height: 90px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .cauldron__rim {
+      position: absolute;
+      top: 14px;
+      left: 0; right: 0;
+      height: 22px;
+      background: linear-gradient(180deg, #3a4e62 0%, #2a3e52 100%);
+      border-radius: 50% 50% 0 0;
+      z-index: 2;
+    }
+    .cauldron__body {
+      position: absolute;
+      bottom: 0;
+      left: 12px; right: 12px;
+      height: 72px;
+      background: linear-gradient(160deg, #2a3a4a 0%, #1a2a3a 100%);
+      border-radius: 0 0 42px 42px;
+      box-shadow: 0 8px 16px rgba(0,0,0,.6), inset -2px -2px 8px rgba(0,0,0,.4);
+      z-index: 1;
+    }
+    /* Handles */
+    .cauldron__body::before,
+    .cauldron__body::after {
+      content: '';
+      position: absolute;
+      top: -10px;
+      width: 14px; height: 22px;
+      background: var(--c-gold);
+      border-radius: 7px;
+    }
+    .cauldron__body::before { left: -10px; }
+    .cauldron__body::after  { right: -10px; }
+    .cauldron__liquid {
+      position: absolute;
+      bottom: 12px;
+      left: 16px; right: 16px;
+      height: 28px;
+      background: radial-gradient(ellipse, var(--c-teal) 30%, #1a5a5a 100%);
+      border-radius: 50%;
+      opacity: 0.85;
+      animation: liquidBob 2s ease-in-out infinite;
+    }
+    .cauldron__smoke {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+    }
+    .smoke-puff {
+      width: 8px; height: 8px;
+      background: rgba(180,200,220,.25);
+      border-radius: 50%;
+      animation: smokeFloat 2s ease-out infinite;
+    }
+    .smoke-puff:nth-child(2) { animation-delay: 0.6s; }
+    .smoke-puff:nth-child(3) { animation-delay: 1.2s; }
+
+    /* Cauldron feedback animations */
+    .cauldron.sparkle .cauldron__body { animation: cauldronSparkle .8s ease forwards; }
+    .cauldron.sparkle .cauldron__liquid { background: radial-gradient(ellipse, #00FF00 30%, #007700 100%); }
+    .cauldron.shake { animation: cauldronShake .6s ease forwards; }
+    .cauldron.shake .cauldron__liquid { background: radial-gradient(ellipse, #330000 30%, #110000 100%); }
+    .cauldron.bubble .cauldron__body { animation: cauldronBubble .8s ease-in-out infinite; }
+    .cauldron.bubble .cauldron__liquid { background: radial-gradient(ellipse, #ffaa00 30%, #aa6600 100%); }
+
+    /* Bottle Slots */
+    .bottle-slots {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .slot-plus { font-size: 1.5rem; color: var(--c-muted); }
+    .bottle-slot {
+      width: 70px; height: 80px;
+      background: var(--c-surface);
+      border: 2px dashed var(--c-muted);
+      border-radius: 10px 10px 16px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--c-muted);
+      transition: border-color .2s, background .2s, color .2s;
+    }
+    .bottle-slot.filled {
+      border-style: solid;
+      border-color: var(--c-teal);
+      color: var(--c-text);
+      background: var(--c-surface2);
+    }
+    .bottle-slot.locked {
+      border-style: solid;
+      border-color: var(--c-gold);
+      color: var(--c-gold);
+      background: rgba(201,145,93,.1);
+      cursor: default;
+    }
+
+    /* Tile Bank */
+    .tile-bank {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+      gap: 0.6rem;
+      width: 100%;
+      max-width: 600px;
+    }
+    .tile {
+      height: auto;
+      padding: 0.5rem 0.3rem 0.2rem;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      transition: transform .12s;
+      cursor: pointer;
+      position: relative;
+    }
+    .tile:hover:not(:disabled) { transform: scale(1.1); }
+    .tile.selected             { transform: scale(1.15); }
+    .tile.selected svg         { filter: drop-shadow(0 0 8px #f5c842); }
+    .tile.on-fire-tile svg     { filter: drop-shadow(0 0 8px #ff6600); }
+    .tile:disabled             { opacity: 0.4; cursor: not-allowed; }
+
+    /* Action buttons row */
+    .action-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* Level 3 given factor display */
+    .given-hint {
+      background: var(--c-surface);
+      border: 1px solid var(--c-gold);
+      border-radius: 6px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      color: var(--c-gold);
+      text-align: center;
+    }
+
+    /* Hint text display */
+    .hint-text-display {
+      background: rgba(255,170,0,.1);
+      border: 1px solid var(--c-warn);
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      color: var(--c-warn);
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+      animation: fadeIn .3s ease;
+    }
+
+    /* ============================================================
+       STATS SCREEN
+       ============================================================ */
+    #statsScreen {
+      justify-content: center;
+      padding: 2rem 1rem;
+      gap: 1.5rem;
+      background: radial-gradient(ellipse at center, #1a3050 0%, var(--c-bg) 70%);
+    }
+    .stats-card {
+      background: var(--c-surface);
+      border: 2px solid var(--c-teal);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .stats-card h2 { font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--c-gold); }
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid var(--c-surface2);
+    }
+    .stats-row span:last-child { font-weight: 700; }
+    .stats-acc {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--c-success);
+    }
+    .stats-btns {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ============================================================
+       BOSS COMPLETE SCREEN
+       ============================================================ */
+    #bossCompleteScreen {
+      position: relative;
+      overflow: hidden;
+      justify-content: center;
+      padding: 2rem 1rem;
+      gap: 1.5rem;
+      background: radial-gradient(ellipse at center, #2a0a1a 0%, #080310 70%);
+    }
+
+    #bossCompleteScreen > * {
+      position: relative;
+      z-index: 1;
+    }
+    .boss-complete-card {
+      background: var(--c-surface);
+      border: 3px solid var(--c-error);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      animation: victoryGlow 1s ease-in-out infinite alternate;
+    }
+    .boss-complete-card h2 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: var(--c-coin);
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    .boss-trophy { font-size: 4rem; }
+
+    /* ============================================================
+       SHOP SCREEN
+       ============================================================ */
+    #shopScreen {
+      padding: 1.5rem 1rem;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 600px;
+    }
+    .shop-item {
+      background: var(--c-surface);
+      border: 2px solid var(--c-surface2);
+      border-radius: var(--radius);
+      padding: 1rem 0.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .shop-item.unlocked { border-color: var(--c-success); }
+    .shop-item__swatch {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.2);
+    }
+    .shop-item__name { font-size: 0.8rem; font-weight: 700; }
+    .shop-item__price { font-size: 0.75rem; color: var(--c-coin); }
+    .shop-item__status { font-size: 0.7rem; color: var(--c-success); }
+    .shop-section-title {
+      width: 100%;
+      max-width: 600px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--c-gold);
+      border-bottom: 1px solid var(--c-surface2);
+      padding-bottom: 0.4rem;
+    }
+
+    /* ============================================================
+       ACHIEVEMENTS SCREEN
+       ============================================================ */
+    #achievementsScreen {
+      padding: 1.5rem 1rem;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 580px;
+    }
+    .badge-card {
+      background: var(--c-surface);
+      border: 2px solid var(--c-surface2);
+      border-radius: var(--radius);
+      padding: 1rem 0.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      transition: border-color .2s;
+    }
+    .badge-card.unlocked { border-color: var(--c-coin); box-shadow: 0 0 10px rgba(255,215,0,.2); }
+    .badge-card.locked { filter: grayscale(0.7); opacity: 0.5; }
+    .badge-icon { font-size: 2rem; }
+    .badge-name { font-size: 0.72rem; font-weight: 700; }
+    .badge-desc { font-size: 0.62rem; color: var(--c-muted); }
+
+    /* ============================================================
+       OVERLAYS & MODALS
+       ============================================================ */
+
+    /* Tutorial */
+    .overlay-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .overlay-card {
+      background: var(--c-surface);
+      border: 2px solid var(--c-teal);
+      border-radius: 14px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      animation: popIn .3s ease;
+    }
+    .overlay-card h2 { font-family: 'Cinzel', serif; font-size: 1.4rem; color: var(--c-gold); }
+    .overlay-card p { line-height: 1.6; color: var(--c-muted); font-size: 0.95rem; }
+    .tutorial-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .tutorial-list li {
+      background: var(--c-surface2);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      color: var(--c-text);
+      text-align: left;
+    }
+    /* Multi-step tutorial */
+    .tut-progress {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .tut-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--c-surface2);
+      border: 1px solid var(--c-teal);
+      transition: background 0.2s;
+    }
+    .tut-dot.active { background: var(--c-gold); border-color: var(--c-gold); }
+    .tut-step[hidden]   { display: none !important; }
+    #tutBackBtn[hidden]  { display: none !important; }
+    #tutNextBtn[hidden]  { display: none !important; }
+    #tutStartBtn[hidden] { display: none !important; }
+    .tut-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .tut-step-label {
+      font-size: 0.8rem;
+      color: var(--c-muted);
+      white-space: nowrap;
+    }
+    .tut-diagram {
+      display: flex;
+      justify-content: center;
+      margin: 0.5rem 0;
+    }
+    .tut-xboard {
+      display: grid;
+      grid-template-rows: 1fr auto 1fr;
+      align-items: center;
+      text-align: center;
+      background: var(--c-surface2);
+      border: 2px solid var(--c-teal);
+      border-radius: 10px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--c-muted);
+      min-width: 120px;
+    }
+    .tut-xboard-top em, .tut-xboard-bot em { color: var(--c-gold); font-style: normal; }
+    .tut-xboard-mid { font-size: 1.5rem; color: var(--c-gold); line-height: 1; padding: 0.25rem 0; }
+    /* Teacher summary */
+    .summary-content { display: flex; flex-direction: column; gap: 1rem; }
+    .summary-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .summary-table th {
+      background: var(--c-surface2);
+      color: var(--c-gold);
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+      border-bottom: 1px solid var(--c-teal);
+    }
+    .summary-table td {
+      padding: 0.45rem 0.6rem;
+      color: var(--c-text);
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .summary-table tr:hover td { background: var(--c-surface2); }
+    .summary-table .acc-good { color: var(--c-success); font-weight: 600; }
+    .summary-table .acc-warn { color: var(--c-gold); font-weight: 600; }
+    .summary-table .acc-bad  { color: var(--c-error); font-weight: 600; }
+    .summary-totals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 0.6rem;
+    }
+    .summary-stat {
+      background: var(--c-surface2);
+      border-radius: 8px;
+      padding: 0.7rem 0.75rem;
+      text-align: center;
+    }
+    .summary-stat .s-val { font-size: 1.4rem; font-weight: 700; color: var(--c-gold); }
+    .summary-stat .s-lbl { font-size: 0.72rem; color: var(--c-muted); margin-top: 2px; }
+    @media print {
+      #app > .screen:not(#summaryScreen) { display: none !important; }
+      #summaryScreen { display: flex !important; }
+      #summaryBackBtn, #summaryDownloadBtn { display: none !important; }
+      body { background: #fff; color: #000; }
+      .summary-table th, .summary-table td { color: #000; border-color: #ccc; }
+    }
+
+    /* Feedback Message */
+    #feedbackMsg {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 90;
+      font-size: clamp(1rem, 3vw, 1.3rem);
+      font-weight: 900;
+      text-align: center;
+      padding: 1rem 2rem;
+      border-radius: 10px;
+      max-width: 90vw;
+      pointer-events: none;
+      animation: feedbackPop .2s ease;
+    }
+    #feedbackMsg.correct  { background: rgba(0,30,0,.9);  color: var(--c-success); border: 2px solid var(--c-success); }
+    #feedbackMsg.partial  { background: rgba(30,20,0,.9); color: var(--c-warn);    border: 2px solid var(--c-warn); }
+    #feedbackMsg.incorrect{ background: rgba(30,0,0,.9);  color: var(--c-error);   border: 2px solid var(--c-error); }
+
+    /* Achievement popup */
+    #achievementPopup {
+      position: fixed;
+      top: 5rem;
+      right: 1rem;
+      z-index: 95;
+      background: var(--c-surface);
+      border: 2px solid var(--c-coin);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 4px 20px rgba(255,215,0,.3);
+      animation: slideInRight .4s ease;
+      max-width: 280px;
+    }
+    #achievementPopup .ach-icon { font-size: 1.8rem; }
+    #achievementPopup .ach-text { display: flex; flex-direction: column; gap: 0.1rem; }
+    #achievementPopup .ach-title { font-size: 0.7rem; color: var(--c-coin); font-weight: 700; }
+    #achievementPopup .ach-name  { font-size: 0.9rem; font-weight: 900; color: var(--c-text); }
+
+    /* Settings Modal */
+    #settingsModal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 200;
+      background: var(--c-surface);
+      border: 2px solid var(--c-surface2);
+      border-radius: 14px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,.7);
+    }
+    #settingsModal h3 { font-size: 1.1rem; color: var(--c-gold); }
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .setting-row label { font-size: 0.9rem; color: var(--c-muted); }
+    .setting-row select {
+      background: var(--c-surface2);
+      border: 1px solid var(--c-muted);
+      color: var(--c-text);
+      border-radius: 6px;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.85rem;
+    }
+    .settings-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 199;
+    }
+
+    /* Glossary Sidebar */
+    #glossary {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      width: 240px;
+      background: var(--c-surface);
+      border-right: 1px solid var(--c-surface2);
+      z-index: 80;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+    }
+    #glossary.open { transform: translateX(0); }
+    .glossary-title {
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--c-gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .glossary-entry h4 {
+      font-size: 0.8rem;
+      color: var(--c-warn);
+      margin-bottom: 0.2rem;
+    }
+    .glossary-entry p {
+      font-size: 0.75rem;
+      color: var(--c-muted);
+      line-height: 1.5;
+    }
+
+    /* Page-section headers */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      max-width: 600px;
+      padding: 0.5rem 0;
+    }
+    .page-header h2 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--c-gold); flex: 1; }
+
+    /* ============================================================
+       @KEYFRAMES
+       ============================================================ */
+    @keyframes idleGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(224,165,209,.4); }
+      50%       { box-shadow: 0 0 18px rgba(224,165,209,.75); }
+    }
+    @keyframes cauldronSparkle {
+      0%   { filter: brightness(1); }
+      30%  { filter: brightness(1.8) saturate(2) hue-rotate(100deg); }
+      60%  { filter: brightness(2.2) saturate(3) hue-rotate(120deg); }
+      100% { filter: brightness(1); }
+    }
+    @keyframes cauldronShake {
+      0%, 100% { transform: translateX(0); }
+      15%       { transform: translateX(-8px) rotate(-2deg); }
+      35%       { transform: translateX(8px) rotate(2deg); }
+      55%       { transform: translateX(-7px) rotate(-1.5deg); }
+      75%       { transform: translateX(7px) rotate(1.5deg); }
+      90%       { transform: translateX(-3px); }
+    }
+    @keyframes cauldronBubble {
+      0%, 100% { box-shadow: 0 8px 16px rgba(0,0,0,.6), inset -2px -2px 8px rgba(0,0,0,.4); }
+      50%       { box-shadow: 0 8px 24px rgba(255,170,0,.5), inset -2px -2px 8px rgba(255,170,0,.2); }
+    }
+    @keyframes fireEffect {
+      0%   { background: linear-gradient(160deg, #ff6600 0%, #ffaa00 100%); border-color: #ff8800; }
+      100% { background: linear-gradient(160deg, #ffaa00 0%, #ff6600 100%); border-color: #ffaa00; }
+    }
+    @keyframes fireGlow {
+      0%   { box-shadow: 0 0 8px rgba(255,100,0,.5); }
+      100% { box-shadow: 0 0 20px rgba(255,100,0,.9); }
+    }
+    @keyframes smokeFloat {
+      0%   { transform: translateY(0) scale(1); opacity: .3; }
+      100% { transform: translateY(-22px) scale(2); opacity: 0; }
+    }
+    @keyframes liquidBob {
+      0%, 100% { transform: scaleX(1); }
+      50%       { transform: scaleX(1.05); }
+    }
+    @keyframes popIn {
+      0%   { transform: scale(.7); opacity: 0; }
+      70%  { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes feedbackPop {
+      0%   { transform: translate(-50%, -50%) scale(.8); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    @keyframes slideInRight {
+      0%   { transform: translateX(120%); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes victoryGlow {
+      0%   { box-shadow: 0 0 20px rgba(255,50,50,.3); }
+      100% { box-shadow: 0 0 40px rgba(255,50,50,.7); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      from { opacity: 1; }
+      to   { opacity: 0.5; }
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 480px) {
+      .level-grid { grid-template-columns: repeat(2, 1fr); }
+      .tile { height: 64px; font-size: 1.1rem; }
+      .bottle-slot { width: 58px; height: 68px; font-size: 1.2rem; }
+      .x-board__product, .x-board__sum { font-size: 2.2rem; }
+    }
+    @media (min-width: 768px) {
+      .game-area { padding: 1.5rem 2rem; gap: 1.25rem; }
+      .tile-bank { gap: 0.75rem; }
+    }
+
+    /* ============================================================
+       STAR FIELD
+       ============================================================ */
+    #stars {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: #fff;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+      opacity: 0;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.6); }
+      50%       { opacity: var(--bright, 0.7); transform: scale(1); }
+    }
+
+    /* ============================================================
+       FLOATING ORBS (ambient background glow)
+       ============================================================ */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      animation: orbDrift var(--orb-dur, 20s) ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 400px; height: 400px; background: rgba(30,10,80,.12);    top: -10%; left: -10%; --orb-dur: 22s; }
+    .orb-2 { width: 300px; height: 300px; background: rgba(180,80,10,.08);   bottom: 10%; right: -5%; --orb-dur: 18s; }
+    .orb-3 { width: 200px; height: 200px; background: rgba(42,100,184,.07);  top: 40%; left: 30%; --orb-dur: 25s; }
+    @keyframes orbDrift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.1); }
+    }
+
+    /* Ensure screen content sits above stars/orbs.
+       Only #app needs this — fixed-position elements manage their own z-index. */
+    #app { position: relative; z-index: 1; }
+
+    /* Several elements have explicit display:flex/block in the author stylesheet,
+       which has higher CSS specificity than the UA [hidden]{display:none} rule.
+       These !important overrides ensure the hidden attribute actually hides them. */
+    .overlay-backdrop[hidden] { display: none !important; }
+    #achievementPopup[hidden] { display: none !important; }
+    #settingsModal[hidden]    { display: none !important; }
+    #settingsOverlay[hidden]  { display: none !important; }
+
+    /* ============================================================
+       ENHANCED CARD DEPTH
+       ============================================================ */
+    .x-board {
+      box-shadow: 0 0 0 1px rgba(42,184,184,.3),
+                  0 8px 32px rgba(0,0,0,.6),
+                  inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .stats-card, .boss-complete-card, .overlay-card {
+      box-shadow: 0 20px 60px rgba(0,0,0,.7),
+                  inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .level-btn {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    /* ============================================================
+       CAULDRON AMBIENT GLOW
+       ============================================================ */
+    .cauldron-wrapper {
+      filter: drop-shadow(0 0 12px rgba(42,184,184,.25));
+      transition: filter .4s ease;
+    }
+    .cauldron.sparkle ~ * .cauldron-wrapper,
+    .cauldron-wrapper:has(.cauldron.sparkle) {
+      filter: drop-shadow(0 0 28px rgba(56,193,114,.6));
+    }
+
+    /* ============================================================
+       ENHANCED START SCREEN — Alchemist's Potion Shop
+       ============================================================ */
+    #startScreen {
+      position: relative;
+      overflow: hidden;
+      background:
+        /* Layer 5 (front): Floor warmth */
+        radial-gradient(ellipse 100% 30% at 50% 100%, rgba(120,60,20,.25) 0%, transparent 70%),
+        /* Layer 4: Right shelf shadow block */
+        linear-gradient(270deg, rgba(8,5,20,.85) 0%, rgba(8,5,20,.6) 12%, transparent 22%),
+        /* Layer 3: Left shelf shadow block */
+        linear-gradient(90deg, rgba(8,5,20,.85) 0%, rgba(8,5,20,.6) 12%, transparent 22%),
+        /* Layer 2: Amber arch-window glow at top-center */
+        radial-gradient(ellipse 280px 200px at 50% 8%, rgba(255,180,60,.18) 0%, rgba(255,140,30,.06) 55%, transparent 100%),
+        /* Layer 1 (base): Deep indigo-purple stone wall */
+        radial-gradient(ellipse at 50% 0%, #1a1035 0%, #0a0818 100%);
+    }
+    /* Lift all direct children above the SVG decoration layer */
+    #startScreen > * {
+      position: relative;
+      z-index: 1;
+    }
+    .start-title p {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #c8d8f0;
+      margin-top: 0.4rem;
+      text-shadow: 0 1px 6px rgba(0,0,0,.95);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient background: stars + orbs -->
+  <div id="stars" aria-hidden="true"></div>
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+
+  <!-- SR announcement region -->
+  <div id="srAnnounce" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ============================================================
+       TUTORIAL OVERLAY
+       ============================================================ -->
+  <div id="tutorialOverlay" class="overlay-backdrop" hidden aria-modal="true" role="dialog" aria-labelledby="tutTitle">
+    <div class="overlay-card" style="max-width:480px">
+
+      <!-- Step indicator -->
+      <div class="tut-progress" aria-label="Tutorial progress">
+        <span class="tut-dot active" data-step="0"></span>
+        <span class="tut-dot" data-step="1"></span>
+        <span class="tut-dot" data-step="2"></span>
+      </div>
+
+      <!-- Step 0: The X-Board -->
+      <div class="tut-step" data-step="0">
+        <h2 id="tutTitle">The X-Board</h2>
+        <div class="tut-diagram">
+          <div class="tut-xboard">
+            <div class="tut-xboard-top">product<br><em>p × q</em></div>
+            <div class="tut-xboard-mid">✕</div>
+            <div class="tut-xboard-bot">sum<br><em>p + q</em></div>
+          </div>
+        </div>
+        <ul class="tutorial-list">
+          <li>The <strong>top</strong> of the X shows the <strong>product</strong> — two numbers must multiply to it</li>
+          <li>The <strong>bottom</strong> of the X shows the <strong>sum</strong> — those same two numbers must add to it</li>
+          <li>Finding these two numbers lets you factor the quadratic using the <strong>AC/X Method</strong></li>
+        </ul>
+      </div>
+
+      <!-- Step 1: Picking Bottles -->
+      <div class="tut-step" data-step="1" hidden>
+        <h2>Pick Two Bottles</h2>
+        <ul class="tutorial-list">
+          <li>🧪 <strong>Click any two bottle tiles</strong> from the bank below the X-board</li>
+          <li>✅ Selected tiles glow <strong style="color:var(--c-gold)">gold</strong> — click a selected tile again to <strong>deselect</strong> it</li>
+          <li>⚗️ Once two tiles are selected, press <strong>"Check Answer"</strong> — the cauldron reacts instantly</li>
+          <li>💡 Watch for <strong>negative numbers</strong> — a negative product means one factor is negative</li>
+        </ul>
+      </div>
+
+      <!-- Step 2: Hints & Feedback -->
+      <div class="tut-step" data-step="2" hidden>
+        <h2>Hints &amp; Feedback</h2>
+        <ul class="tutorial-list">
+          <li>🔥 <strong>Correct answer:</strong> The cauldron sparkles and your streak grows</li>
+          <li>💨 <strong>Wrong sign only:</strong> You get partial credit — the numbers are right, signs are flipped</li>
+          <li>💡 <strong>Hint button:</strong> Use up to 3 hints per puzzle — each one gets more specific</li>
+          <li>🏆 <strong>Earn coins</strong> for correct answers and spend them in the Shop for new themes</li>
+        </ul>
+      </div>
+
+      <!-- Navigation -->
+      <div class="tut-nav">
+        <button id="tutBackBtn"  class="btn btn--ghost" hidden>← Back</button>
+        <span class="tut-step-label">Step <span id="tutStepNum">1</span> of 3</span>
+        <button id="tutNextBtn"  class="btn btn--primary">Next →</button>
+        <button id="tutStartBtn" class="btn btn--primary" hidden>Start Brewing!</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ACHIEVEMENT POPUP
+       ============================================================ -->
+  <div id="achievementPopup" hidden aria-live="assertive">
+    <div class="ach-icon" id="achIcon">✨</div>
+    <div class="ach-text">
+      <span class="ach-title">Achievement Unlocked!</span>
+      <span class="ach-name" id="achName">First Correct</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       FEEDBACK MESSAGE
+       ============================================================ -->
+  <div id="feedbackMsg" hidden role="status" aria-live="assertive"></div>
+
+  <!-- ============================================================
+       SETTINGS MODAL
+       ============================================================ -->
+  <div id="settingsOverlay" class="settings-overlay" hidden></div>
+  <div id="settingsModal" hidden role="dialog" aria-labelledby="settingsTitle" aria-modal="true">
+    <h3 id="settingsTitle">Settings</h3>
+    <div class="setting-row">
+      <label for="fontSizeSelect">Font Size</label>
+      <select id="fontSizeSelect">
+        <option value="16">100%</option>
+        <option value="20">125%</option>
+        <option value="24">150%</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <label>Sound</label>
+      <button id="settingsMuteBtn" class="btn btn--ghost" style="font-size:.8rem;padding:.3rem .7rem;">🔊 On</button>
+    </div>
+    <div class="setting-row">
+      <label>Music</label>
+      <button id="settingsMusicBtn" class="btn btn--ghost" style="font-size:.8rem;padding:.3rem .7rem;">🎵 On</button>
+    </div>
+    <button id="resetProgressBtn" class="btn btn--danger" style="width:100%">Reset Progress</button>
+    <button id="closeSettingsBtn" class="btn btn--ghost" style="width:100%">Close</button>
+  </div>
+
+  <!-- ============================================================
+       GLOSSARY SIDEBAR
+       ============================================================ -->
+  <aside id="glossary" aria-label="Glossary" aria-hidden="true">
+    <div class="glossary-title">
+      <span>Glossary</span>
+      <button id="closeGlossary" class="icon-btn" style="width:28px;height:28px;font-size:.8rem;" aria-label="Close glossary">✕</button>
+    </div>
+    <div class="glossary-entry">
+      <h4>X Board</h4>
+      <p><strong>Top:</strong> Product (a × c)<br><strong>Bottom:</strong> Sum (b)</p>
+    </div>
+    <div class="glossary-entry">
+      <h4>Potion Bottles</h4>
+      <p>Click to select a bottle. Click again to deselect. You need two bottles.</p>
+    </div>
+    <div class="glossary-entry">
+      <h4>Check Answer</h4>
+      <p>Submit your two selected bottles to verify the solution.</p>
+    </div>
+    <div class="glossary-entry">
+      <h4>On Fire</h4>
+      <p>Get 9+ correct in a row to ignite and earn 2x coins!</p>
+    </div>
+    <div class="glossary-entry">
+      <h4>Hints</h4>
+      <p>Use up to 3 hints per level for clues about the factors.</p>
+    </div>
+    <div class="glossary-entry">
+      <h4>AC Method</h4>
+      <p>For ax²+bx+c: find two numbers whose product is a×c and sum is b.</p>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       APP SCREENS
+       ============================================================ -->
+  <div id="app">
+
+    <!-- ──────────────────────────────────────────────
+         START SCREEN
+         ────────────────────────────────────────────── -->
+    <div id="startScreen" class="screen active">
+      <!-- Scene 1: Alchemist Potion Shop -->
+      <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none">
+        <defs>
+          <pattern id="ss-bricks" x="0" y="0" width="100" height="50" patternUnits="userSpaceOnUse">
+            <rect x="1" y="1" width="48" height="23" fill="#1f1238"/>
+            <rect x="51" y="1" width="48" height="23" fill="#1a0f2e"/>
+            <rect x="-24" y="26" width="48" height="23" fill="#1a0f2e"/>
+            <rect x="26" y="26" width="48" height="23" fill="#1f1238"/>
+            <rect x="76" y="26" width="48" height="23" fill="#1a0f2e"/>
+          </pattern>
+          <linearGradient id="ss-vignette" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1a0f2e"/>
+            <stop offset="100%" stop-color="#1a0f2e" stop-opacity="0"/>
+          </linearGradient>
+          <radialGradient id="ss-floor-glow" cx="50%" cy="100%" r="50%">
+            <stop offset="0%" stop-color="#ffb840" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="#ffb840" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="ss-lantern" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffaa00" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#ffaa00" stop-opacity="0"/>
+          </radialGradient>
+          <clipPath id="ss-arch-clip">
+            <path d="M280,290 L280,162 Q280,90 400,48 Q520,90 520,162 L520,290 Z"/>
+          </clipPath>
+        </defs>
+        <!-- 1. WALL -->
+        <rect width="800" height="600" fill="#1a0f2e"/>
+        <rect width="800" height="600" fill="url(#ss-bricks)" opacity="0.55"/>
+        <!-- 2. LEFT CABINET x=0–195 -->
+        <rect x="0" y="0" width="195" height="600" fill="#3a2008"/>
+        <rect x="0" y="80"  width="195" height="12" fill="#5a3810"/>
+        <rect x="0" y="200" width="195" height="12" fill="#5a3810"/>
+        <rect x="0" y="320" width="195" height="12" fill="#5a3810"/>
+        <rect x="0" y="440" width="195" height="12" fill="#5a3810"/>
+        <rect x="188" y="0" width="7" height="600" fill="#5a3810"/>
+        <!-- L-Shelf1 bottles (above y=80) -->
+        <ellipse cx="28"  cy="80" rx="14" ry="5" fill="#2ab8b8" opacity="0.18"/>
+        <ellipse cx="60"  cy="80" rx="14" ry="5" fill="#c084d1" opacity="0.18"/>
+        <ellipse cx="106" cy="80" rx="16" ry="5" fill="#f5c842" opacity="0.18"/>
+        <ellipse cx="150" cy="80" rx="9"  ry="4" fill="#e879a0" opacity="0.18"/>
+        <rect x="22" y="36" width="12" height="44" rx="8" fill="#2ab8b8"/>
+        <rect x="24" y="40" width="8"  height="36" rx="6" fill="#2ab8b8" opacity="0.5"/>
+        <rect x="24" y="31" width="8"  height="8"         fill="#3a2008"/>
+        <ellipse cx="60" cy="63" rx="14" ry="16" fill="#c084d1"/>
+        <ellipse cx="60" cy="65" rx="10" ry="11" fill="#c084d1" opacity="0.5"/>
+        <rect x="54" y="46" width="12" height="8" rx="2" fill="#c084d1"/>
+        <rect x="57" y="39" width="6"  height="8"        fill="#3a2008"/>
+        <rect x="91" y="46" width="28" height="34" rx="3" fill="#f5c842"/>
+        <rect x="94" y="51" width="22" height="25" rx="2" fill="#f5c842" opacity="0.5"/>
+        <rect x="93" y="41" width="24" height="8"  rx="2" fill="#5a3810"/>
+        <rect x="144" y="52" width="10" height="28" rx="2" fill="#e879a0"/>
+        <rect x="146" y="56" width="6"  height="20" rx="1" fill="#e879a0" opacity="0.5"/>
+        <rect x="145" y="47" width="8"  height="7"         fill="#3a2008"/>
+        <!-- L-Shelf2 bottles (above y=200) -->
+        <ellipse cx="28"  cy="200" rx="16" ry="5" fill="#38c172" opacity="0.18"/>
+        <ellipse cx="72"  cy="200" rx="12" ry="5" fill="#2ab8b8" opacity="0.18"/>
+        <ellipse cx="130" cy="200" rx="18" ry="5" fill="#e53e3e" opacity="0.18"/>
+        <ellipse cx="28" cy="185" rx="16" ry="14" fill="#38c172"/>
+        <ellipse cx="28" cy="187" rx="11" ry="9"  fill="#38c172" opacity="0.5"/>
+        <rect x="22" y="170" width="12" height="7" rx="2" fill="#38c172"/>
+        <rect x="25" y="163" width="6"  height="9"        fill="#3a2008"/>
+        <rect x="64" y="158" width="12" height="42" rx="8" fill="#2ab8b8"/>
+        <rect x="66" y="162" width="8"  height="34" rx="6" fill="#2ab8b8" opacity="0.5"/>
+        <rect x="66" y="153" width="8"  height="7"         fill="#3a2008"/>
+        <rect x="112" y="164" width="32" height="36" rx="3" fill="#e53e3e"/>
+        <rect x="115" y="168" width="26" height="28" rx="2" fill="#e53e3e" opacity="0.5"/>
+        <rect x="114" y="159" width="28" height="8"  rx="2" fill="#5a3810"/>
+        <!-- L-Shelf3 bottles (above y=320) -->
+        <ellipse cx="22"  cy="320" rx="8"  ry="4" fill="#4299e1" opacity="0.18"/>
+        <ellipse cx="52"  cy="320" rx="14" ry="5" fill="#e879a0" opacity="0.18"/>
+        <ellipse cx="95"  cy="320" rx="13" ry="5" fill="#c084d1" opacity="0.18"/>
+        <ellipse cx="145" cy="320" rx="8"  ry="4" fill="#f5c842" opacity="0.18"/>
+        <rect x="18" y="290" width="8"  height="30" rx="2" fill="#4299e1"/>
+        <rect x="20" y="294" width="4"  height="22" rx="1" fill="#4299e1" opacity="0.5"/>
+        <rect x="19" y="285" width="6"  height="7"         fill="#3a2008"/>
+        <ellipse cx="52" cy="305" rx="15" ry="15" fill="#e879a0"/>
+        <ellipse cx="52" cy="307" rx="10" ry="10" fill="#e879a0" opacity="0.5"/>
+        <rect x="46" y="289" width="12" height="7" rx="2" fill="#e879a0"/>
+        <rect x="49" y="282" width="6"  height="9"        fill="#3a2008"/>
+        <rect x="86" y="277" width="14" height="43" rx="8" fill="#c084d1"/>
+        <rect x="88" y="281" width="10" height="35" rx="6" fill="#c084d1" opacity="0.5"/>
+        <rect x="89" y="272" width="10" height="7"         fill="#3a2008"/>
+        <rect x="139" y="293" width="10" height="27" rx="2" fill="#f5c842"/>
+        <rect x="141" y="297" width="6"  height="19" rx="1" fill="#f5c842" opacity="0.5"/>
+        <rect x="140" y="288" width="8"  height="7"         fill="#3a2008"/>
+        <!-- L-Shelf4 bottles (above y=440) -->
+        <ellipse cx="30"  cy="440" rx="20" ry="6" fill="#2ab8b8" opacity="0.18"/>
+        <ellipse cx="84"  cy="440" rx="8"  ry="4" fill="#ff6600" opacity="0.18"/>
+        <ellipse cx="128" cy="440" rx="15" ry="5" fill="#38c172" opacity="0.18"/>
+        <rect x="8"  y="404" width="40" height="36" rx="3" fill="#2ab8b8"/>
+        <rect x="11" y="409" width="34" height="27" rx="2" fill="#2ab8b8" opacity="0.5"/>
+        <rect x="10" y="399" width="36" height="8"  rx="2" fill="#5a3810"/>
+        <rect x="80" y="412" width="8"  height="28" rx="2" fill="#ff6600"/>
+        <rect x="82" y="416" width="4"  height="20" rx="1" fill="#ff6600" opacity="0.5"/>
+        <rect x="81" y="407" width="6"  height="7"         fill="#3a2008"/>
+        <ellipse cx="128" cy="426" rx="16" ry="14" fill="#38c172"/>
+        <ellipse cx="128" cy="428" rx="11" ry="9"  fill="#38c172" opacity="0.5"/>
+        <rect x="122" y="411" width="12" height="7" rx="2" fill="#38c172"/>
+        <rect x="125" y="404" width="6"  height="9"        fill="#3a2008"/>
+        <!-- 4. CENTER ARCH WINDOW x=260–540 -->
+        <path d="M262,290 L262,155 Q262,75 400,28 Q538,75 538,155 L538,290 Z" fill="#3a2008"/>
+        <path d="M280,290 L280,162 Q280,90 400,48 Q520,90 520,162 L520,290 Z" fill="#a8d8c8" opacity="0.7"/>
+        <g clip-path="url(#ss-arch-clip)">
+          <line x1="347" y1="48"  x2="347" y2="290" stroke="#3a2008" stroke-width="3"/>
+          <line x1="400" y1="48"  x2="400" y2="290" stroke="#3a2008" stroke-width="3"/>
+          <line x1="453" y1="48"  x2="453" y2="290" stroke="#3a2008" stroke-width="3"/>
+          <line x1="280" y1="168" x2="520" y2="168" stroke="#3a2008" stroke-width="3"/>
+          <line x1="280" y1="228" x2="520" y2="228" stroke="#3a2008" stroke-width="3"/>
+        </g>
+        <!-- Left lantern x=285 -->
+        <rect x="283" y="0"  width="3"  height="38" fill="#666666"/>
+        <rect x="271" y="38" width="26" height="32" rx="3" fill="#8a7a60"/>
+        <rect x="274" y="41" width="20" height="26" rx="2" fill="#ffaa00" opacity="0.75"/>
+        <ellipse cx="284" cy="54" rx="30" ry="30" fill="url(#ss-lantern)"/>
+        <!-- Right lantern x=515 -->
+        <rect x="513" y="0"  width="3"  height="38" fill="#666666"/>
+        <rect x="502" y="38" width="26" height="32" rx="3" fill="#8a7a60"/>
+        <rect x="505" y="41" width="20" height="26" rx="2" fill="#ffaa00" opacity="0.75"/>
+        <ellipse cx="515" cy="54" rx="30" ry="30" fill="url(#ss-lantern)"/>
+        <!-- Floor glow -->
+        <ellipse cx="400" cy="600" rx="160" ry="35" fill="url(#ss-floor-glow)"/>
+        <!-- 5. RIGHT CABINET x=605–800 -->
+        <rect x="605" y="0" width="195" height="600" fill="#3a2008"/>
+        <rect x="605" y="80"  width="195" height="12" fill="#5a3810"/>
+        <rect x="605" y="200" width="195" height="12" fill="#5a3810"/>
+        <rect x="605" y="320" width="195" height="12" fill="#5a3810"/>
+        <rect x="605" y="440" width="195" height="12" fill="#5a3810"/>
+        <rect x="605" y="0"   width="7"   height="600" fill="#5a3810"/>
+        <!-- R-Shelf1 bottles -->
+        <ellipse cx="635" cy="80" rx="14" ry="5" fill="#f5c842" opacity="0.18"/>
+        <ellipse cx="672" cy="80" rx="13" ry="5" fill="#38c172" opacity="0.18"/>
+        <ellipse cx="714" cy="80" rx="16" ry="5" fill="#2ab8b8" opacity="0.18"/>
+        <ellipse cx="768" cy="80" rx="10" ry="4" fill="#e53e3e" opacity="0.18"/>
+        <rect x="629" y="46" width="28" height="34" rx="3" fill="#f5c842"/>
+        <rect x="632" y="51" width="22" height="25" rx="2" fill="#f5c842" opacity="0.5"/>
+        <rect x="631" y="41" width="24" height="8"  rx="2" fill="#5a3810"/>
+        <ellipse cx="672" cy="63" rx="13" ry="16" fill="#38c172"/>
+        <ellipse cx="672" cy="65" rx="9"  ry="11" fill="#38c172" opacity="0.5"/>
+        <rect x="666" y="46" width="12" height="8" rx="2" fill="#38c172"/>
+        <rect x="669" y="39" width="6"  height="9"        fill="#3a2008"/>
+        <rect x="708" y="36" width="12" height="44" rx="8" fill="#2ab8b8"/>
+        <rect x="710" y="40" width="8"  height="36" rx="6" fill="#2ab8b8" opacity="0.5"/>
+        <rect x="710" y="31" width="8"  height="7"         fill="#3a2008"/>
+        <rect x="762" y="50" width="12" height="30" rx="4" fill="#e53e3e"/>
+        <rect x="764" y="54" width="8"  height="22" rx="2" fill="#e53e3e" opacity="0.5"/>
+        <rect x="763" y="45" width="10" height="7"         fill="#3a2008"/>
+        <!-- R-Shelf2 bottles -->
+        <ellipse cx="628" cy="200" rx="8"  ry="4" fill="#4299e1" opacity="0.18"/>
+        <ellipse cx="663" cy="200" rx="15" ry="5" fill="#e879a0" opacity="0.18"/>
+        <ellipse cx="720" cy="200" rx="16" ry="5" fill="#c084d1" opacity="0.18"/>
+        <ellipse cx="764" cy="200" rx="10" ry="4" fill="#f5c842" opacity="0.18"/>
+        <rect x="624" y="172" width="8"  height="28" rx="2" fill="#4299e1"/>
+        <rect x="626" y="176" width="4"  height="20" rx="1" fill="#4299e1" opacity="0.5"/>
+        <rect x="625" y="167" width="6"  height="7"         fill="#3a2008"/>
+        <ellipse cx="663" cy="185" rx="15" ry="14" fill="#e879a0"/>
+        <ellipse cx="663" cy="187" rx="10" ry="9"  fill="#e879a0" opacity="0.5"/>
+        <rect x="657" y="170" width="12" height="7" rx="2" fill="#e879a0"/>
+        <rect x="660" y="163" width="6"  height="9"        fill="#3a2008"/>
+        <ellipse cx="720" cy="183" rx="16" ry="16" fill="#c084d1"/>
+        <ellipse cx="720" cy="185" rx="11" ry="11" fill="#c084d1" opacity="0.5"/>
+        <rect x="714" y="166" width="12" height="8"  rx="2" fill="#c084d1"/>
+        <rect x="717" y="159" width="6"  height="9"         fill="#3a2008"/>
+        <rect x="758" y="158" width="14" height="42" rx="8" fill="#f5c842"/>
+        <rect x="760" y="162" width="10" height="34" rx="6" fill="#f5c842" opacity="0.5"/>
+        <rect x="761" y="153" width="10" height="7"         fill="#3a2008"/>
+        <!-- R-Shelf3 bottles -->
+        <ellipse cx="628" cy="320" rx="20" ry="6" fill="#e879a0" opacity="0.18"/>
+        <ellipse cx="686" cy="320" rx="8"  ry="4" fill="#ff6600" opacity="0.18"/>
+        <ellipse cx="740" cy="320" rx="15" ry="5" fill="#38c172" opacity="0.18"/>
+        <ellipse cx="780" cy="320" rx="8"  ry="4" fill="#4299e1" opacity="0.18"/>
+        <rect x="606" y="284" width="40" height="36" rx="3" fill="#e879a0"/>
+        <rect x="609" y="289" width="34" height="27" rx="2" fill="#e879a0" opacity="0.5"/>
+        <rect x="608" y="279" width="36" height="8"  rx="2" fill="#5a3810"/>
+        <rect x="682" y="291" width="8"  height="29" rx="2" fill="#ff6600"/>
+        <rect x="684" y="295" width="4"  height="21" rx="1" fill="#ff6600" opacity="0.5"/>
+        <rect x="683" y="286" width="6"  height="7"         fill="#3a2008"/>
+        <rect x="724" y="277" width="32" height="43" rx="3" fill="#38c172"/>
+        <rect x="727" y="282" width="26" height="34" rx="2" fill="#38c172" opacity="0.5"/>
+        <rect x="726" y="272" width="28" height="8"  rx="2" fill="#5a3810"/>
+        <rect x="774" y="292" width="10" height="28" rx="2" fill="#4299e1"/>
+        <rect x="776" y="296" width="6"  height="20" rx="1" fill="#4299e1" opacity="0.5"/>
+        <rect x="775" y="287" width="8"  height="7"         fill="#3a2008"/>
+        <!-- R-Shelf4 bottles -->
+        <ellipse cx="638" cy="440" rx="10" ry="5" fill="#c084d1" opacity="0.18"/>
+        <ellipse cx="680" cy="440" rx="16" ry="5" fill="#2ab8b8" opacity="0.18"/>
+        <ellipse cx="740" cy="440" rx="14" ry="5" fill="#f5c842" opacity="0.18"/>
+        <ellipse cx="775" cy="440" rx="9"  ry="4" fill="#e53e3e" opacity="0.18"/>
+        <rect x="632" y="412" width="12" height="28" rx="4" fill="#c084d1"/>
+        <rect x="634" y="416" width="8"  height="20" rx="2" fill="#c084d1" opacity="0.5"/>
+        <rect x="633" y="407" width="10" height="7"         fill="#3a2008"/>
+        <rect x="662" y="404" width="36" height="36" rx="3" fill="#2ab8b8"/>
+        <rect x="665" y="409" width="30" height="27" rx="2" fill="#2ab8b8" opacity="0.5"/>
+        <rect x="664" y="399" width="32" height="8"  rx="2" fill="#5a3810"/>
+        <ellipse cx="740" cy="425" rx="14" ry="15" fill="#f5c842"/>
+        <ellipse cx="740" cy="427" rx="9"  ry="10" fill="#f5c842" opacity="0.5"/>
+        <rect x="734" y="409" width="12" height="7" rx="2" fill="#f5c842"/>
+        <rect x="737" y="402" width="6"  height="9"        fill="#3a2008"/>
+        <rect x="769" y="410" width="12" height="30" rx="8" fill="#e53e3e"/>
+        <rect x="771" y="414" width="8"  height="22" rx="6" fill="#e53e3e" opacity="0.5"/>
+        <rect x="771" y="405" width="8"  height="7"         fill="#3a2008"/>
+        <!-- 6. COUNTER y=520 -->
+        <rect x="0" y="520" width="800" height="80" fill="#3a2008"/>
+        <rect x="0" y="520" width="800" height="6"  fill="#5a3810"/>
+        <ellipse cx="350" cy="546" rx="14" ry="10" fill="#4a3020"/>
+        <ellipse cx="350" cy="542" rx="10" ry="7"  fill="#3a2010"/>
+        <rect x="378" y="530" width="42" height="28" rx="2" fill="#d4c5a0"/>
+        <rect x="378" y="530" width="5"  height="28"        fill="#b8a88a"/>
+        <line x1="390" y1="537" x2="415" y2="537" stroke="#9a8870" stroke-width="1"/>
+        <line x1="390" y1="544" x2="415" y2="544" stroke="#9a8870" stroke-width="1"/>
+        <line x1="390" y1="551" x2="415" y2="551" stroke="#9a8870" stroke-width="1"/>
+        <rect x="447" y="492" width="8"  height="30" rx="2" fill="#e8d5a0"/>
+        <ellipse cx="451" cy="490" rx="4" ry="6" fill="#ff6600"/>
+        <ellipse cx="451" cy="487" rx="2" ry="4" fill="#ffaa00"/>
+        <!-- 7. TOP VIGNETTE + DUST MOTES -->
+        <rect x="0" y="0" width="800" height="100" fill="url(#ss-vignette)"/>
+        <circle cx="120" cy="30"  r="2"   fill="#fff8e0" opacity="0.2"/>
+        <circle cx="250" cy="55"  r="1.5" fill="#fff8e0" opacity="0.2"/>
+        <circle cx="380" cy="20"  r="2"   fill="#fff8e0" opacity="0.2"/>
+        <circle cx="490" cy="45"  r="2.5" fill="#fff8e0" opacity="0.2"/>
+        <circle cx="610" cy="25"  r="1.5" fill="#fff8e0" opacity="0.2"/>
+        <circle cx="700" cy="60"  r="2"   fill="#fff8e0" opacity="0.2"/>
+        <circle cx="170" cy="75"  r="1.5" fill="#fff8e0" opacity="0.15"/>
+        <circle cx="570" cy="70"  r="2"   fill="#fff8e0" opacity="0.15"/>
+      </svg>
+      <div class="start-title">
+        <div style="font-size:2.5rem;margin-bottom:.3rem;">🧙🏾‍♂️</div>
+        <h1>Mr. Favors' Alchemist's Apprentice</h1>
+        <p>Factor Fusion — Master the AC/X-Method</p>
+      </div>
+
+      <div class="start-hud">
+        <div class="coins-badge" id="startCoins">🪙 0</div>
+        <button id="settingsOpenBtn" class="icon-btn" aria-label="Open settings">⚙️</button>
+      </div>
+
+      <div class="level-grid" role="list" aria-label="Select a level">
+        <button class="level-btn" data-level="1" role="listitem" aria-label="Level 1 Sandbox">
+          <span class="lvl-num">1</span>
+          <span class="lvl-name">Sandbox</span>
+          <span class="lvl-lock" id="lock1"></span>
+        </button>
+        <button class="level-btn" data-level="2" role="listitem" aria-label="Level 2 Negatives">
+          <span class="lvl-num">2</span>
+          <span class="lvl-name">Negatives</span>
+          <span class="lvl-lock" id="lock2">🔒</span>
+        </button>
+        <button class="level-btn" data-level="3" role="listitem" aria-label="Level 3 Working Backwards">
+          <span class="lvl-num">3</span>
+          <span class="lvl-name">Backwards</span>
+          <span class="lvl-lock" id="lock3">🔒</span>
+        </button>
+        <button class="level-btn" data-level="4" role="listitem" aria-label="Level 4 Factor Frenzy">
+          <span class="lvl-num">4</span>
+          <span class="lvl-name">Frenzy</span>
+          <span class="lvl-lock" id="lock4">🔒</span>
+        </button>
+        <button class="level-btn" data-level="5" role="listitem" aria-label="Level 5 Boss Stage">
+          <span class="lvl-num">5</span>
+          <span class="lvl-name">Boss Stage</span>
+          <span class="lvl-lock" id="lock5">🔒</span>
+        </button>
+        <button class="level-btn boss-btn" data-level="boss" role="listitem" aria-label="Boss Regents Stage">
+          <span class="lvl-num">👑</span>
+          <span class="lvl-name">Regents Boss</span>
+          <span class="lvl-lock" id="lockBoss">🔒</span>
+        </button>
+      </div>
+
+      <div class="start-nav">
+        <button id="shopBtn"         class="btn btn--gold"  aria-label="Open shop">🛒 Shop</button>
+        <button id="achievementsBtn" class="btn btn--ghost" aria-label="View achievements">🏆 Achievements</button>
+        <button id="howToPlayBtn"    class="btn btn--ghost" aria-label="How to play">❓ How to Play</button>
+        <button id="summaryBtn"      class="btn btn--ghost" aria-label="View session summary" style="font-size:.8rem;opacity:.7">📊 Summary</button>
+      </div>
+
+      <p style="font-size:.75rem;color:var(--c-muted);text-align:center;max-width:400px;">
+        NYS Algebra 1 Standard A-APR.1 — Factor quadratic trinomials using the AC/X-Method
+      </p>
+    </div>
+
+    <!-- ──────────────────────────────────────────────
+         GAME SCREEN
+         ────────────────────────────────────────────── -->
+    <div id="gameScreen" class="screen">
+      <!-- Scene 2: Dungeon Hall with Torches -->
+      <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none">
+        <defs>
+          <radialGradient id="gs-arch-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#2a0050" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="#2a0050" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="gs-torch-l" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ff7800" stop-opacity="0.32"/>
+            <stop offset="100%" stop-color="#ff7800" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="gs-torch-r" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ff7800" stop-opacity="0.32"/>
+            <stop offset="100%" stop-color="#ff7800" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="gs-floor-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#a04600" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#a04600" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="gs-purple-haze" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#460078" stop-opacity="0.07"/>
+            <stop offset="100%" stop-color="#460078" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="gs-spill-l" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#c85000" stop-opacity="0.08"/>
+            <stop offset="100%" stop-color="#c85000" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="gs-spill-r" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stop-color="#c85000" stop-opacity="0.08"/>
+            <stop offset="100%" stop-color="#c85000" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="gs-fog" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1a1a2e" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#1a1a2e" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- 1. BG -->
+        <rect width="800" height="600" fill="#08080f"/>
+        <!-- 2. BACK ARCH GLOW + FRAME -->
+        <ellipse cx="400" cy="280" rx="130" ry="180" fill="url(#gs-arch-glow)"/>
+        <path d="M230,520 L230,200 Q230,115 400,58 Q570,115 570,200 L570,520 Z" fill="#1a1a2e"/>
+        <path d="M248,520 L248,205 Q248,130 400,76 Q552,130 552,205 L552,520 Z" fill="#0a0415"/>
+        <!-- Voussoir stones (alternating) -->
+        <rect x="232" y="195" width="16" height="36" rx="1" fill="#1f1f35"/>
+        <rect x="234" y="158" width="14" height="35" rx="1" fill="#161625"/>
+        <rect x="239" y="122" width="12" height="34" rx="1" fill="#1f1f35" transform="rotate(-8,245,139)"/>
+        <rect x="248" y="88"  width="12" height="34" rx="1" fill="#161625" transform="rotate(-18,254,105)"/>
+        <rect x="552" y="195" width="16" height="36" rx="1" fill="#1f1f35"/>
+        <rect x="552" y="158" width="14" height="35" rx="1" fill="#161625"/>
+        <rect x="549" y="122" width="12" height="34" rx="1" fill="#1f1f35" transform="rotate(8,555,139)"/>
+        <rect x="540" y="88"  width="12" height="34" rx="1" fill="#161625" transform="rotate(18,546,105)"/>
+        <!-- 3. LEFT COLUMN -->
+        <rect x="0" y="0" width="170" height="600" fill="#1a1a2e"/>
+        <rect x="0" y="2"   width="170" height="38" fill="#1a1a2e"/>
+        <rect x="0" y="42"  width="170" height="38" fill="#161628"/>
+        <rect x="0" y="82"  width="170" height="38" fill="#1a1a2e"/>
+        <rect x="0" y="122" width="170" height="38" fill="#161628"/>
+        <rect x="0" y="162" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="0" y="202" width="170" height="38" fill="#161628"/>
+        <rect x="0" y="242" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="0" y="282" width="170" height="38" fill="#161628"/>
+        <rect x="0" y="322" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="0" y="362" width="170" height="38" fill="#161628"/>
+        <rect x="0" y="402" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="0" y="442" width="170" height="38" fill="#161628"/>
+        <rect x="0" y="482" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="0" y="522" width="170" height="38" fill="#161628"/>
+        <rect x="0" y="562" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="162" y="0" width="8" height="600" fill="#0a0a10"/>
+        <rect x="0" y="80" width="180" height="230" fill="url(#gs-spill-l)"/>
+        <!-- Left torch x=148,y=200 -->
+        <rect x="137" y="198" width="22" height="7"  rx="2" fill="#5a4a30"/>
+        <rect x="144" y="172" width="8"  height="28" rx="2" fill="#4a3010"/>
+        <ellipse cx="148" cy="170" rx="7" ry="5" fill="#ff6600"/>
+        <ellipse cx="148" cy="164" rx="5" ry="8" fill="#ffaa00"/>
+        <ellipse cx="148" cy="160" rx="3" ry="6" fill="#fff0a0"/>
+        <ellipse cx="148" cy="186" rx="50" ry="50" fill="url(#gs-torch-l)"/>
+        <!-- 4. RIGHT COLUMN (mirror) -->
+        <rect x="630" y="0" width="170" height="600" fill="#1a1a2e"/>
+        <rect x="630" y="2"   width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="42"  width="170" height="38" fill="#161628"/>
+        <rect x="630" y="82"  width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="122" width="170" height="38" fill="#161628"/>
+        <rect x="630" y="162" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="202" width="170" height="38" fill="#161628"/>
+        <rect x="630" y="242" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="282" width="170" height="38" fill="#161628"/>
+        <rect x="630" y="322" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="362" width="170" height="38" fill="#161628"/>
+        <rect x="630" y="402" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="442" width="170" height="38" fill="#161628"/>
+        <rect x="630" y="482" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="522" width="170" height="38" fill="#161628"/>
+        <rect x="630" y="562" width="170" height="38" fill="#1a1a2e"/>
+        <rect x="630" y="0"   width="8"   height="600" fill="#0a0a10"/>
+        <rect x="620" y="80"  width="180" height="230" fill="url(#gs-spill-r)"/>
+        <!-- Right torch x=652,y=200 -->
+        <rect x="641" y="198" width="22" height="7"  rx="2" fill="#5a4a30"/>
+        <rect x="648" y="172" width="8"  height="28" rx="2" fill="#4a3010"/>
+        <ellipse cx="652" cy="170" rx="7" ry="5" fill="#ff6600"/>
+        <ellipse cx="652" cy="164" rx="5" ry="8" fill="#ffaa00"/>
+        <ellipse cx="652" cy="160" rx="3" ry="6" fill="#fff0a0"/>
+        <ellipse cx="652" cy="186" rx="50" ry="50" fill="url(#gs-torch-r)"/>
+        <!-- 5. FLOOR -->
+        <rect x="0" y="480" width="800" height="120" fill="#0f0f1a"/>
+        <line x1="0"   y1="525" x2="800" y2="525" stroke="#090910" stroke-width="1.5"/>
+        <line x1="0"   y1="570" x2="800" y2="570" stroke="#090910" stroke-width="1.5"/>
+        <line x1="55"  y1="480" x2="55"  y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="110" y1="480" x2="110" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="165" y1="480" x2="165" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="220" y1="480" x2="220" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="275" y1="480" x2="275" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="330" y1="480" x2="330" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="385" y1="480" x2="385" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="440" y1="480" x2="440" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="495" y1="480" x2="495" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="550" y1="480" x2="550" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="605" y1="480" x2="605" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="660" y1="480" x2="660" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="715" y1="480" x2="715" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <line x1="770" y1="480" x2="770" y2="600" stroke="#090910" stroke-width="1.5"/>
+        <ellipse cx="400" cy="570" rx="280" ry="55" fill="url(#gs-floor-glow)"/>
+        <!-- 6. CEILING -->
+        <rect x="0" y="0"  width="800" height="55" fill="#0a0a14"/>
+        <rect x="0" y="2"  width="800" height="13" fill="#111122"/>
+        <rect x="0" y="17" width="800" height="13" fill="#0d0d1a"/>
+        <rect x="0" y="32" width="800" height="13" fill="#111122"/>
+        <rect x="0" y="47" width="800" height="8"  fill="#0d0d1a"/>
+        <rect x="150" y="55" width="3" height="20" rx="1" fill="#0a0a10" opacity="0.4"/>
+        <rect x="300" y="55" width="3" height="15" rx="1" fill="#0a0a10" opacity="0.4"/>
+        <rect x="400" y="55" width="3" height="25" rx="1" fill="#0a0a10" opacity="0.4"/>
+        <rect x="520" y="55" width="3" height="18" rx="1" fill="#0a0a10" opacity="0.4"/>
+        <rect x="670" y="55" width="3" height="22" rx="1" fill="#0a0a10" opacity="0.4"/>
+        <!-- 7. PEDESTAL under cauldron -->
+        <rect x="315" y="450" width="170" height="38" rx="3" fill="#2a2a40"/>
+        <rect x="315" y="450" width="170" height="5"  rx="3" fill="#3a3a50"/>
+        <rect x="355" y="462" width="8" height="3" rx="1" fill="#5500aa" opacity="0.35"/>
+        <rect x="393" y="462" width="8" height="3" rx="1" fill="#5500aa" opacity="0.35"/>
+        <rect x="431" y="462" width="8" height="3" rx="1" fill="#5500aa" opacity="0.35"/>
+        <!-- 8. ATMOSPHERE -->
+        <rect x="0" y="455" width="800" height="50" fill="url(#gs-fog)"/>
+        <ellipse cx="400" cy="300" rx="190" ry="280" fill="url(#gs-purple-haze)"/>
+      </svg>
+
+      <!-- Top bar -->
+      <div class="game-header">
+        <button id="menuBtn" class="icon-btn" aria-label="Return to menu" title="Menu">☰</button>
+        <span class="level-label" id="gameLevelLabel">Level 1</span>
+        <div class="streak-wrap">
+          <span class="streak-label" id="streakLabel">🔥 0</span>
+          <div class="streak-meter" role="progressbar" aria-label="Streak progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="9" id="streakMeter">
+            <div class="streak-fill" id="streakFill"></div>
+          </div>
+        </div>
+        <div class="timer-display" id="timerDisplay" hidden aria-label="Time remaining">60s</div>
+        <span class="coins-mini" id="gameCoins">🪙 0</span>
+        <button id="hintBtn" class="hint-btn" aria-label="Use a hint">💡 Hint (<span id="hintsLeft">3</span>)</button>
+        <button id="glossaryToggleBtn" class="icon-btn" aria-label="Toggle glossary" aria-expanded="false">📖</button>
+        <button id="gameMuteBtn" class="icon-btn" aria-label="Toggle sound">🔊</button>
+        <span class="puzzle-progress" id="puzzleProgress"></span>
+      </div>
+
+      <!-- Main game area -->
+      <div class="game-area">
+
+        <!-- Boss context (Level 5 only) -->
+        <div class="boss-context" id="bossContext" hidden>
+          <div class="boss-expression" id="bossExpression"></div>
+          <div class="boss-steps" id="bossSteps"></div>
+        </div>
+
+        <!-- X Board -->
+        <div class="x-board" id="xBoard" aria-label="X Board: find two numbers">
+          <div class="x-board__label">Product (a × c)</div>
+          <div class="x-board__product" id="xProduct" aria-live="polite">—</div>
+          <div class="x-board__cross" aria-hidden="true">✕</div>
+          <div class="x-board__label">Sum (b)</div>
+          <div class="x-board__sum" id="xSum" aria-live="polite">—</div>
+          <div class="x-board__hint">Find two numbers that multiply to the top and add to the bottom</div>
+        </div>
+
+        <!-- Cauldron -->
+        <div class="cauldron-wrapper">
+          <div class="cauldron" id="cauldron" aria-hidden="true">
+            <div class="cauldron__smoke">
+              <div class="smoke-puff"></div>
+              <div class="smoke-puff"></div>
+              <div class="smoke-puff"></div>
+            </div>
+            <div class="cauldron__rim"></div>
+            <div class="cauldron__body">
+              <div class="cauldron__liquid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level 3 given factor hint -->
+        <div class="given-hint" id="givenFactorHint" hidden>
+          Given factor: <strong id="givenFactorValue">—</strong> &nbsp;|&nbsp; Find the missing factor
+        </div>
+
+        <!-- Bottle Slots -->
+        <div class="bottle-slots" role="group" aria-label="Selected potion bottles">
+          <div class="bottle-slot" id="slot1" aria-label="Left slot: empty">—</div>
+          <div class="slot-plus" aria-hidden="true">+</div>
+          <div class="bottle-slot" id="slot2" aria-label="Right slot: empty">—</div>
+        </div>
+
+        <!-- Tile Bank -->
+        <div class="tile-bank" id="tileBank" role="group" aria-label="Potion bottles to choose from">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Hint text -->
+        <div class="hint-text-display" id="hintTextDisplay" hidden></div>
+
+        <!-- Action buttons -->
+        <div class="action-row">
+          <button id="checkBtn" class="btn btn--primary" disabled aria-label="Check your answer">Check Answer</button>
+          <button id="menuBtn2" class="btn btn--ghost" aria-label="Return to main menu">← Menu</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────
+         STATS SCREEN
+         ────────────────────────────────────────────── -->
+    <div id="statsScreen" class="screen">
+      <div class="stats-card">
+        <h2 id="statsTitle">Level Complete!</h2>
+        <div class="stats-acc" id="statsAcc">100%</div>
+        <div id="statsRows">
+          <!-- populated by JS -->
+        </div>
+        <div class="stats-btns">
+          <button id="nextLevelBtn" class="btn btn--primary">Next Level →</button>
+          <button id="retryLevelBtn" class="btn btn--ghost">Try Again</button>
+          <button id="statsMenuBtn"  class="btn btn--ghost">Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────
+         BOSS COMPLETE SCREEN
+         ────────────────────────────────────────────── -->
+    <div id="bossCompleteScreen" class="screen">
+      <div class="boss-complete-card">
+        <div class="boss-trophy">👑</div>
+        <h2>BOSS DEFEATED!</h2>
+        <p style="color:var(--c-muted)">You have mastered the AC/X-Method!</p>
+        <div id="bossStats" style="display:flex;flex-direction:column;gap:.5rem;text-align:left;"></div>
+        <p style="font-size:.8rem;color:var(--c-success);">✓ Progress report downloaded</p>
+        <button id="bossMenuBtn" class="btn btn--primary" style="width:100%;margin-top:.5rem">Return to Menu</button>
+      </div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────
+         SHOP SCREEN
+         ────────────────────────────────────────────── -->
+    <div id="shopScreen" class="screen" style="padding:1.5rem 1rem;gap:1rem;">
+      <div class="page-header">
+        <button id="shopBackBtn" class="icon-btn" aria-label="Back to menu">←</button>
+        <h2>Potion Shop</h2>
+        <span class="coins-badge" id="shopCoins">🪙 0</span>
+      </div>
+
+      <p class="shop-section-title">Bottle Colors</p>
+      <div class="shop-grid" id="bottleShopGrid"></div>
+
+      <p class="shop-section-title">Background Themes</p>
+      <div class="shop-grid" id="bgShopGrid"></div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────
+         ACHIEVEMENTS SCREEN
+         ────────────────────────────────────────────── -->
+    <div id="achievementsScreen" class="screen" style="padding:1.5rem 1rem;gap:1rem;">
+      <div class="page-header">
+        <button id="achBackBtn" class="icon-btn" aria-label="Back to menu">←</button>
+        <h2>Achievements</h2>
+      </div>
+      <div class="badges-grid" id="badgesGrid"></div>
+    </div>
+
+    <!-- ────────────────────────────────────────────── -->
+    <!--  TEACHER SUMMARY SCREEN                        -->
+    <!-- ────────────────────────────────────────────── -->
+    <div id="summaryScreen" class="screen" style="padding:1.5rem 1rem;gap:1rem;">
+      <div class="page-header">
+        <button id="summaryBackBtn" class="icon-btn" aria-label="Back to menu">←</button>
+        <h2>Session Summary</h2>
+        <button id="summaryDownloadBtn" class="btn btn--gold" style="margin-left:auto">⬇ Download CSV</button>
+      </div>
+      <div id="summaryContent" class="summary-content"></div>
+    </div>
+
+  </div><!-- #app -->
+
+  <script>
+    'use strict';
+
+    /* ============================================================
+       CONSTANTS
+       ============================================================ */
+
+    const LEVEL_CONFIG = {
+      1: { a:{min:1,max:1}, b:{min:3,max:10}, c:{min:2,max:6},   bankSize:4,  range:{min:1,max:6},   attemptsAllowed:5, hintsAllowed:3, puzzlesPerLevel:5, name:'Level 1: Sandbox',         desc:'Positive factors only' },
+      2: { a:{min:1,max:1}, b:{min:-9,max:9}, c:{min:2,max:12},  bankSize:6,  range:{min:-9,max:9},  attemptsAllowed:4, hintsAllowed:3, puzzlesPerLevel:5, name:'Level 2: Negatives',        desc:'Negative factors introduced' },
+      3: { a:{min:1,max:1}, b:{min:-15,max:15},c:{min:2,max:20}, bankSize:6,  range:{min:-15,max:15},attemptsAllowed:3, hintsAllowed:3, puzzlesPerLevel:5, name:'Level 3: Working Backwards',desc:'Given one factor, find the other', givenFactor:true },
+      4: { a:{min:1,max:3}, b:{min:-15,max:15},c:{min:2,max:20}, bankSize:8,  range:{min:-15,max:15},attemptsAllowed:3, hintsAllowed:2, timerSeconds:60,   name:'Level 4: Factor Frenzy',    desc:'Time Attack – 60 seconds!', infinitePuzzles:true },
+      5: { a:{min:2,max:5}, b:{min:-20,max:20},c:{min:3,max:20}, bankSize:10, range:{min:-20,max:20},attemptsAllowed:2, hintsAllowed:2, puzzlesPerLevel:1, name:'Level 5: Boss Stage',       desc:'Full AC Method', requiresExtraction:true },
+      boss: { a:{min:2,max:5}, b:{min:-20,max:20},c:{min:3,max:20}, bankSize:10, range:{min:-20,max:20},attemptsAllowed:2, hintsAllowed:2, puzzlesPerLevel:1, name:'Regents Boss',             desc:'Full AC Method — Regents Style', requiresExtraction:true }
+    };
+
+    const ACHIEVEMENT_DEFS = {
+      first_correct:    { name:'First Correct',     icon:'✨', desc:'Solved your first puzzle correctly' },
+      speed_demon:      { name:'Speed Demon',        icon:'⚡', desc:'Solved a puzzle in ≤5 seconds' },
+      flawless_1:       { name:'Flawless L1',        icon:'🎯', desc:'100% accuracy on Level 1' },
+      flawless_2:       { name:'Flawless L2',        icon:'🎯', desc:'100% accuracy on Level 2' },
+      flawless_3:       { name:'Flawless L3',        icon:'🎯', desc:'100% accuracy on Level 3' },
+      flawless_4:       { name:'Flawless L4',        icon:'🎯', desc:'100% accuracy on Level 4 (no wrong answers)' },
+      flawless_5:       { name:'Flawless L5',        icon:'🎯', desc:'100% accuracy on Level 5' },
+      on_fire:          { name:'On Fire',             icon:'🔥', desc:'Reached a 10-puzzle streak' },
+      master_alchemist: { name:'Master Alchemist',   icon:'🏆', desc:'Completed all 5 levels' },
+      boss_slayer:      { name:'Boss Slayer',         icon:'👑', desc:'Defeated the Regents Boss' },
+      flawless_boss:    { name:'Flawless Boss',       icon:'💎', desc:'100% accuracy on the Regents Boss' }
+    };
+
+    const BOTTLE_COSMETICS = [
+      { id:'bottle_default', name:'Pink Potion',    color:'#E0A5D1', price:0,  default:true },
+      { id:'bottle_teal',    name:'Teal Essence',   color:'#2D8B8B', price:50 },
+      { id:'bottle_gold',    name:'Golden Brew',    color:'#C9915D', price:50 },
+      { id:'bottle_navy',    name:'Navy Ink',       color:'#1A2E4A', price:50 },
+      { id:'bottle_green',   name:'Verdant Potion', color:'#5CBE5C', price:50 }
+    ];
+
+    const BG_COSMETICS = [
+      { id:'bg_default',     name:"Alchemist's Counter", price:0,  default:true },
+      { id:'bg_night',       name:'Night Lab',           price:75 },
+      { id:'bg_crystal',     name:'Crystal Cave',        price:75 }
+    ];
+
+    const BG_STYLES = {
+      bg_default: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(30,15,60,.9) 0%, transparent 60%), radial-gradient(ellipse 30% 50% at 15% 50%, rgba(120,60,10,.35) 0%, transparent 50%), radial-gradient(ellipse 30% 50% at 85% 50%, rgba(120,60,10,.35) 0%, transparent 50%), radial-gradient(ellipse at 50% 30%, rgba(42,100,184,.12) 0%, transparent 55%), linear-gradient(180deg, #060410 0%, #0d1020 40%, #080c17 100%)',
+      bg_night:   'radial-gradient(ellipse at 50% 20%, #1a0a3e 0%, #050010 55%, #020008 100%), radial-gradient(ellipse 20% 40% at 10% 60%, rgba(180,80,10,.3) 0%, transparent 50%), radial-gradient(ellipse 20% 40% at 90% 60%, rgba(180,80,10,.3) 0%, transparent 50%)',
+      bg_crystal: 'radial-gradient(ellipse at top, #0a2828 0%, #021515 55%, #010a0a 100%), radial-gradient(ellipse 40% 60% at 50% 30%, rgba(42,184,184,.08) 0%, transparent 60%)'
+    };
+
+    function getHintMessage(step, puzzle) {
+      const [p, q] = puzzle.correctFactors;
+      if (step === 0) {
+        return `The top of the X is ${puzzle.product}. List factor pairs of ${puzzle.product} and see which pair adds to ${puzzle.sum}.`;
+      }
+      if (step === 1) {
+        const bothPos = p >= 0 && q >= 0;
+        const bothNeg = p < 0 && q < 0;
+        if (bothPos) return `Both factors are positive. Look for two positive numbers that multiply to ${puzzle.product}.`;
+        if (bothNeg) return `Both factors are negative. Their product is positive but their sum is negative.`;
+        return `The factors have opposite signs. One is positive and one is negative.`;
+      }
+      const smaller = Math.abs(p) <= Math.abs(q) ? p : q;
+      return `Hint: one of the factors is ${smaller}.`;
+    }
+
+    const BLANK_STAT = () => ({ attempts:0, correct:0, wrong:0, hintsUsed:0, totalTime:0 });
+    const DEFAULT_SESSION = {
+      sessionId: `anon_${Date.now()}`,
+      level: 1,
+      streak: 0,
+      coins: 0,
+      stats: { '1':BLANK_STAT(), '2':BLANK_STAT(), '3':BLANK_STAT(), '4':BLANK_STAT(), '5':BLANK_STAT(), boss:BLANK_STAT() },
+      unlockedCosmetics: ['bottle_default','bg_default'],
+      achievements: [],
+      soundMuted: false,
+      musicMuted: false,
+      createdAt: Date.now(),
+      lastPlayed: Date.now(),
+      hintsRemaining: { '1':3,'2':3,'3':3,'4':3,'5':3,'boss':3 },
+      dailyCoins: 0,
+      dailyCoinsDate: new Date().toLocaleDateString(),
+      tutorialSeen: false,
+      levelsCompleted: []
+    };
+
+    /* ============================================================
+       STORAGE MODULE
+       ============================================================ */
+    const Storage = {
+      KEY: 'alchemistSession',
+
+      init() {
+        if (!localStorage.getItem(this.KEY)) {
+          localStorage.setItem(this.KEY, JSON.stringify(DEFAULT_SESSION));
+        } else {
+          // Migrate missing keys
+          const s = this.get();
+          const merged = Object.assign({}, DEFAULT_SESSION, s);
+          if (!merged.levelsCompleted) merged.levelsCompleted = [];
+          if (!merged.hintsRemaining) merged.hintsRemaining = { '1':3,'2':3,'3':3,'4':3,'5':3,'boss':3 };
+          // Migrate stats to add hintsUsed/totalTime if missing
+          [1,2,3,4,5,'boss'].forEach(k => {
+            const key = String(k);
+            if (!merged.stats[key]) merged.stats[key] = BLANK_STAT();
+            if (merged.stats[key].hintsUsed === undefined) merged.stats[key].hintsUsed = 0;
+            if (merged.stats[key].totalTime === undefined) merged.stats[key].totalTime = 0;
+          });
+          localStorage.setItem(this.KEY, JSON.stringify(merged));
+        }
+      },
+
+      get() {
+        if (this._fallback) return Object.assign({}, this._fallback);
+        try {
+          return JSON.parse(localStorage.getItem(this.KEY)) || Object.assign({}, DEFAULT_SESSION);
+        } catch(e) { return Object.assign({}, DEFAULT_SESSION); }
+      },
+
+      set(data) {
+        try {
+          localStorage.setItem(this.KEY, JSON.stringify(data));
+        } catch(e) {
+          this._fallback = data;
+          if (e.name === 'QuotaExceededError') {
+            UI.showFeedbackMessage('Storage full \u2014 progress may not save this session.', 'partial');
+            setTimeout(() => UI.clearFeedback(), 3000);
+          }
+        }
+      },
+
+      update(partial) {
+        const s = this.get();
+        this.set(Object.assign(s, partial));
+      },
+
+      checkDailyReset() {
+        const s = this.get();
+        const today = new Date().toLocaleDateString();
+        if (s.dailyCoinsDate !== today) {
+          s.dailyCoins = 0;
+          s.dailyCoinsDate = today;
+          this.set(s);
+        }
+      },
+
+      addCoins(amount) {
+        this.checkDailyReset();
+        const s = this.get();
+        const remaining = 100 - (s.dailyCoins || 0);
+        const actual = Math.min(amount, Math.max(0, remaining));
+        s.coins = (s.coins || 0) + actual;
+        s.dailyCoins = (s.dailyCoins || 0) + actual;
+        this.set(s);
+        return actual;
+      },
+
+      updateStats(levelKey, isCorrect, elapsed) {
+        const s = this.get();
+        const key = String(levelKey);
+        if (!s.stats[key]) s.stats[key] = BLANK_STAT();
+        s.stats[key].attempts++;
+        if (isCorrect) s.stats[key].correct++;
+        else s.stats[key].wrong++;
+        if (elapsed) s.stats[key].totalTime = (s.stats[key].totalTime || 0) + elapsed;
+        this.set(s);
+      },
+
+      unlockAchievement(id) {
+        const s = this.get();
+        if (s.achievements.includes(id)) return false;
+        s.achievements.push(id);
+        this.set(s);
+        return true;
+      },
+
+      unlockCosmetic(id) {
+        const s = this.get();
+        if (!s.unlockedCosmetics.includes(id)) s.unlockedCosmetics.push(id);
+        this.set(s);
+      },
+
+      useHint(levelKey) {
+        const s = this.get();
+        const key = String(levelKey);
+        if ((s.hintsRemaining[key] || 0) <= 0) return false;
+        s.hintsRemaining[key]--;
+        if (!s.stats[key]) s.stats[key] = BLANK_STAT();
+        s.stats[key].hintsUsed = (s.stats[key].hintsUsed || 0) + 1;
+        this.set(s);
+        return true;
+      },
+
+      completeLevel(levelKey) {
+        const s = this.get();
+        const key = String(levelKey);
+        if (!s.levelsCompleted.includes(key)) s.levelsCompleted.push(key);
+        this.set(s);
+      },
+
+      generateCSV() {
+        const s = this.get();
+        const date = new Date().toLocaleString();
+        let csv = `Session Report\nSessionID,${s.sessionId}\nGenerated,${date}\n\n`;
+        csv += 'Level,Attempts,Correct,Wrong,Accuracy%,Hints Used,Time (s)\n';
+        [1,2,3,4,5,'boss'].forEach(k => {
+          const st = s.stats[String(k)] || BLANK_STAT();
+          const acc = st.attempts > 0 ? Math.round((st.correct / st.attempts) * 100) : 0;
+          const time = Math.round(st.totalTime || 0);
+          const label = k === 'boss' ? 'Boss' : `Level ${k}`;
+          csv += `${label},${st.attempts},${st.correct},${st.wrong},${acc}%,${st.hintsUsed||0},${time}\n`;
+        });
+        csv += `\nTotal Coins,${s.coins}\n`;
+        csv += `Streak,${s.streak}\n`;
+        csv += `Achievements,${s.achievements.length}/${Object.keys(ACHIEVEMENT_DEFS).length}\n`;
+        const flawless = s.achievements.filter(a => a.startsWith('flawless_')).length;
+        csv += `Flawless Levels,${flawless}\n`;
+        return csv;
+      },
+
+      downloadCSV() {
+        const csv = this.generateCSV();
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `alchemist_report_${Date.now()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      },
+
+      reset() {
+        const fresh = Object.assign({}, DEFAULT_SESSION, { sessionId: `anon_${Date.now()}`, createdAt: Date.now() });
+        this.set(fresh);
+      }
+    };
+
+    /* ============================================================
+       SHEETS MODULE
+       Fire-and-forget POST to Google Apps Script on level complete.
+       Payload is fully anonymous — no name, email, class, or device.
+       Game thread is never blocked; failures queue silently.
+
+       // If DOE Workspace blocks anonymous POST:
+       // 1. Contact IT to enable "Anyone" access for Apps Script
+       // 2. Interim workaround: student uses Summary → Download CSV,
+       //    teacher manually pastes into Sheet
+       // 3. This module fails silently — game never breaks
+       ============================================================ */
+    const Sheets = {
+      URL: 'https://script.google.com/macros/s/AKfycbyNpgwyEqujDQoXwcZFl_ofxmcGKSWLh9LNP4P7hrmuaHvt8HpbuZ5t7qWZMZ6U8Otm/exec',
+
+      // Queue failed sends — retry on next level completion
+      _queue: [],
+
+      send(levelKey) {
+        const s = Storage.get();
+        const key = String(levelKey);
+        const st = s.stats[key] || {};
+        const attempts = st.attempts || 0;
+        const correct  = st.correct  || 0;
+        const acc = attempts > 0
+          ? Math.round((correct / attempts) * 100) + '%'
+          : '0%';
+        const payload = {
+          sessionId:    s.sessionId,
+          level:        key === 'boss' ? 'Boss' : 'Level ' + key,
+          attempts:     attempts,
+          correct:      correct,
+          wrong:        st.wrong       || 0,
+          accuracy:     acc,
+          hintsUsed:    st.hintsUsed   || 0,
+          timeOnTask:   Math.round(st.totalTime || 0),
+          coins:        s.coins        || 0,
+          achievements: s.achievements ? s.achievements.length : 0,
+          complete:     s.levelsCompleted
+                        ? s.levelsCompleted.includes(key)
+                        : false
+        };
+
+        // Fire-and-forget — never awaited, never blocks gameplay
+        this._dispatch(payload);
+
+        // Retry any queued failed sends
+        if (this._queue.length > 0) {
+          const queued = [...this._queue];
+          this._queue = [];
+          queued.forEach(p => this._dispatch(p));
+        }
+      },
+
+      _dispatch(payload) {
+        fetch(this.URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {
+          // Silent failure — queue for retry, never surface to student
+          this._queue.push(payload);
+        });
+      }
+    };
+
+    /* ============================================================
+       AUDIO MODULE
+       ============================================================ */
+    const Audio = {
+      ctx: null,
+      musicInterval: null,
+      musicNotes: [261, 329, 392, 349],
+      musicTempo: 500,
+      noteIndex: 0,
+
+      init() {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) {
+          this.ctx = new Ctx();
+          // Resume on first user interaction
+          document.addEventListener('click', () => {
+            if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+          }, { once: true });
+        }
+        const s = Storage.get();
+        this._muted = s.soundMuted || false;
+        this._musicMuted = s.musicMuted || false;
+      },
+
+      get muted() { return this._muted; },
+      get musicMuted() { return this._musicMuted; },
+
+      _playOsc(freq, duration, vol = 0.25, type = 'sine', glide = null) {
+        if (!this.ctx || this._muted) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          if (glide) osc.frequency.exponentialRampToValueAtTime(glide, this.ctx.currentTime + duration);
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.start(this.ctx.currentTime);
+          osc.stop(this.ctx.currentTime + duration);
+        } catch(e) {}
+      },
+
+      playSuccess() {
+        this._playOsc(523, 0.5, 0.12);
+        this._playOsc(659, 0.5, 0.12);
+        this._playOsc(784, 0.5, 0.12);
+        setTimeout(() => this._playOsc(880, 0.2, 0.1), 500);
+      },
+
+      playFail() {
+        this._playOsc(440, 0.14, 0.2);
+        setTimeout(() => this._playOsc(330, 0.14, 0.2), 140);
+        setTimeout(() => this._playOsc(220, 0.16, 0.2), 280);
+      },
+
+      playPartial() {
+        [0, 110, 220].forEach(d => setTimeout(() => this._playOsc(659, 0.1, 0.15), d));
+      },
+
+      playSelect() {
+        this._playOsc(880, 0.3, 0.1, 'sine', 440);
+      },
+
+      playStreak() {
+        this._playOsc(784, 0.15, 0.15);
+        setTimeout(() => this._playOsc(698, 0.15, 0.15), 140);
+        setTimeout(() => this._playOsc(622, 0.4, 0.15), 280);
+      },
+
+      startMusicLoop() {
+        if (this.musicInterval) return;
+        const tick = () => {
+          if (!this._musicMuted && !this._muted && this.ctx) {
+            try {
+              const freq = this.musicNotes[this.noteIndex];
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+              osc.frequency.value = freq;
+              osc.type = 'sine';
+              gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + (this.musicTempo / 1000) * 0.85);
+              osc.start(this.ctx.currentTime);
+              osc.stop(this.ctx.currentTime + (this.musicTempo / 1000) * 0.9);
+            } catch(e) {}
+          }
+          this.noteIndex = (this.noteIndex + 1) % this.musicNotes.length;
+        };
+        tick();
+        this.musicInterval = setInterval(tick, this.musicTempo);
+      },
+
+      stopMusic() {
+        if (this.musicInterval) { clearInterval(this.musicInterval); this.musicInterval = null; }
+      },
+
+      setFireTempo(on) {
+        this.stopMusic();
+        this.musicTempo = on ? 250 : 500;
+        this.startMusicLoop();
+      },
+
+      toggleMute() {
+        this._muted = !this._muted;
+        Storage.update({ soundMuted: this._muted });
+        this._updateMuteButtons();
+        if (this._muted) this.stopMusic();
+        else this.startMusicLoop();
+      },
+
+      toggleMusicMute() {
+        this._musicMuted = !this._musicMuted;
+        Storage.update({ musicMuted: this._musicMuted });
+        this._updateMusicButtons();
+      },
+
+      _updateMuteButtons() {
+        const label = this._muted ? '🔇' : '🔊';
+        document.querySelectorAll('#gameMuteBtn, #settingsMuteBtn').forEach(b => {
+          if (b.id === 'gameMuteBtn') b.textContent = label;
+          else b.textContent = this._muted ? '🔇 Off' : '🔊 On';
+        });
+      },
+
+      _updateMusicButtons() {
+        const btn = document.getElementById('settingsMusicBtn');
+        if (btn) btn.textContent = this._musicMuted ? '🔕 Off' : '🎵 On';
+      }
+    };
+
+    /* ============================================================
+       PUZZLE ENGINE (pure helpers)
+       ============================================================ */
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function generateTileBank(p, q, bankSize, range, product, sum) {
+      // The correct factors must ALWAYS appear in the bank.
+      // Build distractors separately, then combine.
+      const correct = new Set([p, q]);           // deduplicated (handles p === q)
+      const used    = new Set([p, q, 0]);         // 0 excluded from distractors
+      const distractors = [];
+
+      const tryAdd = v => {
+        if (!used.has(v) && v >= range.min && v <= range.max) {
+          used.add(v);
+          distractors.push(v);
+        }
+      };
+
+      // Sign-flipped variants of the correct factors (classic wrong-sign trap)
+      tryAdd(-p);
+      tryAdd(-q);
+
+      // Other factor pairs of |product| that don't give the right sum
+      const absProduct = Math.abs(product);
+      for (let i = 1; i <= Math.min(absProduct, 50) && distractors.length < bankSize * 3; i++) {
+        if (absProduct % i === 0) {
+          const j = absProduct / i;
+          if (i + j !== sum)  { tryAdd(i);  tryAdd(j);  }
+          if (-i + -j !== sum){ tryAdd(-i); tryAdd(-j); }
+          if (i  + -j !== sum){ tryAdd(i);  tryAdd(-j); }
+          if (-i + j  !== sum){ tryAdd(-i); tryAdd(j);  }
+        }
+      }
+
+      // Random filler if still short
+      let safety = 0;
+      while (distractors.length < bankSize * 2 && safety < 100) {
+        safety++;
+        const r = randomInt(range.min, range.max);
+        tryAdd(r);
+      }
+
+      // Final bank: guaranteed correct factors + shuffled distractors to fill remaining slots
+      const needed = bankSize - correct.size;
+      return shuffle([...correct, ...shuffle(distractors).slice(0, needed)]);
+    }
+
+    function generatePuzzle(levelNum) {
+      const cfg     = LEVEL_CONFIG[levelNum];
+      const isMonic = cfg.a.min === 1 && cfg.a.max === 1;
+
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const p = randomInt(cfg.range.min, cfg.range.max);
+        const q = randomInt(cfg.range.min, cfg.range.max);
+
+        // Skip p===q on levels requiring two tile selections.
+        // generateTileBank deduplicates, so only one tile with value p would
+        // exist; selectTile() deselects on re-click, permanently blocking the
+        // player. Level 3 (cfg.givenFactor) is immune: only one selection needed.
+        if (!cfg.givenFactor && p === q) continue;
+
+        const product = p * q;
+        const sum     = p + q;
+
+        // b coefficient must satisfy the level's b-range
+        if (sum < cfg.b.min || sum > cfg.b.max) continue;
+
+        let a, c;
+
+        if (isMonic) {
+          a = 1;
+          c = product;
+          if (c < cfg.c.min || c > cfg.c.max) continue;
+        } else {
+          // Enumerate every valid a in the level's a-range
+          const validAs = [];
+          for (let candidate = cfg.a.min; candidate <= cfg.a.max; candidate++) {
+            if (product !== 0 && product % candidate === 0) {
+              const candidateC = product / candidate;
+              if (candidateC >= cfg.c.min && candidateC <= cfg.c.max) {
+                validAs.push(candidate);
+              }
+            }
+          }
+          if (validAs.length === 0) continue;
+          a = validAs[Math.floor(Math.random() * validAs.length)];
+          c = product / a;
+        }
+
+        const tileBank = generateTileBank(p, q, cfg.bankSize, cfg.range, product, sum);
+        const puzzle   = { a, b: sum, c, product, sum, correctFactors: [p, q], tileBank };
+
+        if (cfg.givenFactor) {
+          puzzle.givenFactor  = Math.random() < 0.5 ? p : q;
+          puzzle.targetFactor = puzzle.givenFactor === p ? q : p;
+          // Rebuild tile bank — generateTileBank guarantees both factors are always present
+          puzzle.tileBank = generateTileBank(puzzle.givenFactor, puzzle.targetFactor, cfg.bankSize, cfg.range, product, sum);
+        }
+
+        return puzzle;
+      }
+
+      // Should never reach here — safe default via factor-first path (p=2, q=3)
+      console.error('generatePuzzle: exhausted 100 attempts for level', levelNum, '— using safe default');
+      const sp = 2, sq = 3, sProduct = 6, sSum = 5;
+      // Find a valid 'a' for this level's config (handles non-monic levels where a≥2)
+      let safeA = cfg.a.min;
+      for (let candidate = cfg.a.min; candidate <= cfg.a.max; candidate++) {
+        const candidateC = sProduct / candidate;
+        if (sProduct % candidate === 0 && candidateC >= cfg.c.min && candidateC <= cfg.c.max) {
+          safeA = candidate;
+          break;
+        }
+      }
+      const safeC = sProduct / safeA;
+      return { a: safeA, b: sSum, c: safeC, product: sProduct, sum: sSum,
+               correctFactors: [sp, sq],
+               tileBank: generateTileBank(sp, sq, cfg.bankSize, cfg.range, sProduct, sSum) };
+    }
+
+    function checkAnswer(selectedTwo, ac, b) {
+      const [p1, q1] = [...selectedTwo].sort((x, y) => x - y);
+      const exactProduct = p1 * q1 === ac;
+      const exactSum     = p1 + q1 === b;
+      if (exactProduct && exactSum) return 'CORRECT';
+      // Sign error: product is correct but user flipped both signs (e.g. picked -3,-4 instead of 3,4)
+      const flipSum = (-p1) + (-q1) === b;
+      if (exactProduct && flipSum) return 'PARTIAL_SIGN_ERROR';
+      return 'INCORRECT';
+    }
+
+    /* ============================================================
+       GAME STATE (FSM)
+       ============================================================ */
+    const Game = {
+      fsm: 'IDLE',              // IDLE | SELECTED_ONE | SELECTED_TWO | LOCKED
+      currentLevel: null,
+      currentPuzzle: null,
+      selectedIndices: [],      // indices into tileBank
+      puzzleAttempts: 0,        // wrong attempts on current puzzle
+      levelWrongTotal: 0,       // total wrong for flawless check
+      puzzlesCompleted: 0,      // correct puzzles in this level run
+      puzzleStartTime: null,
+      timer: null,
+      timerRemaining: 0,
+      hintStep: 0,              // which hint to show next (0-2)
+      isOnFire: false,
+
+      startLevel(levelNum) {
+        this.currentLevel = levelNum;
+        this.fsm = 'IDLE';
+        this.selectedIndices = [];
+        this.puzzleAttempts = 0;
+        this.levelWrongTotal = 0;
+        this.puzzlesCompleted = 0;
+        this.hintStep = 0;
+        this.isOnFire = false;
+        clearInterval(this.timer);
+        this.timer = null;
+        clearTimeout(this._pendingTimeout);
+        this._pendingTimeout = null;
+
+        const cfg = LEVEL_CONFIG[levelNum];
+        this.currentPuzzle = generatePuzzle(levelNum);
+        if (!this.currentPuzzle) return;
+
+        UI.showScreen('gameScreen');
+        UI.renderPuzzle(this.currentPuzzle);
+        UI.updateHeader();
+        UI.updateStreakMeter();
+
+        // Level 4: start timer
+        if (cfg.timerSeconds) {
+          this.timerRemaining = cfg.timerSeconds;
+          UI.showTimer(true);
+          UI.updateTimerDisplay(this.timerRemaining);
+          this.timer = setInterval(() => {
+            this.timerRemaining--;
+            UI.updateTimerDisplay(this.timerRemaining);
+            if (this.timerRemaining <= 0) {
+              clearInterval(this.timer);
+              this.timer = null;
+              Storage.completeLevel(Game.currentLevel);
+              Game._checkFlawless(String(Game.currentLevel));
+              Sheets.send(Game.currentLevel);
+              Game._lockUI(true);
+              UI.showStatsScreen(Game.currentLevel);
+            }
+          }, 1000);
+        } else {
+          UI.showTimer(false);
+        }
+
+        this.puzzleStartTime = Date.now();
+
+        // Tutorial
+        const s = Storage.get();
+        if (!s.tutorialSeen && levelNum === 1) {
+          Storage.update({ tutorialSeen: true });
+          UI.showTutorial();
+        }
+
+        // Apply cosmetics
+        UI.applyCosmetics();
+      },
+
+      selectTile(index) {
+        if (this.fsm === 'LOCKED') return;
+        const cfg = LEVEL_CONFIG[this.currentLevel];
+
+        // In Level 3, only one selection needed (slot 2)
+        const needsTwo = !cfg.givenFactor;
+
+        // Already selected → deselect
+        const alreadyIdx = this.selectedIndices.indexOf(index);
+        if (alreadyIdx !== -1) {
+          this.selectedIndices.splice(alreadyIdx, 1);
+          this.fsm = this.selectedIndices.length === 0 ? 'IDLE' : 'SELECTED_ONE';
+          UI.updateSelectedSlots();
+          UI.enableCheckButton(false);
+          return;
+        }
+
+        // Can't add more than needed
+        const maxSelect = needsTwo ? 2 : 1;
+        if (this.selectedIndices.length >= maxSelect) return;
+
+        this.selectedIndices.push(index);
+        Audio.playSelect();
+
+        if (needsTwo) {
+          this.fsm = this.selectedIndices.length === 1 ? 'SELECTED_ONE' : 'SELECTED_TWO';
+          UI.enableCheckButton(this.selectedIndices.length === 2);
+        } else {
+          this.fsm = 'SELECTED_ONE';
+          UI.enableCheckButton(true);
+        }
+        UI.updateSelectedSlots();
+      },
+
+      doCheck() {
+        if (this.fsm === 'LOCKED') return;
+        if (this.selectedIndices.length === 0) return;
+
+        this.fsm = 'LOCKED';
+        this._lockUI(true);
+
+        const puzzle = this.currentPuzzle;
+        const cfg    = LEVEL_CONFIG[this.currentLevel];
+        let selected;
+
+        if (cfg.givenFactor) {
+          const picked = puzzle.tileBank[this.selectedIndices[0]];
+          selected = [puzzle.givenFactor, picked];
+        } else {
+          selected = this.selectedIndices.map(i => puzzle.tileBank[i]);
+        }
+
+        const result = checkAnswer(selected, puzzle.product, puzzle.sum);
+        const elapsed = (Date.now() - this.puzzleStartTime) / 1000;
+
+        Storage.updateStats(this.currentLevel, result === 'CORRECT', elapsed);
+        this._handleResult(result, elapsed);
+      },
+
+      _handleResult(result, elapsed) {
+        const s = Storage.get();
+        const puzzle = this.currentPuzzle;
+        const cfg    = LEVEL_CONFIG[this.currentLevel];
+        const levelKey = String(this.currentLevel);
+
+        if (result === 'CORRECT') {
+          // Points & coins
+          let coins = 5;
+          if (this.isOnFire) coins *= 2;
+          if (this.selectedIndices.length > 0 && this.puzzleAttempts === 0 && elapsed <= 8) {
+            Storage.addCoins(coins + 3); // first attempt + quick bonus
+          } else {
+            Storage.addCoins(coins);
+          }
+
+          // Streak
+          const newStreak = (s.streak || 0) + 1;
+          Storage.update({ streak: newStreak });
+
+          this.puzzleAttempts = 0;
+          this.puzzlesCompleted++;
+
+          // On Fire check
+          if (newStreak >= 10 && !this.isOnFire) {
+            this.isOnFire = true;
+            Audio.setFireTempo(true);
+          }
+
+          // Achievements
+          this._checkAchievements(result, elapsed, newStreak);
+
+          UI.animateCauldron('sparkle');
+          Audio.playSuccess();
+          UI.showFeedbackMessage('Excellent! The potion is stable.', 'correct');
+          UI.updateHeader();
+          UI.updateStreakMeter();
+
+          // Announce for SR
+          UI.announce('Correct! The potion is stable.');
+
+          // Auto-advance after 3s
+          clearTimeout(this._pendingTimeout);
+          this._pendingTimeout = setTimeout(() => {
+            this._lockUI(false);
+            this.fsm = 'IDLE';
+            this.selectedIndices = [];
+            UI.clearFeedback();
+
+            // Determine if level is done
+            const isDone = cfg.infinitePuzzles ? false :
+              (this.puzzlesCompleted >= (cfg.puzzlesPerLevel || 5));
+
+            if (isDone) {
+              clearInterval(this.timer);
+              this.timer = null;
+              if (levelKey === '5' || levelKey === 'boss') {
+                Storage.completeLevel(levelKey);
+                Sheets.send(this.currentLevel);
+                Storage.addCoins(300);
+                this._checkAchievements('boss_complete', elapsed, s.streak);
+                this._checkFlawless(levelKey);
+                Storage.downloadCSV();
+                UI.showBossComplete(this.currentLevel);
+              } else {
+                Storage.completeLevel(levelKey);
+                Sheets.send(this.currentLevel);
+                this._checkFlawless(levelKey);
+                UI.showStatsScreen(this.currentLevel);
+              }
+            } else {
+              // Next puzzle
+              this.currentPuzzle = generatePuzzle(this.currentLevel);
+              this.hintStep = 0;
+              this.puzzleStartTime = Date.now();
+              UI.renderPuzzle(this.currentPuzzle);
+              UI.hideHintText();
+            }
+          }, 3000);
+
+        } else if (result === 'PARTIAL_SIGN_ERROR') {
+          this.levelWrongTotal++;
+          Storage.update({ streak: 0 });
+          this.isOnFire = false;
+          Audio.setFireTempo(false);
+          this.puzzleAttempts++;
+
+          UI.animateCauldron('bubble');
+          Audio.playPartial();
+          UI.showFeedbackMessage('The potion is unstable! Check your signs.', 'partial');
+          UI.updateHeader();
+          UI.updateStreakMeter();
+          UI.announce('Partial. Check your signs.');
+
+          clearTimeout(this._pendingTimeout);
+          this._pendingTimeout = setTimeout(() => {
+            this.fsm = 'IDLE';
+            this.selectedIndices = [];
+            this._lockUI(false);
+            UI.clearCauldron();
+            UI.clearFeedback();
+            UI.updateSelectedSlots();
+            UI.enableCheckButton(false);
+          }, 2800);
+
+        } else { // INCORRECT
+          this.levelWrongTotal++;
+          Storage.update({ streak: 0 });
+          this.isOnFire = false;
+          Audio.setFireTempo(false);
+          this.puzzleAttempts++;
+
+          UI.animateCauldron('shake');
+          Audio.playFail();
+          UI.showFeedbackMessage('The potion fizzled. Try a new combination.', 'incorrect');
+          UI.updateHeader();
+          UI.updateStreakMeter();
+          UI.announce('Incorrect. Try a new combination.');
+
+          clearTimeout(this._pendingTimeout);
+          this._pendingTimeout = setTimeout(() => {
+            this.fsm = 'IDLE';
+            this.selectedIndices = [];
+            this._lockUI(false);
+            UI.clearCauldron();
+            UI.clearFeedback();
+            UI.updateSelectedSlots();
+            UI.enableCheckButton(false);
+
+            // Auto-advance if too many wrong attempts on one puzzle
+            if (this.puzzleAttempts >= (LEVEL_CONFIG[this.currentLevel].attemptsAllowed || 5)) {
+              const [p, q] = this.currentPuzzle.correctFactors;
+              UI.showFeedbackMessage(`Answer: ${p} and ${q}. Moving on…`, 'partial');
+              this.puzzleAttempts = 0;
+              this.hintStep = 0;
+              this.currentPuzzle = generatePuzzle(this.currentLevel);
+              this.puzzleStartTime = Date.now();
+              setTimeout(() => {
+                UI.clearFeedback();
+                UI.renderPuzzle(this.currentPuzzle);
+                UI.hideHintText();
+              }, 1800);
+            }
+          }, 2800);
+        }
+      },
+
+      useHint() {
+        const levelKey = String(this.currentLevel);
+        if (!Storage.useHint(levelKey)) return; // no hints left
+
+        const step = this.hintStep;
+        const msg = getHintMessage(step, this.currentPuzzle);
+
+        this.hintStep = Math.min(this.hintStep + 1, 2);
+        UI.showHintText(msg);
+        UI.updateHeader();
+      },
+
+      _lockUI(locked) {
+        const bank = document.getElementById('tileBank');
+        const check = document.getElementById('checkBtn');
+        if (bank) bank.style.pointerEvents = locked ? 'none' : '';
+        if (check) check.disabled = locked;
+      },
+
+      _checkAchievements(result, elapsed, streak) {
+        const s = Storage.get();
+
+        if (result === 'CORRECT') {
+          // First correct
+          if (!s.achievements.includes('first_correct')) {
+            const unlocked = Storage.unlockAchievement('first_correct');
+            if (unlocked) UI.celebrateAchievement('first_correct');
+          }
+          // Speed demon (≤5s)
+          if (elapsed <= 5 && !s.achievements.includes('speed_demon')) {
+            const unlocked = Storage.unlockAchievement('speed_demon');
+            if (unlocked) UI.celebrateAchievement('speed_demon');
+          }
+          // On Fire (streak 10)
+          if (streak >= 10 && !s.achievements.includes('on_fire')) {
+            const unlocked = Storage.unlockAchievement('on_fire');
+            if (unlocked) {
+              UI.celebrateAchievement('on_fire');
+              Audio.playStreak();
+            }
+          }
+          // Master Alchemist — include the current level (completeLevel fires after this in the timeout)
+          const completed = [...(Storage.get().levelsCompleted || []), String(this.currentLevel)];
+          if (['1','2','3','4','5'].every(l => completed.includes(l)) && !s.achievements.includes('master_alchemist')) {
+            const unlocked = Storage.unlockAchievement('master_alchemist');
+            if (unlocked) UI.celebrateAchievement('master_alchemist');
+          }
+        }
+        if (result === 'boss_complete') {
+          if (!s.achievements.includes('boss_slayer')) {
+            const unlocked = Storage.unlockAchievement('boss_slayer');
+            if (unlocked) UI.celebrateAchievement('boss_slayer');
+          }
+        }
+      },
+
+      _checkFlawless(levelKey) {
+        if (this.levelWrongTotal > 0) return;
+        const id = `flawless_${levelKey}`;
+        const unlocked = Storage.unlockAchievement(id);
+        if (unlocked) UI.celebrateAchievement(id);
+      }
+    };
+
+    /* ============================================================
+       POTION BOTTLE SVG BUILDER
+       ============================================================ */
+    const TILE_COLORS = ['#c084d1','#2ab8b8','#e879a0','#38c172','#f5c842','#4299e1','#e53e3e','#ff8c42'];
+
+    function buildPotionSVG(val, colorIndex, w, h) {
+      w = w || 60; h = h || 80;
+      const color = TILE_COLORS[colorIndex % TILE_COLORS.length];
+      const cid   = 'btl' + colorIndex;
+      // 4-pointed star at (cx, cy)
+      const star = function(cx, cy) {
+        var r1 = 3, r2 = 1.2, pts = [];
+        for (var i = 0; i < 8; i++) {
+          var a = (Math.PI / 4) * i - Math.PI / 2;
+          var r = i % 2 === 0 ? r1 : r2;
+          pts.push((cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1));
+        }
+        return 'M' + pts.join('L') + 'Z';
+      };
+      return '<svg viewBox="0 0 60 80" width="' + w + '" height="' + h + '" aria-hidden="true" data-base-color="' + color + '">' +
+        '<defs><clipPath id="' + cid + '"><ellipse cx="30" cy="52" rx="22" ry="22"/></clipPath></defs>' +
+        '<ellipse cx="30" cy="52" rx="22" ry="22" fill="rgba(200,220,230,0.15)" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>' +
+        '<ellipse cx="30" cy="58" rx="19" ry="16" class="liquid-fill" fill="' + color + '" clip-path="url(#' + cid + ')"/>' +
+        '<ellipse cx="30" cy="42" rx="19" ry="4" class="liquid-surface" fill="' + color + '" opacity="0.6"/>' +
+        '<circle cx="22" cy="54" r="2.5" fill="white" opacity="0.3"/>' +
+        '<circle cx="34" cy="60" r="1.8" fill="white" opacity="0.25"/>' +
+        '<rect x="24" y="22" width="12" height="18" rx="3" fill="rgba(200,220,230,0.12)" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>' +
+        '<ellipse cx="18" cy="42" rx="5" ry="9" fill="white" opacity="0.18" transform="rotate(-20 18 42)"/>' +
+        '<rect x="22" y="12" width="16" height="12" rx="4" fill="#8B5E3C"/>' +
+        '<rect x="24" y="10" width="12" height="5" rx="2" fill="#A0724A"/>' +
+        '<text x="30" y="57" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="16" fill="white">' + val + '</text>' +
+        '<g class="sparkles" opacity="0">' +
+        '<path d="' + star(7,9)  + '" fill="#fff8a0"/>' +
+        '<path d="' + star(53,9) + '" fill="#fff8a0"/>' +
+        '<path d="' + star(7,71) + '" fill="#fff8a0"/>' +
+        '<path d="' + star(53,71)+ '" fill="#fff8a0"/>' +
+        '</g>' +
+        '</svg>';
+    }
+
+    /* ============================================================
+       UI MODULE
+       ============================================================ */
+    const UI = {
+      showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+        // Apply background cosmetic
+        this.applyCosmetics();
+      },
+
+      renderPuzzle(puzzle) {
+        const cfg = LEVEL_CONFIG[Game.currentLevel];
+
+        document.getElementById('xProduct').textContent = puzzle.product;
+        document.getElementById('xSum').textContent = puzzle.sum;
+
+        // Boss context
+        const bossCtx = document.getElementById('bossContext');
+        const bossExp = document.getElementById('bossExpression');
+        const bossSteps = document.getElementById('bossSteps');
+        if (cfg.requiresExtraction) {
+          bossCtx.hidden = false;
+          const sign = (n) => n >= 0 ? `+ ${n}` : `- ${Math.abs(n)}`;
+          bossExp.textContent = `${puzzle.a}x\u00B2 ${sign(puzzle.b)}x ${sign(puzzle.c)}`;
+          bossSteps.textContent = `a=${puzzle.a}, b=${puzzle.b}, c=${puzzle.c} \u2192 Product: a\u00D7c = ${puzzle.a}\u00D7${puzzle.c} = ${puzzle.product} | Sum: b = ${puzzle.sum}`;
+        } else {
+          bossCtx.hidden = true;
+        }
+
+        // Level 3 given factor
+        const gfHint = document.getElementById('givenFactorHint');
+        const gfVal  = document.getElementById('givenFactorValue');
+        if (cfg.givenFactor && puzzle.givenFactor !== undefined) {
+          gfHint.hidden = false;
+          gfVal.textContent = puzzle.givenFactor;
+        } else {
+          gfHint.hidden = true;
+        }
+
+        // Render tile bank
+        const bank = document.getElementById('tileBank');
+        bank.innerHTML = '';
+        puzzle.tileBank.forEach((val, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'tile';
+          btn.dataset.colorIndex = idx;
+          btn.innerHTML = buildPotionSVG(val, idx);
+          btn.setAttribute('aria-label', `Potion bottle with value ${val}`);
+          btn.setAttribute('aria-pressed', 'false');
+          btn.setAttribute('tabindex', '0');
+          btn.addEventListener('click', () => Game.selectTile(idx));
+          btn.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') { const next = bank.children[idx + 1]; if (next) next.focus(); }
+            if (e.key === 'ArrowLeft')  { const prev = bank.children[idx - 1]; if (prev) prev.focus(); }
+          });
+          bank.appendChild(btn);
+        });
+
+        // Reset slots
+        this.updateSelectedSlots();
+        this.enableCheckButton(false);
+        this.clearCauldron();
+        this.hideHintText();
+
+        // If Level 3, pre-fill slot 1 as locked given factor
+        if (cfg.givenFactor && puzzle.givenFactor !== undefined) {
+          const s1 = document.getElementById('slot1');
+          s1.textContent = puzzle.givenFactor;
+          s1.className = 'bottle-slot locked';
+          s1.setAttribute('aria-label', `Left slot: given factor ${puzzle.givenFactor} (locked)`);
+        }
+
+        // Puzzle progress
+        const pProg = document.getElementById('puzzleProgress');
+        if (cfg.infinitePuzzles) {
+          pProg.textContent = `Solved: ${Game.puzzlesCompleted}`;
+        } else {
+          pProg.textContent = `${Game.puzzlesCompleted}/${cfg.puzzlesPerLevel || 5}`;
+        }
+
+        // Apply fire style if on fire
+        if (Game.isOnFire) {
+          document.querySelectorAll('.tile').forEach(t => {
+            t.classList.add('on-fire-tile');
+            const lf = t.querySelector('.liquid-fill');
+            const ls = t.querySelector('.liquid-surface');
+            if (lf) lf.setAttribute('fill', '#ff6600');
+            if (ls) ls.setAttribute('fill', '#ff6600');
+          });
+        }
+      },
+
+      updateSelectedSlots() {
+        const cfg = LEVEL_CONFIG[Game.currentLevel];
+        const puzzle = Game.currentPuzzle;
+        if (!puzzle) return;
+
+        const s1   = document.getElementById('slot1');
+        const s2   = document.getElementById('slot2');
+        const bank = document.getElementById('tileBank');
+
+        // Helper: fill a slot with a mini potion SVG
+        const fillSlot = (slot, val, tileIdx) => {
+          const colorIdx = parseInt((bank.children[tileIdx] || {}).dataset?.colorIndex || tileIdx, 10);
+          slot.innerHTML = buildPotionSVG(val, colorIdx, 42, 56);
+          // Gold fill on the slot's liquid to match selected state
+          const lf = slot.querySelector('.liquid-fill');
+          const ls = slot.querySelector('.liquid-surface');
+          if (lf) lf.setAttribute('fill', '#f5c842');
+          if (ls) ls.setAttribute('fill', '#f5c842');
+        };
+        const clearSlot = (slot, label) => {
+          slot.textContent = '—';
+          slot.className = 'bottle-slot';
+          slot.setAttribute('aria-label', label);
+        };
+
+        // Level 3: slot1 is locked given factor (handled in renderPuzzle)
+        if (cfg && cfg.givenFactor) {
+          if (Game.selectedIndices.length >= 1) {
+            const ti = Game.selectedIndices[0];
+            const val = puzzle.tileBank[ti];
+            fillSlot(s2, val, ti);
+            s2.className = 'bottle-slot filled';
+            s2.setAttribute('aria-label', `Right slot: ${val}`);
+          } else {
+            clearSlot(s2, 'Right slot: empty');
+          }
+        } else {
+          if (Game.selectedIndices.length >= 1) {
+            const ti = Game.selectedIndices[0];
+            fillSlot(s1, puzzle.tileBank[ti], ti);
+            s1.className = 'bottle-slot filled';
+            s1.setAttribute('aria-label', `Left slot: ${puzzle.tileBank[ti]}`);
+          } else {
+            clearSlot(s1, 'Left slot: empty');
+          }
+          if (Game.selectedIndices.length >= 2) {
+            const ti = Game.selectedIndices[1];
+            fillSlot(s2, puzzle.tileBank[ti], ti);
+            s2.className = 'bottle-slot filled';
+            s2.setAttribute('aria-label', `Right slot: ${puzzle.tileBank[ti]}`);
+          } else {
+            clearSlot(s2, 'Right slot: empty');
+          }
+        }
+
+        // Update tile highlighting, aria-pressed, and SVG liquid fill
+        const tiles = document.querySelectorAll('.tile');
+        tiles.forEach((t, i) => {
+          const sel = Game.selectedIndices.includes(i);
+          t.classList.toggle('selected', sel);
+          t.setAttribute('aria-pressed', String(sel));
+          const svg = t.querySelector('svg');
+          const lf  = t.querySelector('.liquid-fill');
+          const ls  = t.querySelector('.liquid-surface');
+          const sp  = t.querySelector('.sparkles');
+          if (lf && svg) {
+            const base    = svg.dataset.baseColor || '#c084d1';
+            const onFire  = t.classList.contains('on-fire-tile');
+            const fill    = sel ? '#f5c842' : (onFire ? '#ff6600' : base);
+            lf.setAttribute('fill', fill);
+            if (ls) ls.setAttribute('fill', fill);
+            if (sp) sp.setAttribute('opacity', sel ? '1' : '0');
+          }
+        });
+      },
+
+      enableCheckButton(on) {
+        const btn = document.getElementById('checkBtn');
+        if (btn) btn.disabled = !on;
+      },
+
+      animateCauldron(type) {
+        const el = document.getElementById('cauldron');
+        if (!el) return;
+        el.classList.remove('sparkle', 'shake', 'bubble');
+        // Force reflow
+        void el.offsetWidth;
+        el.classList.add(type);
+        setTimeout(() => el.classList.remove(type), 1000);
+      },
+
+      clearCauldron() {
+        const el = document.getElementById('cauldron');
+        if (el) el.classList.remove('sparkle', 'shake', 'bubble');
+      },
+
+      showFeedbackMessage(text, type) {
+        const el = document.getElementById('feedbackMsg');
+        if (!el) return;
+        el.textContent = text;
+        el.className = type;
+        el.hidden = false;
+      },
+
+      clearFeedback() {
+        const el = document.getElementById('feedbackMsg');
+        if (el) el.hidden = true;
+      },
+
+      showTutorial(returnFocusEl) {
+        const el = document.getElementById('tutorialOverlay');
+        if (!el) return;
+        el._returnFocus = returnFocusEl || document.activeElement;
+        UI._tutGoToStep(0);
+        el.hidden = false;
+        trapFocus(el);
+      },
+
+      hideTutorial() {
+        const el = document.getElementById('tutorialOverlay');
+        if (!el) return;
+        releaseFocus(el, el._returnFocus);
+        el.hidden = true;
+      },
+
+      _tutGoToStep(step) {
+        const steps = document.querySelectorAll('.tut-step');
+        const dots  = document.querySelectorAll('.tut-dot');
+        const total = steps.length;
+        steps.forEach((s, i) => { s.hidden = i !== step; });
+        dots.forEach((d, i) => { d.classList.toggle('active', i === step); });
+        document.getElementById('tutStepNum').textContent = step + 1;
+        const backBtn  = document.getElementById('tutBackBtn');
+        const nextBtn  = document.getElementById('tutNextBtn');
+        const startBtn = document.getElementById('tutStartBtn');
+        backBtn.hidden  = step === 0;
+        nextBtn.hidden  = step === total - 1;
+        startBtn.hidden = step !== total - 1;
+      },
+
+      showHintText(msg) {
+        const el = document.getElementById('hintTextDisplay');
+        if (!el) return;
+        el.textContent = msg;
+        el.hidden = false;
+      },
+
+      hideHintText() {
+        const el = document.getElementById('hintTextDisplay');
+        if (el) el.hidden = true;
+      },
+
+      showTimer(visible) {
+        const el = document.getElementById('timerDisplay');
+        if (el) el.hidden = !visible;
+      },
+
+      updateTimerDisplay(secs) {
+        const el = document.getElementById('timerDisplay');
+        if (!el) return;
+        el.textContent = `${secs}s`;
+        el.classList.toggle('urgent', secs <= 10);
+      },
+
+      updateHeader() {
+        const s = Storage.get();
+        const el = document.getElementById('gameCoins');
+        if (el) el.textContent = `🪙 ${s.coins}`;
+        const startCoins = document.getElementById('startCoins');
+        if (startCoins) startCoins.textContent = `🪙 ${s.coins}`;
+        const shopCoins = document.getElementById('shopCoins');
+        if (shopCoins) shopCoins.textContent = `🪙 ${s.coins}`;
+
+        // Hints remaining
+        const lvl = String(Game.currentLevel);
+        const hintsLeft = document.getElementById('hintsLeft');
+        if (hintsLeft) hintsLeft.textContent = s.hintsRemaining[lvl] || 0;
+        const hintBtn = document.getElementById('hintBtn');
+        if (hintBtn) hintBtn.disabled = (s.hintsRemaining[lvl] || 0) <= 0;
+
+        // Level label
+        const ll = document.getElementById('gameLevelLabel');
+        if (ll && Game.currentLevel) ll.textContent = LEVEL_CONFIG[Game.currentLevel].name;
+      },
+
+      updateStreakMeter() {
+        const s = Storage.get();
+        const streak = s.streak || 0;
+        const pct = Math.min((streak / 9) * 100, 100);
+        const fill = document.getElementById('streakFill');
+        const meter = document.getElementById('streakMeter');
+        const label = document.getElementById('streakLabel');
+        if (fill) fill.style.width = pct + '%';
+        if (fill) fill.classList.toggle('on-fire', streak >= 9);
+        if (meter) { meter.setAttribute('aria-valuenow', Math.min(streak, 9)); }
+        if (label) label.textContent = `🔥 ${streak}`;
+      },
+
+      showStatsScreen(levelNum) {
+        const s = Storage.get();
+        const key = String(levelNum);
+        const st = s.stats[key] || { attempts:0, correct:0, wrong:0 };
+        const cfg = LEVEL_CONFIG[levelNum];
+        const acc = st.attempts > 0 ? Math.round((st.correct / st.attempts) * 100) : 0;
+
+        document.getElementById('statsTitle').textContent =
+          cfg.infinitePuzzles ? 'Time\'s Up! Great Run!' : 'Level Complete!';
+        document.getElementById('statsAcc').textContent = acc + '%';
+        document.getElementById('statsAcc').style.color =
+          acc === 100 ? 'var(--c-success)' : acc >= 70 ? 'var(--c-warn)' : 'var(--c-error)';
+
+        const rows = document.getElementById('statsRows');
+        rows.innerHTML = `
+          <div class="stats-row"><span>Puzzles Attempted</span><span>${st.attempts}</span></div>
+          <div class="stats-row"><span>Correct</span><span style="color:var(--c-success)">${st.correct}</span></div>
+          <div class="stats-row"><span>Wrong</span><span style="color:var(--c-error)">${st.wrong}</span></div>
+          <div class="stats-row"><span>Coins Earned</span><span style="color:var(--c-coin)">🪙 ${s.coins}</span></div>
+          ${cfg.infinitePuzzles ? `<div class="stats-row"><span>Puzzles Solved</span><span>${Game.puzzlesCompleted}</span></div>` : ''}
+        `;
+
+        // Next level button
+        const nextBtn = document.getElementById('nextLevelBtn');
+        const nextLevel = typeof levelNum === 'number' ? levelNum + 1 : null;
+        if (nextLevel && nextLevel <= 5) {
+          nextBtn.hidden = false;
+          nextBtn.dataset.next = nextLevel;
+        } else if (nextLevel === 6) {
+          // After level 5, go to boss
+          nextBtn.hidden = false;
+          nextBtn.textContent = 'Boss Stage →';
+          nextBtn.dataset.next = 'boss';
+        } else {
+          nextBtn.hidden = true;
+        }
+
+        this.showScreen('statsScreen');
+      },
+
+      showBossComplete(levelNum) {
+        const s = Storage.get();
+        const bossStats = document.getElementById('bossStats');
+        bossStats.innerHTML = `
+          <div class="stats-row"><span>Total Coins</span><span style="color:var(--c-coin)">🪙 ${s.coins}</span></div>
+          <div class="stats-row"><span>Current Streak</span><span>🔥 ${s.streak}</span></div>
+          <div class="stats-row"><span>Achievements</span><span>${s.achievements.length}/${Object.keys(ACHIEVEMENT_DEFS).length}</span></div>
+        `;
+        this.showScreen('bossCompleteScreen');
+      },
+
+      celebrateAchievement(id) {
+        const def = ACHIEVEMENT_DEFS[id];
+        if (!def) return;
+        const popup = document.getElementById('achievementPopup');
+        const icon  = document.getElementById('achIcon');
+        const name  = document.getElementById('achName');
+        if (!popup) return;
+        icon.textContent = def.icon;
+        name.textContent = def.name;
+        popup.hidden = false;
+        popup.style.animation = 'none';
+        void popup.offsetWidth;
+        popup.style.animation = 'slideInRight .4s ease';
+        setTimeout(() => { popup.hidden = true; }, 3000);
+      },
+
+      renderStartScreen() {
+        const s = Storage.get();
+        const completed = s.levelsCompleted || [];
+        document.getElementById('startCoins').textContent = `🪙 ${s.coins}`;
+
+        // Level lock state
+        const locks = [
+          { num: 1, lockId: 'lock1', needsLevel: null },
+          { num: 2, lockId: 'lock2', needsLevel: '1' },
+          { num: 3, lockId: 'lock3', needsLevel: '2' },
+          { num: 4, lockId: 'lock4', needsLevel: '3' },
+          { num: 5, lockId: 'lock5', needsLevel: '4' },
+          { num: 'boss', lockId: 'lockBoss', needsLevel: '5' }
+        ];
+        locks.forEach(({ num, lockId, needsLevel }) => {
+          const btn = document.querySelector(`[data-level="${num}"]`);
+          const lock = document.getElementById(lockId);
+          const isLocked = needsLevel && !completed.includes(String(needsLevel));
+          if (btn) btn.disabled = !!isLocked;
+          if (lock) lock.textContent = isLocked ? '🔒' : (num === 1 ? '' : '');
+        });
+      },
+
+      renderShop() {
+        const s = Storage.get();
+        const bottleGrid = document.getElementById('bottleShopGrid');
+        const bgGrid = document.getElementById('bgShopGrid');
+        if (!bottleGrid || !bgGrid) return;
+
+        bottleGrid.innerHTML = '';
+        BOTTLE_COSMETICS.forEach(item => {
+          const unlocked = s.unlockedCosmetics.includes(item.id);
+          const div = document.createElement('div');
+          div.className = 'shop-item' + (unlocked ? ' unlocked' : '');
+          div.innerHTML = `
+            <div class="shop-item__swatch" style="background:${item.color}"></div>
+            <div class="shop-item__name">${item.name}</div>
+            ${unlocked
+              ? `<div class="shop-item__status">✓ Unlocked</div>`
+              : `<div class="shop-item__price">🪙 ${item.price}</div>
+                 <button class="btn btn--gold" style="font-size:.75rem;padding:.3rem .6rem"
+                   onclick="buyCosmetic('${item.id}',${item.price},'bottle')">Buy</button>`
+            }
+          `;
+          bottleGrid.appendChild(div);
+        });
+
+        bgGrid.innerHTML = '';
+        BG_COSMETICS.forEach(item => {
+          const unlocked = s.unlockedCosmetics.includes(item.id);
+          const div = document.createElement('div');
+          div.className = 'shop-item' + (unlocked ? ' unlocked' : '');
+          div.innerHTML = `
+            <div class="shop-item__swatch" style="background:${BG_STYLES[item.id]?.split(',')[0].replace('radial-gradient(ellipse at top,','').trim() || '#888'}"></div>
+            <div class="shop-item__name">${item.name}</div>
+            ${unlocked
+              ? `<div class="shop-item__status">✓ Unlocked</div>`
+              : `<div class="shop-item__price">🪙 ${item.price}</div>
+                 <button class="btn btn--gold" style="font-size:.75rem;padding:.3rem .6rem"
+                   onclick="buyCosmetic('${item.id}',${item.price},'bg')">Buy</button>`
+            }
+          `;
+          bgGrid.appendChild(div);
+        });
+
+        document.getElementById('shopCoins').textContent = `🪙 ${s.coins}`;
+      },
+
+      renderAchievements() {
+        const s = Storage.get();
+        const grid = document.getElementById('badgesGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        Object.entries(ACHIEVEMENT_DEFS).forEach(([id, def]) => {
+          const unlocked = s.achievements.includes(id);
+          const div = document.createElement('div');
+          div.className = 'badge-card ' + (unlocked ? 'unlocked' : 'locked');
+          div.setAttribute('aria-label', `${def.name}: ${unlocked ? 'Unlocked' : 'Locked'}`);
+          div.innerHTML = `
+            <div class="badge-icon">${def.icon}</div>
+            <div class="badge-name">${def.name}</div>
+            <div class="badge-desc">${def.desc}</div>
+          `;
+          grid.appendChild(div);
+        });
+      },
+
+      renderSummary() {
+        const s = Storage.get();
+        const el = document.getElementById('summaryContent');
+        if (!el) return;
+        let totalAttempts = 0, totalCorrect = 0, totalHints = 0, totalTime = 0;
+        const rows = [1,2,3,4,5,'boss'].map(k => {
+          const st = s.stats[String(k)] || { attempts:0, correct:0, wrong:0, hintsUsed:0, totalTime:0 };
+          totalAttempts += st.attempts;
+          totalCorrect  += st.correct;
+          totalHints    += (st.hintsUsed || 0);
+          totalTime     += (st.totalTime || 0);
+          const acc = st.attempts > 0 ? Math.round((st.correct / st.attempts) * 100) : null;
+          const accClass = acc === null ? '' : acc >= 80 ? 'acc-good' : acc >= 50 ? 'acc-warn' : 'acc-bad';
+          const label = k === 'boss' ? 'Boss' : `Level ${k}`;
+          const completed = s.levelsCompleted.includes(String(k)) ? '✅' : '—';
+          return `<tr>
+            <td>${label}</td>
+            <td>${completed}</td>
+            <td>${st.attempts}</td>
+            <td>${st.correct}</td>
+            <td>${st.wrong}</td>
+            <td class="${accClass}">${acc !== null ? acc+'%' : '—'}</td>
+            <td>${st.hintsUsed || 0}</td>
+            <td>${Math.round(st.totalTime || 0)}s</td>
+          </tr>`;
+        }).join('');
+        const overallAcc = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+        el.innerHTML = `
+          <table class="summary-table" aria-label="Level performance breakdown">
+            <thead><tr>
+              <th>Level</th><th>Done</th><th>Attempts</th><th>Correct</th>
+              <th>Wrong</th><th>Accuracy</th><th>Hints</th><th>Time</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div class="summary-totals">
+            <div class="summary-stat"><div class="s-val">${totalAttempts}</div><div class="s-lbl">Total Attempts</div></div>
+            <div class="summary-stat"><div class="s-val">${overallAcc}%</div><div class="s-lbl">Overall Accuracy</div></div>
+            <div class="summary-stat"><div class="s-val">${totalHints}</div><div class="s-lbl">Hints Used</div></div>
+            <div class="summary-stat"><div class="s-val">${Math.round(totalTime)}s</div><div class="s-lbl">Time on Task</div></div>
+            <div class="summary-stat"><div class="s-val">${s.coins}</div><div class="s-lbl">Coins Earned</div></div>
+            <div class="summary-stat"><div class="s-val">${s.achievements.length}</div><div class="s-lbl">Achievements</div></div>
+          </div>`;
+      },
+
+      applyCosmetics() {
+        const s = Storage.get();
+        const unlocked = s.unlockedCosmetics || [];
+
+        // Active bottle color: last unlocked
+        let bottleColor = '#E0A5D1';
+        BOTTLE_COSMETICS.forEach(c => { if (unlocked.includes(c.id)) bottleColor = c.color; });
+        document.documentElement.style.setProperty('--c-bottle', bottleColor);
+
+        // Active background: last unlocked
+        let bgGrad = 'radial-gradient(ellipse at top, #142540 0%, #0d1b2a 100%)';
+        BG_COSMETICS.forEach(c => { if (unlocked.includes(c.id) && BG_STYLES[c.id]) bgGrad = BG_STYLES[c.id]; });
+        const gameScreen = document.getElementById('gameScreen');
+        if (gameScreen) gameScreen.style.background = bgGrad;
+      },
+
+      announce(text) {
+        const el = document.getElementById('srAnnounce');
+        if (el) { el.textContent = ''; setTimeout(() => el.textContent = text, 50); }
+      }
+    };
+
+    /* ============================================================
+       GLOBAL HELPERS
+       ============================================================ */
+
+    function buyCosmetic(id, price, type) {
+      const s = Storage.get();
+      if (s.unlockedCosmetics.includes(id)) return;
+      if (s.coins < price) {
+        UI.showFeedbackMessage(`Not enough coins! Need ${price} 🪙 but have ${s.coins}.`, 'incorrect');
+        setTimeout(() => UI.clearFeedback(), 2500);
+        return;
+      }
+      s.coins -= price;
+      Storage.set(s);
+      Storage.unlockCosmetic(id);
+      UI.renderShop();
+      UI.applyCosmetics();
+    }
+
+    /* ============================================================
+       EVENT LISTENERS
+       ============================================================ */
+
+    function bindEvents() {
+      // Level buttons on start screen
+      document.querySelectorAll('[data-level]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const level = btn.dataset.level;
+          const levelNum = level === 'boss' ? 'boss' : parseInt(level, 10);
+          if (!btn.disabled) Game.startLevel(levelNum);
+        });
+      });
+
+      // Keyboard shortcuts: 1-5 and B launch levels from start screen
+      document.addEventListener('keydown', e => {
+        const active = document.querySelector('.screen.active');
+        if (!active || active.id !== 'startScreen') return;
+        const map = { '1':1, '2':2, '3':3, '4':4, '5':5, 'b':'boss', 'B':'boss' };
+        const lvl = map[e.key];
+        if (lvl === undefined) return;
+        const btn = document.querySelector(`[data-level="${lvl}"]`);
+        if (btn && !btn.disabled) Game.startLevel(typeof lvl === 'number' ? lvl : 'boss');
+      });
+
+      // Check answer
+      document.getElementById('checkBtn').addEventListener('click', () => Game.doCheck());
+
+      // Menu buttons
+      ['menuBtn', 'menuBtn2'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', () => {
+          clearInterval(Game.timer);
+          Game.timer = null;
+          Audio.setFireTempo(false);
+          UI.showScreen('startScreen');
+          UI.renderStartScreen();
+        });
+      });
+
+      // Stats screen buttons
+      document.getElementById('nextLevelBtn').addEventListener('click', () => {
+        const next = document.getElementById('nextLevelBtn').dataset.next;
+        if (!next) return;
+        const lvl = next === 'boss' ? 'boss' : parseInt(next, 10);
+        Game.startLevel(lvl);
+      });
+      document.getElementById('retryLevelBtn').addEventListener('click', () => {
+        Game.startLevel(Game.currentLevel);
+      });
+      document.getElementById('statsMenuBtn').addEventListener('click', () => {
+        UI.showScreen('startScreen');
+        UI.renderStartScreen();
+      });
+
+      // Boss complete
+      document.getElementById('bossMenuBtn').addEventListener('click', () => {
+        UI.showScreen('startScreen');
+        UI.renderStartScreen();
+      });
+
+      // Shop
+      document.getElementById('shopBtn').addEventListener('click', () => {
+        UI.showScreen('shopScreen');
+        UI.renderShop();
+      });
+      document.getElementById('shopBackBtn').addEventListener('click', () => {
+        UI.showScreen('startScreen');
+        UI.renderStartScreen();
+      });
+
+      // Achievements
+      document.getElementById('achievementsBtn').addEventListener('click', () => {
+        UI.showScreen('achievementsScreen');
+        UI.renderAchievements();
+      });
+      document.getElementById('achBackBtn').addEventListener('click', () => {
+        UI.showScreen('startScreen');
+        UI.renderStartScreen();
+      });
+
+      // Summary screen
+      document.getElementById('summaryBtn').addEventListener('click', () => {
+        UI.showScreen('summaryScreen');
+        UI.renderSummary();
+      });
+      document.getElementById('summaryBackBtn').addEventListener('click', () => {
+        UI.showScreen('startScreen');
+        UI.renderStartScreen();
+      });
+      document.getElementById('summaryDownloadBtn').addEventListener('click', () => {
+        Storage.downloadCSV();
+      });
+
+      // Hint
+      document.getElementById('hintBtn').addEventListener('click', () => Game.useHint());
+
+      // Tutorial stepper
+      document.getElementById('tutStartBtn').addEventListener('click', () => UI.hideTutorial());
+      document.getElementById('tutNextBtn').addEventListener('click', () => {
+        const current = [...document.querySelectorAll('.tut-step')].findIndex(s => !s.hidden);
+        UI._tutGoToStep(current + 1);
+      });
+      document.getElementById('tutBackBtn').addEventListener('click', () => {
+        const current = [...document.querySelectorAll('.tut-step')].findIndex(s => !s.hidden);
+        UI._tutGoToStep(current - 1);
+      });
+
+      // How to Play button
+      document.getElementById('howToPlayBtn').addEventListener('click', () => {
+        UI.showTutorial(document.getElementById('howToPlayBtn'));
+      });
+
+
+      // Glossary
+      document.getElementById('glossaryToggleBtn').addEventListener('click', () => {
+        const g = document.getElementById('glossary');
+        const btn = document.getElementById('glossaryToggleBtn');
+        const open = g.classList.toggle('open');
+        g.setAttribute('aria-hidden', !open);
+        btn.setAttribute('aria-expanded', open);
+      });
+      document.getElementById('closeGlossary').addEventListener('click', () => {
+        const g = document.getElementById('glossary');
+        g.classList.remove('open');
+        g.setAttribute('aria-hidden', 'true');
+        document.getElementById('glossaryToggleBtn').setAttribute('aria-expanded', 'false');
+      });
+
+      // Settings
+      document.getElementById('settingsOpenBtn').addEventListener('click', openSettings);
+      document.getElementById('closeSettingsBtn').addEventListener('click', closeSettings);
+      document.getElementById('settingsOverlay').addEventListener('click', closeSettings);
+
+      document.getElementById('fontSizeSelect').addEventListener('change', function() {
+        document.documentElement.style.fontSize = this.value + 'px';
+        Storage.update({ fontSize: parseInt(this.value, 10) });
+      });
+
+      document.getElementById('settingsMuteBtn').addEventListener('click', () => {
+        Audio.toggleMute();
+      });
+      document.getElementById('settingsMusicBtn').addEventListener('click', () => {
+        Audio.toggleMusicMute();
+        Audio._updateMusicButtons();
+      });
+      document.getElementById('gameMuteBtn').addEventListener('click', () => {
+        Audio.toggleMute();
+      });
+
+      document.getElementById('resetProgressBtn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset ALL progress? This cannot be undone.')) {
+          if (confirm('This will erase all coins, achievements, and unlocks. Confirm?')) {
+            Storage.reset();
+            location.reload();
+          }
+        }
+      });
+
+      // Tab visibility (auto-mute + timer pause)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (!Audio.muted) Audio.stopMusic();
+          // Pause Level 4 timer while tab is hidden
+          if (Game.timer) {
+            clearInterval(Game.timer);
+            Game.timer = null;
+            Game._timerPaused = true;
+          }
+        } else {
+          if (!Audio.muted && !Audio.musicMuted) Audio.startMusicLoop();
+          // Resume timer if it was paused
+          if (Game._timerPaused && Game.timerRemaining > 0) {
+            Game._timerPaused = false;
+            Game.timer = setInterval(() => {
+              Game.timerRemaining--;
+              UI.updateTimerDisplay(Game.timerRemaining);
+              if (Game.timerRemaining <= 0) {
+                clearInterval(Game.timer);
+                Game.timer = null;
+                Game._lockUI(true);
+                UI.showStatsScreen(Game.currentLevel);
+              }
+            }, 1000);
+          }
+        }
+      });
+
+      // Keyboard: Enter/Space on tiles
+      document.getElementById('tileBank').addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const tiles = [...document.querySelectorAll('.tile')];
+          const idx = tiles.indexOf(document.activeElement);
+          if (idx !== -1) Game.selectTile(idx);
+        }
+      });
+    }
+
+    /* ============================================================
+       FOCUS MANAGEMENT HELPERS
+       ============================================================ */
+    function trapFocus(el) {
+      const sel = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      const nodes = [...el.querySelectorAll(sel)];
+      if (!nodes.length) return;
+      const first = nodes[0], last = nodes[nodes.length - 1];
+      el._trapHandler = e => {
+        if (e.key !== 'Tab') return;
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      };
+      el.addEventListener('keydown', el._trapHandler);
+      first.focus();
+    }
+
+    function releaseFocus(el, returnTo) {
+      if (el._trapHandler) { el.removeEventListener('keydown', el._trapHandler); delete el._trapHandler; }
+      if (returnTo) returnTo.focus();
+    }
+
+    function openSettings() {
+      openSettings._trigger = document.activeElement;
+      const modal = document.getElementById('settingsModal');
+      const overlay = document.getElementById('settingsOverlay');
+      modal.hidden = false;
+      overlay.hidden = false;
+      const s = Storage.get();
+      const fs = document.getElementById('fontSizeSelect');
+      if (fs) fs.value = s.fontSize || 16;
+      Audio._updateMuteButtons();
+      Audio._updateMusicButtons();
+      trapFocus(modal);
+    }
+
+    function closeSettings() {
+      const modal = document.getElementById('settingsModal');
+      const overlay = document.getElementById('settingsOverlay');
+      // Hide first — before any focus operations that might throw
+      modal.hidden = true;
+      overlay.hidden = true;
+      // Release focus trap and restore focus to trigger element
+      try { releaseFocus(modal, openSettings._trigger); } catch(e) { /* ignore */ }
+    }
+
+    /* ============================================================
+       TEST HARNESS
+       ============================================================ */
+
+    window.runPuzzleTests = function runPuzzleTests() {
+      const LEVELS      = [1, 2, 3, 4, 5, 'boss'];
+      const RUNS        = 200;
+      const details     = {};
+      let   totalFails  = 0;
+
+      LEVELS.forEach(level => {
+        const cfg = LEVEL_CONFIG[level];
+        const counts = {
+          a_product:   { pass: 0, fail: 0 },
+          b_sum:       { pass: 0, fail: 0 },
+          c_axc:       { pass: 0, fail: 0 },
+          d_bEqSum:    { pass: 0, fail: 0 },
+          e_bankHasBoth:{ pass: 0, fail: 0 },
+          f_bankSize:  { pass: 0, fail: 0 },
+          g_givenFactor:{ pass: 0, fail: 0 },
+        };
+
+        for (let i = 0; i < RUNS; i++) {
+          const pz = generatePuzzle(level);
+          const [p, q] = pz.correctFactors;
+
+          // a. p * q === puzzle.product
+          if (p * q === pz.product)       counts.a_product.pass++;
+          else                            counts.a_product.fail++;
+
+          // b. p + q === puzzle.sum
+          if (p + q === pz.sum)           counts.b_sum.pass++;
+          else                            counts.b_sum.fail++;
+
+          // c. puzzle.product === puzzle.a * puzzle.c
+          if (pz.product === pz.a * pz.c) counts.c_axc.pass++;
+          else                            counts.c_axc.fail++;
+
+          // d. puzzle.sum === puzzle.b
+          if (pz.sum === pz.b)            counts.d_bEqSum.pass++;
+          else                            counts.d_bEqSum.fail++;
+
+          // e. tileBank contains BOTH correctFactors
+          const bankHasP = pz.tileBank.includes(p);
+          const bankHasQ = pz.tileBank.includes(q);
+          if (bankHasP && bankHasQ) {
+            counts.e_bankHasBoth.pass++;
+          } else {
+            counts.e_bankHasBoth.fail++;
+            console.error('FAIL check-e (tileBank missing factor) — level', level, 'puzzle:', JSON.stringify(pz));
+          }
+
+          // f. tileBank.length === cfg.bankSize
+          if (pz.tileBank.length === cfg.bankSize) counts.f_bankSize.pass++;
+          else                                      counts.f_bankSize.fail++;
+
+          // g. Level 3 only: givenFactor defined and equals one of correctFactors
+          if (level === 3) {
+            if (pz.givenFactor !== undefined &&
+                (pz.givenFactor === p || pz.givenFactor === q)) {
+              counts.g_givenFactor.pass++;
+            } else {
+              counts.g_givenFactor.fail++;
+            }
+          } else {
+            // Not applicable — mark as pass so table stays clean
+            counts.g_givenFactor.pass++;
+          }
+        }
+
+        // Tally failures for this level
+        let levelFails = 0;
+        Object.values(counts).forEach(c => { levelFails += c.fail; });
+        totalFails += levelFails;
+
+        // Build a flat row for console.table
+        const row = { level: String(level), runs: RUNS, levelFails };
+        Object.entries(counts).forEach(([check, c]) => {
+          row[check] = c.fail === 0 ? `${c.pass}✓` : `${c.pass}✓ / ${c.fail}✗`;
+        });
+        details[level] = row;
+      });
+
+      console.table(Object.values(details));
+      const allPassed = totalFails === 0;
+      if (allPassed) {
+        console.log('%c✅ ALL CHECKS PASSED', 'color:green;font-weight:bold');
+      } else {
+        console.log('%c❌ ' + totalFails + ' FAILURE(S) — see table above', 'color:red;font-weight:bold');
+      }
+      return { allPassed, failureCount: totalFails, details };
+    };
+
+    /* ============================================================
+       INITIALIZATION
+       ============================================================ */
+
+    window.addEventListener('DOMContentLoaded', () => {
+      Storage.init();
+      Audio.init();
+
+      // Generate star field
+      const starContainer = document.getElementById('stars');
+      if (starContainer) {
+        for (let i = 0; i < 120; i++) {
+          const s = document.createElement('div');
+          s.className = 'star';
+          const size = Math.random() < 0.8 ? 1 : (Math.random() < 0.5 ? 2 : 3);
+          s.style.cssText = [
+            `width:${size}px`, `height:${size}px`,
+            `top:${Math.random() * 100}%`, `left:${Math.random() * 100}%`,
+            `--dur:${(2.5 + Math.random() * 4).toFixed(1)}s`,
+            `--delay:-${(Math.random() * 5).toFixed(1)}s`,
+            `--bright:${(0.4 + Math.random() * 0.6).toFixed(2)}`
+          ].join(';');
+          starContainer.appendChild(s);
+        }
+      }
+
+      // Apply saved font size
+      const s = Storage.get();
+      if (s.fontSize) document.documentElement.style.fontSize = s.fontSize + 'px';
+
+      bindEvents();
+      UI.renderStartScreen();
+      UI.showScreen('startScreen');
+
+      // Start background music (requires user interaction on most browsers)
+      // Will auto-start after first click due to AudioContext resume
+      setTimeout(() => Audio.startMusicLoop(), 500);
+    });
+
+  </script>
+</body>
+</html>

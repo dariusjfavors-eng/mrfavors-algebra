@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC Function Challenges</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* A softer gray */
+        }
+        .tab-button.active {
+            background-color: #1d4ed8; /* blue-700 */
+            color: white;
+            border-color: #1d4ed8;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .function-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 8px;
+            cursor: pointer;
+            background: #d1d5db;
+            border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -8px;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .answer-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .answer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .feedback {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .feedback.show {
+            display: block;
+            opacity: 1;
+        }
+        #subway-train, #elevator-car { transition: all 0.5s ease-in-out; }
+        .topping {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(20px) scale(0.8);
+        }
+        .topping.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">NYC Function Challenges</h1>
+            <p class="text-lg text-gray-600 mt-2 max-w-3xl mx-auto">Function notation is a rule that connects an input to an output. First, <strong>explore</strong> how each NYC function works by changing the input with the slider. Then, take on the <strong>challenge</strong> to see if you can use the function's rule to find the right answer!</p>
+        </header>
+
+        <div id="tabs-container" class="mb-6 sticky top-0 z-10 bg-f0f2f5/80 backdrop-blur-sm py-2">
+            <div class="flex flex-wrap -mb-px justify-center bg-white/70 rounded-lg shadow-sm p-1" id="tab-buttons">
+                <button class="tab-button active flex-1 text-center p-3 font-semibold text-sm sm:text-base rounded-md" data-tab="subway">🚇 Subway</button>
+                <button class="tab-button flex-1 text-center p-3 font-semibold text-sm sm:text-base rounded-md" data-tab="bike">🚲 Citibike</button>
+                <button class="tab-button flex-1 text-center p-3 font-semibold text-sm sm:text-base rounded-md" data-tab="elevator">🏙️ Elevator</button>
+                <button class="tab-button flex-1 text-center p-3 font-semibold text-sm sm:text-base rounded-md" data-tab="deli">🥪 Deli</button>
+            </div>
+        </div>
+
+        <div id="tab-content-container">
+            <!-- Subway Scenario -->
+            <div id="subway" class="tab-content active space-y-6">
+                <!-- Part 1: Explore -->
+                <div class="function-card">
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">1. Explore: MTA Travel Time</h3>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <p class="mb-4">The function <strong class="font-mono">T(s) = 3s + 4</strong> calculates the total travel time in minutes for `s` stops.</p>
+                            <label for="subway-slider" class="font-semibold">Move the slider to see the input (`s`) change the output (`T(s)`).</label>
+                            <input type="range" id="subway-slider" min="0" max="10" value="0" class="mt-2">
+                            <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                                <p class="text-lg text-blue-800 font-semibold" id="subway-result-text"></p>
+                            </div>
+                        </div>
+                        <div class="h-48 flex items-center justify-center relative bg-gray-100 rounded-lg p-4">
+                            <div class="w-full h-1 bg-gray-400 absolute"></div>
+                            <div id="subway-stations" class="w-full flex justify-between absolute"></div>
+                            <div id="subway-train" class="absolute left-0" style="width: 50px; left: calc(0% - 25px);"><svg viewBox="0 0 100 80" class="w-12 h-12" fill="#2563EB"><rect x="5" y="20" width="90" height="50" rx="10"></rect><rect y="15" width="100" height="15" rx="5"></rect><rect x="15" y="70" width="10" height="10" rx="5"></rect><rect x="75" y="70" width="10" height="10" rx="5"></rect><rect x="20" y="30" width="60" height="20" fill="white"></rect></svg></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Part 2: Challenge -->
+                <div class="function-card">
+                    <h3 class="text-xl font-bold text-green-800 mb-2">2. Challenge: Solve the Problem</h3>
+                    <p class="mb-4 text-gray-700" id="subway-challenge-prompt">Your friend says their trip from Times Sq-42 St to South Ferry took exactly <strong>25 minutes</strong>. How many stops did they travel? In other words, solve for `s` when <strong>T(s) = 25</strong>.</p>
+                    <div class="flex items-center gap-4">
+                         <input type="number" id="subway-challenge-input" class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 w-full" placeholder="Enter number of stops...">
+                         <button onclick="checkSubwayAnswer()" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">Submit</button>
+                    </div>
+                    <div id="subway-feedback" class="feedback mt-4 p-4 rounded-lg text-base"></div>
+                    <button id="subway-next-problem" onclick="generateSubwayProblem()" class="hidden mt-4 bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 transition w-full">Next Problem</button>
+                </div>
+            </div>
+            
+            <!-- Citibike Scenario -->
+            <div id="bike" class="tab-content space-y-6">
+                 <div class="function-card">
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">1. Explore: Citibike Rental Cost</h3>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                             <p class="mb-4">The function <strong class="font-mono">C(m) = 0.30m + 4.79</strong> calculates the total cost for a ride of `m` minutes.</p>
+                             <label for="bike-slider" class="font-semibold">Move the slider to see how minutes (`m`) affect the cost (`C(m)`).</label>
+                             <input type="range" id="bike-slider" min="0" max="60" value="0" class="mt-2">
+                             <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                                 <p class="text-lg text-blue-800 font-semibold" id="bike-result-text"></p>
+                             </div>
+                        </div>
+                        <div class="h-48 flex flex-col items-center justify-center relative bg-gray-100 rounded-lg p-4">
+                            <svg viewBox="0 0 100 70" class="h-24 w-auto text-blue-600" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="25" cy="50" r="15" class="bike-wheel origin-center"/><circle cx="75" cy="50" r="15" class="bike-wheel origin-center"/><path d="M25 50 L 45 25 L 75 50 L 60 50 L 50 35 L 40 50 Z" /><path d="M40 25 h 15" /></svg>
+                        </div>
+                    </div>
+                 </div>
+                 <div class="function-card">
+                    <h3 class="text-xl font-bold text-green-800 mb-2">2. Challenge: Solve the Problem</h3>
+                    <p class="mb-4 text-gray-700" id="bike-challenge-prompt">You're biking from your high school near Union Square to Central Park for 35 minutes to meet a friend. What is the value of <strong>C(35)</strong>, your total cost?</p>
+                    <div class="grid grid-cols-2 gap-4" id="bike-challenge-answer-area">
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkBikeAnswer('10.50')">$10.50</button>
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkBikeAnswer('15.29')">$15.29</button>
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkBikeAnswer('4.79')">$4.79</button>
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkBikeAnswer('40.09')">$40.09</button>
+                    </div>
+                    <div id="bike-feedback" class="feedback mt-4 p-4 rounded-lg text-base"></div>
+                    <button id="bike-next-problem" onclick="generateBikeProblem()" class="hidden mt-4 bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 transition w-full">Next Problem</button>
+                 </div>
+            </div>
+            
+            <!-- Elevator Scenario -->
+            <div id="elevator" class="tab-content space-y-6">
+                <div class="function-card">
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">1. Explore: Skyscraper Height</h3>
+                     <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                             <p class="mb-4">The function <strong class="font-mono">H(f) = 12f</strong> calculates the elevator's height in feet at floor `f`.</p>
+                             <label for="elevator-slider" class="font-semibold">Move the slider to see how floor (`f`) affects height (`H(f)`).</label>
+                             <input type="range" id="elevator-slider" min="1" max="50" value="1" class="mt-2">
+                             <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                                 <p class="text-lg text-blue-800 font-semibold" id="elevator-result-text"></p>
+                             </div>
+                        </div>
+                        <div class="h-64 flex items-center justify-center relative bg-gray-800 rounded-lg p-4" style="background-image: linear-gradient(to top, #4a5568, #2d3748);">
+                           <div class="w-16 h-full bg-gray-900/50 rounded-lg relative overflow-hidden">
+                               <div id="elevator-car" class="absolute w-full h-10 bg-yellow-400 bottom-0 flex items-center justify-center">
+                                   <div class="w-1 h-full bg-gray-600"></div>
+                               </div>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="function-card">
+                    <h3 class="text-xl font-bold text-green-800 mb-2">2. Challenge: Solve the Problem</h3>
+                    <p class="mb-4 text-gray-700" id="elevator-challenge-prompt">You're visiting an office in the Empire State Building. A sign says you are <strong>480 feet</strong> above the ground. What floor are you on? Solve for `f` when <strong>H(f) = 480</strong>.</p>
+                    <div class="flex items-center gap-4">
+                        <input type="number" id="elevator-challenge-input" class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 w-full" placeholder="Enter floor number...">
+                        <button onclick="checkElevatorAnswer()" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">Submit</button>
+                   </div>
+                   <div id="elevator-feedback" class="feedback mt-4 p-4 rounded-lg text-base"></div>
+                   <button id="elevator-next-problem" onclick="generateElevatorProblem()" class="hidden mt-4 bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 transition w-full">Next Problem</button>
+                </div>
+            </div>
+
+            <!-- Deli Scenario -->
+            <div id="deli" class="tab-content space-y-6">
+                <div class="function-card">
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">1. Explore: Deli Sandwich Price</h3>
+                     <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                             <p class="mb-4">The function <strong class="font-mono">P(t) = 1.50t + 8.00</strong> calculates the price of a sandwich with `t` toppings.</p>
+                             <label for="deli-slider" class="font-semibold">Move the slider to see how toppings (`t`) affect the price (`P(t)`).</label>
+                             <input type="range" id="deli-slider" min="0" max="5" value="0" class="mt-2">
+                             <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                                 <p class="text-lg text-blue-800 font-semibold" id="deli-result-text"></p>
+                             </div>
+                        </div>
+                        <div class="h-48 flex items-center justify-center relative p-4">
+                            <div class="relative w-48 h-32">
+                                <svg viewBox="0 0 100 50" class="absolute bottom-0 w-full h-auto text-yellow-600/80 fill-current"><path d="M 0 50 C 0 22, 100 22, 100 50 Z" /></svg>
+                                <div id="toppings-container" class="absolute bottom-6 w-full h-24 flex flex-col-reverse items-center">
+                                   <div class="topping w-40 h-2 bg-red-500 rounded-full"></div>
+                                   <div class="topping w-44 h-2 bg-green-500 rounded-full"></div>
+                                   <div class="topping w-40 h-2 bg-yellow-400 rounded-full"></div>
+                                   <div class="topping w-36 h-2 bg-purple-500 rounded-full"></div>
+                                   <div class="topping w-40 h-2 bg-pink-400 rounded-full"></div>
+                                </div>
+                                <svg viewBox="0 0 100 50" class="absolute top-0 w-full h-auto text-yellow-600/80 fill-current"><path d="M 0 25 C 0 -2, 100 -2, 100 25 Z" /></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="function-card">
+                    <h3 class="text-xl font-bold text-green-800 mb-2">2. Challenge: Solve the Problem</h3>
+                    <p class="mb-4 text-gray-700" id="deli-challenge-prompt">You order a classic sandwich with 3 toppings (lettuce, tomato, and cheese). What is the value of <strong>P(3)</strong>, your total cost?</p>
+                    <div class="grid grid-cols-2 gap-4" id="deli-challenge-answer-area">
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkDeliAnswer('11.50')">$11.50</button>
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkDeliAnswer('8.00')">$8.00</button>
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkDeliAnswer('12.50')">$12.50</button>
+                        <button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkDeliAnswer('4.50')">$4.50</button>
+                    </div>
+                    <div id="deli-feedback" class="feedback mt-4 p-4 rounded-lg text-base"></div>
+                    <button id="deli-next-problem" onclick="generateDeliProblem()" class="hidden mt-4 bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 transition w-full">Next Problem</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// --- Audio Setup ---
+let audioInitialized = false;
+// We need to start the audio context on a user interaction (like a click)
+// We'll attach it to the whole body, to run once on the first click.
+document.body.addEventListener('click', async () => {
+    if (!audioInitialized) {
+        await Tone.start();
+        console.log('AudioContext started');
+        audioInitialized = true;
+    }
+}, { once: true });
+
+// Create synths for our sounds
+const correctSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: "triangle" },
+    envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 }
+}).toDestination();
+correctSynth.volume.value = -8;
+
+const wrongSynth = new Tone.FMSynth({
+    frequency: 120,
+    detune: 10,
+    oscillator: { type: "sawtooth" },
+    envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+}).toDestination();
+wrongSynth.volume.value = -10;
+
+// --- Global Challenge State ---
+let subwayCorrectAnswer;
+let bikeCorrectAnswer;
+let elevatorCorrectAnswer;
+let deliCorrectAnswer;
+
+// --- Utility Functions ---
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+// --- Universal Tab Logic ---
+const tabButtons = document.querySelectorAll('.tab-button');
+const tabContents = document.querySelectorAll('.tab-content');
+tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const tabId = button.dataset.tab;
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        tabContents.forEach(content => content.classList.remove('active'));
+        const targetContent = document.getElementById(tabId);
+        if (targetContent) { // This check prevents the error
+            targetContent.classList.add('active');
+        }
+    });
+});
+
+// --- Feedback Helper Function ---
+function showFeedback(element, message, isCorrect, nextProblemButtonId = null) {
+    element.innerHTML = message;
+    element.className = 'feedback p-4 rounded-lg text-base show ';
+    if (isCorrect) {
+        element.classList.add('bg-green-100', 'text-green-800', 'border-l-4', 'border-green-500');
+        // Play correct sound
+        if (audioInitialized) {
+            correctSynth.triggerAttackRelease(["C4", "E4", "G4"], "8n");
+        }
+        if (nextProblemButtonId) {
+            document.getElementById(nextProblemButtonId).classList.remove('hidden');
+        }
+    } else {
+        element.classList.add('bg-yellow-100', 'text-yellow-800', 'border-l-4', 'border-yellow-500');
+        // Play funny wrong sound
+        if (audioInitialized) {
+            wrongSynth.triggerAttackRelease("C2", "8n");
+        }
+    }
+}
+
+// --- Subway ---
+const subwaySlider = document.getElementById('subway-slider');
+const subwayResultText = document.getElementById('subway-result-text');
+const subwayTrain = document.getElementById('subway-train');
+const subwayStationsContainer = document.getElementById('subway-stations');
+const subwayStopsMax = 10;
+for (let i = 0; i <= subwayStopsMax; i++) {
+    subwayStationsContainer.appendChild(document.createElement('div')).className = 'w-3 h-3 bg-gray-600 rounded-full';
+}
+function updateSubway() {
+    const stops = parseInt(subwaySlider.value);
+    const totalTime = 3 * stops + 4;
+    subwayResultText.innerHTML = `T(<strong class="text-blue-600">${stops}</strong>) = 3(${stops}) + 4 = <strong class="text-blue-600">${totalTime} min</strong>`;
+    const percentage = (stops / subwayStopsMax) * 100;
+    subwayTrain.style.left = `calc(${percentage}% - ${25 * (percentage / 50)}px)`;
+}
+subwaySlider.addEventListener('input', updateSubway);
+updateSubway();
+
+function generateSubwayProblem() {
+    // Hide feedback and next button
+    document.getElementById('subway-feedback').classList.remove('show');
+    document.getElementById('subway-next-problem').classList.add('hidden');
+
+    // Generate new numbers
+    const stops = getRandomInt(5, 12);
+    const time = 3 * stops + 4;
+    subwayCorrectAnswer = stops;
+
+    // Update UI
+    document.getElementById('subway-challenge-prompt').innerHTML = `Your friend says their trip took exactly <strong>${time} minutes</strong>. How many stops did they travel? In other words, solve for \`s\` when <strong>T(s) = ${time}</strong>.`;
+    document.getElementById('subway-challenge-input').value = '';
+}
+
+function checkSubwayAnswer() {
+    const input = document.getElementById('subway-challenge-input');
+    const answer = parseInt(input.value);
+    const feedbackEl = document.getElementById('subway-feedback');
+    const correctTime = 3 * subwayCorrectAnswer + 4;
+
+    if (answer === subwayCorrectAnswer) {
+        showFeedback(feedbackEl, '<strong>Correct!</strong> 🎉 3s + 4 = ' + correctTime + '. Subtracting 4 gives 3s = ' + (correctTime - 4) + '. Dividing by 3 gives s = ' + subwayCorrectAnswer + ' stops. Great job!', true, 'subway-next-problem');
+    } else if (isNaN(answer)) {
+        showFeedback(feedbackEl, '<strong>Hint:</strong> Please enter a number. You are trying to find the input `s` that makes the output 25.', false);
+    } else {
+        const calculatedTime = 3 * answer + 4;
+        showFeedback(feedbackEl, `<strong>Not quite.</strong> If you travel for ${answer} stops, the time T(${answer}) would be ${calculatedTime} minutes. We are looking for the number of stops that results in <strong>${correctTime}</strong> minutes. Try setting up the equation: <strong>3s + 4 = ${correctTime}</strong>.`, false);
+    }
+}
+
+// --- Citibike ---
+const bikeSlider = document.getElementById('bike-slider');
+const bikeResultText = document.getElementById('bike-result-text');
+function updateBike() {
+    const minutes = parseInt(bikeSlider.value);
+    const totalCost = (0.30 * minutes + 4.79).toFixed(2);
+    bikeResultText.innerHTML = `C(<strong class="text-blue-600">${minutes}</strong>) = 0.30(${minutes}) + 4.79 = <strong class="text-blue-600">$${totalCost}</strong>`;
+}
+bikeSlider.addEventListener('input', updateBike);
+updateBike();
+
+function generateBikeProblem() {
+    document.getElementById('bike-feedback').classList.remove('show');
+    document.getElementById('bike-next-problem').classList.add('hidden');
+
+    const minutes = getRandomInt(20, 50);
+    bikeCorrectAnswer = (0.30 * minutes + 4.79).toFixed(2);
+    const trapAnswer = (0.30 * minutes).toFixed(2); // "Forgot base fee"
+    const wrongAnswer1 = (0.20 * minutes + 4.79).toFixed(2); // Wrong rate
+    const wrongAnswer2 = (0.30 * (minutes + 10) + 4.79).toFixed(2); // Wrong minutes
+
+    document.getElementById('bike-challenge-prompt').innerHTML = `You're biking... for <strong>${minutes} minutes</strong> to meet a friend. What is the value of <strong>C(${minutes})</strong>, your total cost?`;
+
+    let options = [bikeCorrectAnswer, trapAnswer, wrongAnswer1, wrongAnswer2];
+    // Ensure no duplicates
+    options = [...new Set(options)];
+    // Add more randoms if duplicates reduced the count
+    while(options.length < 4) {
+        options.push((getRandomInt(10, 25) + Math.random()).toFixed(2));
+    }
+    shuffleArray(options);
+
+    const answerArea = document.getElementById('bike-challenge-answer-area');
+    answerArea.innerHTML = options.map(opt => 
+        `<button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkBikeAnswer('${opt}')">$${opt}</button>`
+    ).join('');
+}
+
+function checkBikeAnswer(selectedAnswer) {
+    const feedbackEl = document.getElementById('bike-feedback');
+    const minutes = (parseFloat(bikeCorrectAnswer) - 4.79) / 0.30;
+    
+    if (selectedAnswer === bikeCorrectAnswer) {
+        showFeedback(feedbackEl, `<strong>Exactly right!</strong> 👏 C(${minutes.toFixed(0)}) = 0.30 * ${minutes.toFixed(0)} + 4.79 = ${bikeCorrectAnswer}.`, true, 'bike-next-problem');
+    } else if (selectedAnswer === (0.30 * minutes).toFixed(2)) {
+        showFeedback(feedbackEl, '<strong>Almost there!</strong> You correctly calculated the cost for the minutes, but don\'t forget to add the initial unlock fee of $4.79.', false);
+    } else {
+        showFeedback(feedbackEl, `<strong>Good try!</strong> Remember to substitute the number of minutes (${minutes.toFixed(0)}) for \`m\` in the function C(m) = 0.30m + 4.79.`, false);
+    }
+}
+
+// --- Elevator ---
+const elevatorSlider = document.getElementById('elevator-slider');
+const elevatorResultText = document.getElementById('elevator-result-text');
+const elevatorCar = document.getElementById('elevator-car');
+const elevatorFloorsMax = 50;
+function updateElevator() {
+    const floor = parseInt(elevatorSlider.value);
+    const totalHeight = 12 * floor;
+    elevatorResultText.innerHTML = `H(<strong class="text-blue-600">${floor}</strong>) = 12(${floor}) = <strong class="text-blue-600">${totalHeight} ft</strong>`;
+    const percentage = ((floor - 1) / (elevatorFloorsMax - 1)) * 100;
+    // Adjust for car height (40px) in container (h-64 = 256px)
+    elevatorCar.style.bottom = `calc(${percentage}% * (1 - 40/256))`; 
+}
+elevatorSlider.addEventListener('input', updateElevator);
+updateElevator();
+
+function generateElevatorProblem() {
+    document.getElementById('elevator-feedback').classList.remove('show');
+    document.getElementById('elevator-next-problem').classList.add('hidden');
+
+    const floor = getRandomInt(20, 60);
+    const height = 12 * floor;
+    elevatorCorrectAnswer = floor;
+
+    document.getElementById('elevator-challenge-prompt').innerHTML = `You're visiting an office... A sign says you are <strong>${height} feet</strong> above the ground. What floor are you on? Solve for \`f\` when <strong>H(f) = ${height}</strong>.`;
+    document.getElementById('elevator-challenge-input').value = '';
+}
+
+function checkElevatorAnswer() {
+    const input = document.getElementById('elevator-challenge-input');
+    const answer = parseInt(input.value);
+    const feedbackEl = document.getElementById('elevator-feedback');
+    const correctHeight = 12 * elevatorCorrectAnswer;
+
+    if (answer === elevatorCorrectAnswer) {
+        showFeedback(feedbackEl, `<strong>Perfect!</strong> ✨ 12f = ${correctHeight}. To find the floor \`f\`, you divide the height by 12. ${correctHeight} / 12 = ${elevatorCorrectAnswer}. You're on the ${elevatorCorrectAnswer}th floor!`, true, 'elevator-next-problem');
+    } else if (isNaN(answer)) {
+        showFeedback(feedbackEl, '<strong>Hint:</strong> Please enter a number. You are trying to find the input `f` that makes the output 480.', false);
+    } else {
+        const calculatedHeight = 12 * answer;
+        showFeedback(feedbackEl, `<strong>Not quite.</strong> If you were on floor ${answer}, your height H(${answer}) would be ${calculatedHeight} feet. We want the floor that results in ${correctHeight} feet. Try setting up the equation: <strong>12f = ${correctHeight}</strong>.`, false);
+    }
+}
+
+// --- Deli ---
+const deliSlider = document.getElementById('deli-slider');
+const deliResultText = document.getElementById('deli-result-text');
+const toppings = document.querySelectorAll('#toppings-container .topping');
+function updateDeli() {
+    const numToppings = parseInt(deliSlider.value);
+    const totalPrice = (1.50 * numToppings + 8.00).toFixed(2);
+    deliResultText.innerHTML = `P(<strong class="text-blue-600">${numToppings}</strong>) = 1.50(${numToppings}) + 8.00 = <strong class="text-blue-600">$${totalPrice}</strong>`;
+    toppings.forEach((topping, index) => {
+        if (index < numToppings) {
+            topping.classList.add('visible');
+            topping.style.transform = `translateY(${-index * 8}px) scale(1)`;
+        } else {
+            topping.classList.remove('visible');
+            topping.style.transform = 'translateY(20px) scale(0.8)';
+        }
+    });
+}
+deliSlider.addEventListener('input', updateDeli);
+updateDeli();
+
+function generateDeliProblem() {
+    document.getElementById('deli-feedback').classList.remove('show');
+    document.getElementById('deli-next-problem').classList.add('hidden');
+
+    const toppings = getRandomInt(2, 5);
+    deliCorrectAnswer = (1.50 * toppings + 8.00).toFixed(2);
+    const trapAnswer = (1.50 * toppings).toFixed(2); // "Forgot base price"
+    const wrongAnswer1 = (1.25 * toppings + 8.00).toFixed(2); // Wrong rate
+    const wrongAnswer2 = (1.50 * (toppings + 1) + 8.00).toFixed(2); // Wrong toppings
+
+    document.getElementById('deli-challenge-prompt').innerHTML = `You order a sandwich with <strong>${toppings} toppings</strong>. What is the value of <strong>P(${toppings})</strong>, your total cost?`;
+    
+    let options = [deliCorrectAnswer, trapAnswer, wrongAnswer1, wrongAnswer2];
+    options = [...new Set(options)];
+    while(options.length < 4) {
+        options.push((getRandomInt(9, 15) + Math.random()).toFixed(2));
+    }
+    shuffleArray(options);
+
+    const answerArea = document.getElementById('deli-challenge-answer-area');
+    answerArea.innerHTML = options.map(opt => 
+        `<button class="answer-btn bg-white p-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-800" onclick="checkDeliAnswer('${opt}')">$${opt}</button>`
+    ).join('');
+}
+
+function checkDeliAnswer(selectedAnswer) {
+    const feedbackEl = document.getElementById('deli-feedback');
+    const toppings = (parseFloat(deliCorrectAnswer) - 8.00) / 1.50;
+
+    if (selectedAnswer === deliCorrectAnswer) {
+        showFeedback(feedbackEl, `<strong>Deliciously correct!</strong> 💯 P(${toppings}) = 1.50 * ${toppings} + 8.00 = ${deliCorrectAnswer}.`, true, 'deli-next-problem');
+    } else if (selectedAnswer === (1.50 * toppings).toFixed(2)) {
+        showFeedback(feedbackEl, `<strong>So close!</strong> You correctly calculated the cost for the toppings, but don\'t forget to add the base price of the sandwich, which is $8.00.`, false);
+    } else {
+        showFeedback(feedbackEl, `<strong>Good attempt!</strong> Remember to substitute the number of toppings (${toppings}) for \`t\` in the function P(t) = 1.50t + 8.00.`, false);
+    }
+}
+
+// --- Initial Problem Generation on Load ---
+window.onload = () => {
+    generateSubwayProblem();
+    generateBikeProblem();
+    generateElevatorProblem();
+    generateDeliProblem();
+};
+</script>
+</body>
+</html>
+
+

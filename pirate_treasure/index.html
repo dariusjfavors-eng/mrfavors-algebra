@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pirate Treasure: Systems of Equations</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load Tone.js for sound -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    
+    <!-- Load Pirate Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Set base font size for accessibility */
+        html {
+            font-size: 14px; /* Scaled down base font */
+        }
+        @media (max-width: 640px) {
+            html {
+                font-size: 12px; /* Scaled down for small phones */
+            }
+        }
+        
+        /* Apply fonts */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3eac2; /* Old paper color */
+        }
+        .pirate-font {
+            font-family: 'IM Fell English SC', serif;
+        }
+        
+        /* Custom card style */
+        .card {
+            background: #faf3e0; /* Lighter parchment */
+            border: 2px solid #854d0e; /* Dark brown border */
+            border-radius: 8px;
+            padding: 1rem; /* Reduced padding */
+            box-shadow: 2px 2px 0px #c2410c; /* Reduced shadow */
+        }
+        
+        /* Custom button style */
+        .btn {
+            background-color: #c2410c; /* Red-700 */
+            color: white;
+            padding: 0.5rem 1rem; /* Reduced padding */
+            border-radius: 8px;
+            font-size: 0.9rem; /* Reduced font size */
+            transition: all 0.2s;
+            border: 2px solid #7c2d12; /* Red-900 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            background-color: #9a3412; /* Red-800 */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        .btn:disabled {
+            background-color: #9ca3af;
+            border-color: #6b7280;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        /* Input field style */
+        .input-field {
+            border: 2px solid #854d0e;
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem; /* Reduced padding */
+            font-size: 0.9rem; /* Reduced font size */
+            width: 60px; /* Reduced width */
+            text-align: center;
+            background: #fff;
+        }
+        .input-field:focus {
+            outline: 2px solid #c2410c;
+            border-color: #c2410c;
+        }
+        
+        /* Canvas style */
+        #mapCanvas {
+            background-color: #fdfaf0; /* Parchment canvas bg */
+            border: 4px solid #854d0e; /* Dark brown "frame" */
+            box-shadow: 0 0 15px rgba(0,0,0,0.5); /* Shadow */
+            border-radius: 8px;
+            width: 100%;
+            height: auto;
+        }
+        
+        /* Message Box */
+        #messageBox {
+            transition: opacity 0.5s, transform 0.5s;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-4"> <!-- Reduced body padding -->
+
+    <div class="max-w-5xl mx-auto"> <!-- Reduced max-width -->
+        <h1 class="text-2xl md:text-3xl font-bold text-center pirate-font text-red-800 mb-4"> <!-- Scaled down title -->
+            Pirate Treasure: Systems of Equations
+        </h1>
+
+        <div class="flex flex-col lg:flex-row gap-4"> <!-- Reduced gap -->
+
+            <!-- Left Side: The Map -->
+            <div class="flex-1 lg:w-2/3 relative">
+                <canvas id="mapCanvas" width="700" height="700"></canvas>
+                
+                <!-- The Key (Legend) -->
+                <div id="legend" class="card p-2 text-xs md:text-sm mt-2"> <!-- Reduced padding, font, margin -->
+                    <h3 class="pirate-font text-base md:text-lg font-bold text-red-800 mb-2">The Captain's Key</h3> <!-- Scaled down -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-1 bg-red-600 border border-red-800"></div>
+                        <span id="legend-clue1">Clue 1: y = x + 2</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <div class="w-8 h-1 border-2 border-blue-600 border-dashed"></div>
+                        <span>Clue 2: (Your Path)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Controls -->
+            <div class="flex-1 lg:w-1/3 space-y-4"> <!-- Reduced space -->
+
+                <!-- Clue 1 -->
+                <div class="card">
+                    <h2 class="text-lg md:text-xl pirate-font text-red-800 mb-2">Clue 1 Path</h2> <!-- Scaled down -->
+                    <p class="text-base md:text-lg font-bold" id="clue1-equation">y = 1x + 2</p> <!-- Scaled down -->
+                </div>
+
+                <!-- Clue 2 -->
+                <div class="card">
+                    <h2 class="text-lg md:text-xl pirate-font text-red-800 mb-2">Clue 2 Path</h2> <!-- Scaled down -->
+                    <p class="text-sm mb-1">This clue is in standard form. Ye must convert it!</p> <!-- Scaled down -->
+                    <p class="text-base md:text-lg font-bold" id="clue2-equation">2x + 3y = 12</p> <!-- Scaled down -->
+                </div>
+                
+                <!-- Student Work Area -->
+                <div class="card space-y-4">
+                    <h3 class="text-lg pirate-font text-gray-800">Find the Second Path</h3> <!-- Scaled down -->
+                    
+                    <!-- Step 1 -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Step 1: Move the x-term (use the inverse)</label> <!-- Scaled down -->
+                        <p class="text-xs mb-1">From <span id="step1-start" class="font-bold">2x + 3y = 12</span></p> <!-- Scaled down -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span id="step1-y-term" class="text-base font-bold">3y</span> <!-- Scaled down -->
+                            <span class="text-base">=</span> <!-- Scaled down -->
+                            <input type="number" id="step1-x-coeff" class="input-field" aria-label="X coefficient">
+                            <span class="text-base font-bold">x +</span> <!-- Scaled down -->
+                            <input type="number" id="step1-c-term" class="input-field" aria-label="Constant term">
+                            <button id="checkStep1Btn" class="btn text-sm py-1 px-2 ml-auto">Check</button> <!-- Scaled down -->
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div id="step2-area" class="hidden space-y-2">
+                        <label class="block text-sm font-semibold mb-1">Step 2: Isolate 'y' (divide all terms)</label> <!-- Scaled down -->
+                        <p class="text-xs mb-1">From <span id="step2-start" class="font-bold">3y = -2x + 12</span></p> <!-- Scaled down -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-base font-bold">y =</span> <!-- Scaled down -->
+                            <input type="number" id="step2-m" class="input-field" step="0.1" aria-label="Slope (m)">
+                            <span class="text-base font-bold">x +</span> <!-- Scaled down -->
+                            <input type="number" id="step2-b" class="input-field" step="0.1" aria-label="Y-intercept (b)">
+                            <button id="plotLine2Btn" class="btn text-sm py-1 px-2 ml-auto">Plot Path</button> <!-- Scaled down -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Find the Treasure -->
+                <div class="card">
+                    <h3 class="text-lg pirate-font text-gray-800">X Marks the Spot!</h3> <!-- Scaled down -->
+                    <p class="text-sm mb-2">Where do the two paths cross?</p> <!-- Scaled down -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-base font-bold">(</span> <!-- Scaled down -->
+                        <input type="number" id="solution-x" class="input-field" aria-label="Solution X coordinate">
+                        <span class="text-base font-bold">,</span> <!-- Scaled down -->
+                        <input type="number" id="solution-y" class="input-field" aria-label="Solution Y coordinate">
+                        <span class="text-base font-bold">)</span> <!-- Scaled down -->
+                        <button id="checkSolutionBtn" class="btn text-sm py-1 px-2 ml-auto">Dig!</button> <!-- Scaled down -->
+                    </div>
+                </div>
+                
+                <!-- New Problem Button -->
+                <button id="newProblemBtn" class="btn w-full pirate-font text-lg">New Map</button> <!-- Scaled down -->
+
+            </div>
+        </div>
+    </div>
+    
+    <!-- Message Box -->
+    <div id="messageBox" class="hidden fixed bottom-4 right-4 p-4 rounded-lg shadow-xl text-white text-base pirate-font max-w-sm" <!-- Scaled down -->
+         role="alert">
+        This is a message!
+    </div>
+
+    <script>
+        // --- Global Variables ---
+        let canvas, ctx;
+        let gridSize = 30; // Pixel size of each unit
+        const maxX = 10;   // Graph limits (0 to 10)
+        const maxY = 10;
+        let padding = 50;  // Pixel padding for axes
+        let canvasWidth, canvasHeight;
+        
+        let eq1 = {}; // { m, b }
+        let eq2 = {}; // { A, B, C, m, b }
+        let solution = {}; // { x, y }
+        
+        // Student's current attempt for line 2
+        let line2Params = { m: 0, b: 0, drawn: false }; 
+        
+        let synth; // For Tone.js
+        let solutionFound = false;
+
+        // --- Helper: Random Integer ---
+        function r(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        // --- Initialization ---
+        window.onload = () => {
+            canvas = document.getElementById('mapCanvas');
+            ctx = canvas.getContext('2d');
+            
+            setupAudio();
+            setupEventListeners();
+            
+            // Initial problem
+            generateNewProblem();
+            
+            // Set up responsive canvas
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        };
+        
+        function setupAudio() {
+            try {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            } catch (e) {
+                console.error("Could not initialize audio:", e);
+            }
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('checkStep1Btn').addEventListener('click', handleCheckStep1);
+            document.getElementById('plotLine2Btn').addEventListener('click', handlePlotLine2);
+            document.getElementById('checkSolutionBtn').addEventListener('click', handleCheckSolution);
+            document.getElementById('newProblemBtn').addEventListener('click', () => {
+                generateNewProblem();
+                resizeCanvas(); // Redraw with new problem
+            });
+            
+            // Start audio on first interaction
+            document.body.addEventListener('click', () => {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+            }, { once: true });
+        }
+        
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvasWidth = container.clientWidth;
+            canvasHeight = canvasWidth * 1; // 1:1 aspect ratio
+            
+            if (canvasHeight > window.innerHeight * 0.7) {
+                canvasHeight = window.innerHeight * 0.7;
+                canvasWidth = canvasHeight;
+            }
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // Recalculate padding and grid size
+            padding = canvasWidth * 0.1; // 10% padding
+            if (padding < 30) padding = 30; // Reduced minimum padding
+            
+            // Calculate grid size to fit maxX units
+            gridSize = (canvasWidth - 2 * padding) / maxX;
+            
+            drawMap();
+        }
+
+        // --- Problem Generation ---
+        function generateNewProblem() {
+            let validProblem = false;
+            while (!validProblem) {
+                // 1. Pick a simple integer solution (now within 10x10 grid)
+                solution.x = r(2, 8);
+                solution.y = r(2, 8);
+
+                // 2. Generate Equation 1
+                let m1 = r(1, 2) * (Math.random() > 0.5 ? 1 : -1); // Slopes 1, 2, -1, -2
+                let b1 = solution.y - m1 * solution.x;
+                
+                // 3. Generate Equation 2
+                let m2 = r(1, 2) * (Math.random() > 0.5 ? 1 : -1);
+                if (m1 === m2) continue; // Slopes must be different
+                let b2 = solution.y - m2 * solution.x;
+                
+                // 4. Check if lines are "on-screen"
+                if (isLineOnGraph(m1, b1) && isLineOnGraph(m2, b2)) {
+                    eq1 = { m: m1, b: b1 };
+                    
+                    // 5. Convert Eq2 to Ax + By = C
+                    let B = r(2, 4);
+                    let A = -m2 * B;
+                    let C = b2 * B;
+                    
+                    eq2 = { A, B, C, m: m2, b: b2 };
+                    validProblem = true;
+                }
+            }
+            
+            // Reset UI
+            solutionFound = false;
+            line2Params = { m: 0, b: 0, drawn: false };
+            
+            document.getElementById('clue1-equation').textContent = `y = ${eq1.m}x + ${eq1.b}`;
+            document.getElementById('legend-clue1').textContent = `Clue 1: y = ${eq1.m}x + ${eq1.b}`;
+            
+            let bTerm = eq2.B === 1 ? 'y' : `${eq2.B}y`;
+            if (eq2.B < 0) bTerm = eq2.B === -1 ? '- y' : `- ${Math.abs(eq2.B)}y`;
+            let aTerm = eq2.A === 1 ? 'x' : `${eq2.A}x`;
+            if (eq2.A < 0) aTerm = eq2.A === -1 ? '- x' : `- ${Math.abs(eq2.A)}x`;
+            
+            let sign = eq2.B > 0 ? '+' : '';
+            document.getElementById('clue2-equation').textContent = `${aTerm} ${sign} ${bTerm} = ${eq2.C}`;
+            
+            // Reset Step 1
+            document.getElementById('step1-start').textContent = `${aTerm} ${sign} ${bTerm} = ${eq2.C}`;
+            document.getElementById('step1-y-term').textContent = `${bTerm}`;
+            document.getElementById('step1-x-coeff').value = '';
+            document.getElementById('step1-c-term').value = '';
+            
+            // Hide Step 2
+            document.getElementById('step2-area').classList.add('hidden');
+            document.getElementById('step2-m').value = '';
+            document.getElementById('step2-b').value = '';
+            
+            // Reset Solution
+            document.getElementById('solution-x').value = '';
+            document.getElementById('solution-y').value = '';
+            
+            // Redraw map
+            drawMap();
+        }
+        
+        function isLineOnGraph(m, b) {
+            const yAt0 = b;
+            const yAtMaxX = m * maxX + b;
+            // Check if y-intercept and far-x-intercept are roughly on screen
+            return yAt0 > -2 && yAt0 < maxY + 2 && yAtMaxX > -2 && yAtMaxX < maxY + 2;
+        }
+
+        // --- Coordinate Conversion ---
+        function getXPixel(x) {
+            return padding + x * gridSize;
+        }
+        function getYPixel(y) {
+            return canvasHeight - padding - y * gridSize;
+        }
+
+        // --- Drawing ---
+        function drawMap() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Draw parchment background
+            ctx.fillStyle = '#fdfaf0';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            drawGrid();
+            drawAxes();
+            
+            // Draw Clue 1
+            drawLine(eq1, '#c2410c', 3); // Red-700
+            
+            // Draw Clue 2 (student attempt)
+            if (line2Params.drawn) {
+                drawLine(line2Params, '#2563eb', 3, true); // Blue-600, dashed
+            }
+            
+            // Draw solution if found
+            if (solutionFound) {
+                drawSolution();
+            }
+        }
+        
+        function drawGrid() {
+            ctx.strokeStyle = '#e0d8c0'; // Lighter grid lines
+            ctx.lineWidth = 1;
+            
+            for (let x = 1; x < maxX; x++) {
+                ctx.beginPath();
+                ctx.moveTo(getXPixel(x), getYPixel(0));
+                ctx.lineTo(getXPixel(x), getYPixel(maxY));
+                ctx.stroke();
+            }
+            for (let y = 1; y < maxY; y++) {
+                ctx.beginPath();
+                ctx.moveTo(getXPixel(0), getYPixel(y));
+                ctx.lineTo(getXPixel(maxX), getYPixel(y));
+                ctx.stroke();
+            }
+        }
+        
+        function drawAxes() {
+            ctx.strokeStyle = '#854d0e'; // Dark brown
+            ctx.lineWidth = 3;
+            
+            // Y-Axis
+            ctx.beginPath();
+            ctx.moveTo(getXPixel(0), getYPixel(0));
+            ctx.lineTo(getXPixel(0), getYPixel(maxY) - 15); // Line to 15px above grid
+            ctx.stroke();
+            // Y-Axis Arrow (Fixed to point UP)
+            ctx.beginPath();
+            ctx.moveTo(getXPixel(0) - 8, getYPixel(maxY)); // Base left (at y=10 line)
+            ctx.lineTo(getXPixel(0), getYPixel(maxY) - 15); // Tip (at end of line)
+            ctx.lineTo(getXPixel(0) + 8, getYPixel(maxY)); // Base right (at y=10 line)
+            ctx.stroke();
+            
+            // X-Axis
+            ctx.beginPath();
+            ctx.moveTo(getXPixel(0), getYPixel(0));
+            ctx.lineTo(getXPixel(maxX) + 15, getYPixel(0));
+            ctx.stroke();
+            // X-Axis Arrow
+            ctx.beginPath();
+            ctx.moveTo(getXPixel(maxX) + 15, getYPixel(0) - 8);
+            ctx.lineTo(getXPixel(maxX), getYPixel(0));
+            ctx.lineTo(getXPixel(maxX) + 15, getYPixel(0) + 8);
+            ctx.stroke();
+            
+            // Axis Labels
+            ctx.fillStyle = '#7c2d12'; // Red-900
+            ctx.font = `bold ${gridSize * 0.8}px 'IM Fell English SC'`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Y', getXPixel(0), getYPixel(maxY) - 20); // Moved label closer
+            ctx.fillText('X', getXPixel(maxX) + 20, getYPixel(0)); // Moved label closer
+            
+            // Axis Numbers (now 1-10)
+            ctx.fillStyle = '#854d0e';
+            ctx.font = `${gridSize * 0.5}px 'Inter'`;
+            
+            for (let i = 1; i <= maxX; i += 1) {
+                if (i % 2 === 0 || maxX <= 10) { // Show all numbers for 10x10 grid
+                    ctx.fillText(i, getXPixel(i), getYPixel(0) + 15); // X-axis numbers (closer)
+                    ctx.fillText(i, getXPixel(0) - 15, getYPixel(i)); // Y-axis numbers (closer)
+                }
+            }
+        }
+        
+        function drawLine(eq, color, width, dashed = false) {
+            const { m, b } = eq;
+            
+            // Find y at x=0 and x=maxX
+            const y1 = m * 0 + b;
+            const y2 = m * maxX + b;
+            
+            ctx.beginPath();
+            ctx.moveTo(getXPixel(0), getYPixel(y1));
+            ctx.lineTo(getXPixel(maxX), getYPixel(y2));
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            
+            if (dashed) {
+                ctx.setLineDash([8, 8]);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset
+        }
+        
+        function drawSolution() {
+            const xPx = getXPixel(solution.x);
+            const yPx = getYPixel(solution.y);
+            
+            // Draw a red 'X' underneath first
+            ctx.strokeStyle = '#c2410c';
+            ctx.lineWidth = 4;
+            const xSize = gridSize * 0.7;
+            ctx.beginPath();
+            ctx.moveTo(xPx - xSize, yPx - xSize);
+            ctx.lineTo(xPx + xSize, yPx + xSize);
+            ctx.moveTo(xPx + xSize, yPx - xSize);
+            ctx.lineTo(xPx - xSize, yPx + xSize);
+            ctx.stroke();
+            
+            // Draw skull and bones on top
+            ctx.font = `${gridSize * 2}px serif`; // Use serif for emoji
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('☠️', xPx, yPx);
+        }
+
+        // --- Event Handlers ---
+        function handleCheckStep1() {
+            const xCoeff = parseFloat(document.getElementById('step1-x-coeff').value);
+            const cTerm = parseFloat(document.getElementById('step1-c-term').value);
+            
+            const correctXCoeff = -eq2.A;
+            const correctCTerm = eq2.C;
+            
+            if (xCoeff === correctXCoeff && cTerm === correctCTerm) {
+                showMessage("Step 1 correct! Now isolate 'y'!", 'success');
+                // Populate and show step 2
+                document.getElementById('step2-start').textContent = `${eq2.B}y = ${correctXCoeff}x + ${correctCTerm}`;
+                document.getElementById('step2-area').classList.remove('hidden');
+            } else {
+                showMessage("Not quite, matey! Remember to use the inverse to move the x-term.", 'error');
+            }
+        }
+        
+        function handlePlotLine2() {
+            const m = parseFloat(document.getElementById('step2-m').value);
+            const b = parseFloat(document.getElementById('step2-b').value);
+            
+            if (isNaN(m) || isNaN(b)) {
+                showMessage("Avast! Enter numbers for the slope and y-intercept.", 'error');
+                return;
+            }
+            
+            line2Params = { m, b, drawn: true };
+            drawMap();
+            
+            // Check if correct
+            // Use a small tolerance for floating point errors
+            const mCorrect = Math.abs(m - eq2.m) < 0.01;
+            const bCorrect = Math.abs(b - eq2.b) < 0.01;
+            
+            if (mCorrect && bCorrect) {
+                showMessage("That's the path! Now find where they cross!", 'success');
+            } else {
+                showMessage("Arr, that line looks crooked. Check yer division.", 'error');
+            }
+        }
+        
+        function handleCheckSolution() {
+            const x = parseFloat(document.getElementById('solution-x').value);
+            const y = parseFloat(document.getElementById('solution-y').value);
+            
+            if (isNaN(x) || isNaN(y)) {
+                showMessage("Ye must enter coordinates, scallywag!", 'error');
+                return;
+            }
+            
+            if (x === solution.x && y === solution.y) {
+                showMessage("TREASURE FOUND! Ye be a true pirate genius!", 'success');
+                solutionFound = true;
+                drawMap(); // Redraw to show the 'X'
+                playVictorySound();
+            } else {
+                showMessage("No treasure there! Check yer map again!", 'error');
+            }
+        }
+        
+        // --- UI Helpers ---
+        function showMessage(text, type = 'error') {
+            const msgBox = document.getElementById('messageBox');
+            msgBox.textContent = text;
+            
+            if (type === 'success') {
+                msgBox.className = msgBox.className.replace(/bg-\S+/, 'bg-green-600');
+            } else {
+                msgBox.className = msgBox.className.replace(/bg-\S+/, 'bg-red-700');
+            }
+            
+            msgBox.classList.remove('hidden', 'opacity-0', 'translate-y-4');
+            msgBox.classList.add('opacity-100', 'translate-y-0');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                msgBox.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => msgBox.classList.add('hidden'), 500);
+            }, 3000);
+        }
+        
+        function playVictorySound() {
+            if (synth) {
+                const now = Tone.now();
+                synth.triggerAttackRelease("C4", "8n", now);
+                synth.triggerAttackRelease("E4", "8n", now + 0.2);
+                synth.triggerAttackRelease("G4", "8n", now + 0.4);
+                synth.triggerAttackRelease("C5", "4n", now + 0.6);
+            }
+        }
+
+    </script>
+</body>
+</html>
+
+
+
+
+

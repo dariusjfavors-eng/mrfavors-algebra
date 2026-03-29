@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parabola Domain & Range Simulator</title>
+    <!-- Imports Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Uses the 'Inter' font, a clean sans-serif font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Sets a default aspect ratio for the canvas, Tailwind handles scaling */
+        canvas {
+            border: 2px solid #374151; /* dark-gray-700 */
+            border-radius: 0.5rem;
+            aspect-ratio: 1 / 1;
+        }
+        /* Style for input numbers to make them clear */
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        /* --- Animation styles for GIF pop up and recede --- */
+        @keyframes popUp {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        @keyframes recede {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+        }
+        
+        .animate-pop-up {
+            animation: popUp 0.3s ease-out forwards;
+        }
+        
+        .animate-recede {
+            animation: recede 0.3s ease-in forwards;
+        }
+
+        /* --- NEW: Animation for equation steps --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        /* --- End of animation styles --- */
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- Instructions Box -->
+        <div id="instructions" class="bg-blue-100 border-l-4 border-blue-500 text-blue-800 p-4 rounded-lg shadow-md mb-6" role="alert">
+            <h2 class="font-bold text-xl mb-2">Directions:</h2>
+            <p id="instructions-text">
+                A parabola segment is shown on the graph. Identify either its <strong>domain</strong> or its <strong>range</strong>.
+                <br>
+                Select 'x' for the domain or 'y' for the range, then build the correct interval. As you make selections, the graph will show a shaded region for your interval.
+                Once you correctly identify two intervals, you will face a challenge problem.
+            </p>
+        </div>
+
+        <!-- Main Content: Graph + Controls -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- Left/Top Section: Graph -->
+            <div class="lg:w-2/3 w-full bg-white p-4 rounded-lg shadow-lg relative">
+                <canvas id="graphCanvas" width="600" height="600" class="w-full h-auto"></canvas>
+                
+                <!-- GIF for WRONG Answer -->
+                <img id="wrong-answer-gif" 
+                     src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeXc0YXF3bWcwbzlveHRxcGY1d2IwdnFqZWtrMHB3NTMxdWZ6Ymc3byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/b2jicwWyJ8wTpQGKaX/giphy.gif"
+                     alt="Try again"
+                     class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 max-w-sm h-auto rounded-lg shadow-2xl z-10"
+                     style="transform: translate(-50%, -50%) scale(0.5); opacity: 0;">
+
+                <!-- GIF for CORRECT Answer (New) -->
+                <img id="correct-answer-gif" 
+                     src="https://media.giphy.com/media/BhmVkWoUjQniiGDWU3/giphy.gif"
+                     alt="Correct!"
+                     class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 max-w-sm h-auto rounded-lg shadow-2xl z-10"
+                     style="transform: translate(-50%, -50%) scale(0.5); opacity: 0;">
+            </div>
+
+            <!-- Right/Bottom Section: Controls -->
+            <div class="lg:w-1/3 w-full bg-white p-6 rounded-lg shadow-lg flex flex-col justify-center">
+                
+                <!-- Normal Mode Controls (default) -->
+                <div id="normal-controls">
+                    <h3 class="text-2xl font-bold mb-4 text-center text-gray-800">Interval Identifier</h3>
+                    
+                    <!-- Dynamic Prompt -->
+                    <h4 id="problem-prompt" class="text-xl font-semibold mb-6 text-center text-gray-700 h-16 flex items-center justify-center" role="status">Loading problem...</h4>
+
+                    <div class="mb-6">
+                        <label class="block text-lg font-medium text-gray-700 mb-2">Define the interval:</label>
+                        <div class="flex items-center justify-center gap-1 sm:gap-2">
+                            <input type="number" step="1" id="normal-lower" class="w-20 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="Lower bound">
+                            
+                            <!-- Inequality dropdown 1 -->
+                            <select id="normal-lower-op" class="w-16 p-3 border border-gray-300 rounded-md text-center text-lg font-mono focus:ring-blue-500 focus:border-blue-500" aria-label="Lower bound inequality">
+                                <option>≤</option>
+                                <option><</option>
+                                <option>≥</option>
+                                <option>></option>
+                            </select>
+
+                            <!-- Variable dropdown -->
+                            <select id="normal-variable" class="w-16 p-3 border border-gray-300 rounded-md text-center text-lg font-mono font-bold focus:ring-blue-500 focus:border-blue-500" aria-label="Variable (x or y)">
+                                <option class="text-blue-600 font-bold" value="x">x</option>
+                                <option class="text-red-600 font-bold" value="y">y</option>
+                            </select>
+
+                            <!-- Inequality dropdown 2 -->
+                            <select id="normal-upper-op" class="w-16 p-3 border border-gray-300 rounded-md text-center text-lg font-mono focus:ring-blue-500 focus:border-blue-500" aria-label="Upper bound inequality">
+                                <option>≤</option>
+                                <option><</option>
+                                <option>≥</option>
+                                <option>></option>
+                            </select>
+
+                            <input type="number" step="1" id="normal-upper" class="w-20 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="Upper bound">
+                        </div>
+                    </div>
+                    <button id="check-normal-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-lg hover:bg-blue-700 transition duration-200 shadow-md">Check Answer</button>
+                </div>
+
+                <!-- Challenge Mode Controls (hidden by default) -->
+                <div id="challenge-controls" class="hidden">
+                    <h3 class="text-2xl font-bold mb-6 text-center text-green-700">Challenge Problem!</h3>
+                    <p class="text-center text-gray-700 mb-6 text-lg">Find both the domain and range.</p>
+                    
+                    <!-- Domain Inputs -->
+                    <div class="mb-4">
+                        <label class="block text-lg font-medium text-gray-700 mb-2">Domain (x-values):</label>
+                        <div class="flex items-center justify-center gap-1 sm:gap-2">
+                            <input type="number" step="1" id="challenge-domain-lower" class="w-20 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="Domain lower bound">
+                            
+                            <!-- Inequality dropdowns for challenge domain -->
+                            <select id="challenge-domain-lower-op" class="w-16 p-3 border border-gray-300 rounded-md text-center text-lg font-mono focus:ring-blue-500 focus:border-blue-500" aria-label="Domain lower bound inequality">
+                                <option>≤</option>
+                                <option><</option>
+                                <option>≥</option>
+                                <option>></option>
+                            </select>
+                            
+                            <span class="text-3xl font-bold font-mono text-blue-600 w-8 text-center">x</span>
+                            
+                            <select id="challenge-domain-upper-op" class="w-16 p-3 border border-gray-300 rounded-md text-center text-lg font-mono focus:ring-blue-500 focus:border-blue-500" aria-label="Domain upper bound inequality">
+                                <option>≤</option>
+                                <option><</option>
+                                <option>≥</option>
+                                <option>></option>
+                            </select>
+
+                            <input type="number" step="1" id="challenge-domain-upper" class="w-20 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="Domain upper bound">
+                        </div>
+                    </div>
+                    
+                    <!-- Range Inputs -->
+                    <div class="mb-6">
+                        <label class="block text-lg font-medium text-gray-700 mb-2">Range (y-values):</label>
+                        <div class="flex items-center justify-center gap-1 sm:gap-2">
+                            <input type="number" step="1" id="challenge-range-lower" class="w-20 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="Range lower bound">
+                            
+                            <!-- Inequality dropdowns for challenge range -->
+                            <select id="challenge-range-lower-op" class="w-16 p-3 border border-gray-300 rounded-md text-center text-lg font-mono focus:ring-blue-500 focus:border-blue-500" aria-label="Range lower bound inequality">
+                                <option>≤</option>
+                                <option><</option>
+                                <option>≥</option>
+                                <option>></option>
+                            </select>
+
+                            <!-- Y variable span -->
+                            <span class="text-3xl font-bold font-mono text-red-600 w-8 text-center">y</span>
+
+                            <!-- Upper op for range -->
+                            <select id="challenge-range-upper-op" class="w-16 p-3 border border-gray-300 rounded-md text-center text-lg font-mono focus:ring-blue-500 focus:border-blue-500" aria-label="Range upper bound inequality">
+                                <option>≤</option>
+                                <option><</option>
+                                <option>≥</option>
+                                <option>></option>
+                            </select>
+
+                            <input type="number" step="1" id="challenge-range-upper" class="w-20 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="Range upper bound">
+                        </div>
+                    </div>
+                    <button id="check-challenge-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg hover:bg-green-700 transition duration-200 shadow-md">Check Challenge</button>
+                </div>
+
+                <!-- Point Checker Controls (hidden by default) -->
+                <div id="point-checker-controls" class="hidden">
+                    <h3 class="text-2xl font-bold mb-4 text-center text-indigo-700">One More Step!</h3>
+                    <p id="point-prompt" class="text-center text-gray-700 mb-6 text-lg">
+                        Great! Now, provide one coordinate point (x, y) that is on the parabola segment you identified.
+                    </p>
+                    
+                    <!-- (x, y) Inputs -->
+                    <div class="flex items-center justify-center gap-6 mb-6">
+                        <!-- X Input -->
+                        <div class="flex flex-col items-center">
+                            <label for="point-x" class="text-2xl font-bold font-mono text-blue-600 mb-1">x</label>
+                            <input type="number" step="1" id="point-x" class="w-24 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="x-coordinate">
+                        </div>
+                        <!-- Y Input -->
+                        <div class="flex flex-col items-center">
+                            <label for="point-y" class="text-2xl font-bold font-mono text-red-600 mb-1">y</label>
+                            <input type="number" step="1" id="point-y" class="w-24 p-3 border border-gray-300 rounded-md text-center text-lg font-mono" aria-label="y-coordinate">
+                        </div>
+                    </div>
+                    
+                    <button id="check-point-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg text-lg hover:bg-indigo-700 transition duration-200 shadow-md">Check Point</button>
+                    
+                    <!-- Feedback for point checker -->
+                    <div id="point-feedback" class="mt-4 p-4 text-center rounded-md font-medium text-lg" role="alert"></div>
+
+                    <!-- NEW: Equation Animation Container -->
+                    <div id="equation-animation" class="mt-4 p-4 rounded-md bg-gray-50 border border-gray-200 shadow-inner hidden">
+                        <!-- Steps will be injected here by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Feedback Message Box (for normal/challenge) -->
+                <div id="feedback" class="mt-6 p-4 text-center rounded-md font-medium text-lg" role="alert"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            const instructionsText = document.getElementById('instructions-text');
+            
+            // --- Normal Mode ---
+            const problemPrompt = document.getElementById('problem-prompt');
+            const normalVariable = document.getElementById('normal-variable');
+            const normalLowerInput = document.getElementById('normal-lower');
+            const normalUpperInput = document.getElementById('normal-upper');
+            const normalLowerOp = document.getElementById('normal-lower-op');
+            const normalUpperOp = document.getElementById('normal-upper-op');
+            const checkNormalBtn = document.getElementById('check-normal-btn');
+            const feedbackDiv = document.getElementById('feedback');
+            
+            // --- GIF References ---
+            const wrongGif = document.getElementById('wrong-answer-gif');
+            const correctGif = document.getElementById('correct-answer-gif'); 
+
+            // --- Challenge Mode ---
+            const normalControls = document.getElementById('normal-controls');
+            const challengeControls = document.getElementById('challenge-controls');
+            const challengeDomainLower = document.getElementById('challenge-domain-lower');
+            const challengeDomainUpper = document.getElementById('challenge-domain-upper');
+            const challengeDomainLowerOp = document.getElementById('challenge-domain-lower-op');
+            const challengeDomainUpperOp = document.getElementById('challenge-domain-upper-op');
+            const challengeRangeLower = document.getElementById('challenge-range-lower');
+            const challengeRangeUpper = document.getElementById('challenge-range-upper');
+            const challengeRangeLowerOp = document.getElementById('challenge-range-lower-op');
+            const challengeRangeUpperOp = document.getElementById('challenge-range-upper-op');
+            const checkChallengeBtn = document.getElementById('check-challenge-btn');
+
+            // --- Point Checker ---
+            const pointCheckerControls = document.getElementById('point-checker-controls');
+            const pointXInput = document.getElementById('point-x');
+            const pointYInput = document.getElementById('point-y');
+            const checkPointBtn = document.getElementById('check-point-btn');
+            const pointFeedbackDiv = document.getElementById('point-feedback');
+            
+            // --- NEW: Equation Animation ---
+            const equationAnimationDiv = document.getElementById('equation-animation');
+
+            // --- Canvas & Graph Constants ---
+            const width = canvas.width;
+            const height = canvas.height;
+            const graphBounds = { min: -10, max: 10 };
+            const rangeX = graphBounds.max - graphBounds.min;
+            const rangeY = graphBounds.max - graphBounds.min;
+            const xScale = width / rangeX;
+            const yScale = height / rangeY;
+            const gridStep = 1;
+            
+            // --- Colors ---
+            const COLOR_GRID = '#e5e7eb'; // gray-200
+            const COLOR_AXES = '#374151'; // gray-700
+            const COLOR_PARABOLA = '#3b82f6'; // blue-500
+            const COLOR_HIGHLIGHT = '#f97316'; // orange-500
+            const COLOR_ENDPOINTS = '#be123c'; // rose-700
+
+            // --- Game State ---
+            let currentProblem = {};
+            let gameState = {
+                correctAnswers: 0,
+                mode: 'normal', // 'normal', 'challenge', or 'point-check'
+                pendingNextProblem: null // Stores 'normal' or 'challenge'
+            };
+
+            // --- Coordinate Transformation Functions ---
+            
+            /**
+             * Converts an x-coordinate from graph space to canvas space.
+             * @param {number} x - The graph x-coordinate.
+             * @returns {number} The canvas x-coordinate.
+             */
+            function toCanvasX(x) {
+                return (x - graphBounds.min) * xScale;
+            }
+
+            /**
+             * Converts a y-coordinate from graph space to canvas space.
+             * @param {number} y - The graph y-coordinate.
+             * @returns {number} The canvas y-coordinate.
+             */
+            function toCanvasY(y) {
+                return height - (y - graphBounds.min) * yScale;
+            }
+
+            // --- Drawing Functions ---
+
+            /**
+             * Clears the canvas and draws the gridlines.
+             */
+            function drawGrid() {
+                ctx.clearRect(0, 0, width, height);
+                ctx.strokeStyle = COLOR_GRID;
+                ctx.lineWidth = 1;
+
+                // Vertical gridlines
+                for (let x = graphBounds.min; x <= graphBounds.max; x += gridStep) {
+                    const canvasX = toCanvasX(x);
+                    ctx.beginPath();
+                    ctx.moveTo(canvasX, 0);
+                    ctx.lineTo(canvasX, height);
+                    ctx.stroke();
+                }
+                
+                // Horizontal gridlines
+                for (let y = graphBounds.min; y <= graphBounds.max; y += gridStep) {
+                    const canvasY = toCanvasY(y);
+                    ctx.beginPath();
+                    ctx.moveTo(0, canvasY);
+                    ctx.lineTo(width, canvasY);
+                    ctx.stroke();
+                }
+            }
+
+            /**
+             * Draws the X and Y axes with labels.
+             */
+            function drawAxes() {
+                ctx.strokeStyle = COLOR_AXES;
+                ctx.lineWidth = 2;
+                ctx.fillStyle = COLOR_AXES;
+                ctx.font = '14px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Y-Axis
+                const xAxisCanvasY = toCanvasY(0);
+                ctx.beginPath();
+                ctx.moveTo(toCanvasX(graphBounds.min), xAxisCanvasY);
+                ctx.lineTo(toCanvasX(graphBounds.max), xAxisCanvasY);
+                ctx.stroke();
+                
+                // X-Axis
+                const yAxisCanvasX = toCanvasX(0);
+                ctx.beginPath();
+                ctx.moveTo(yAxisCanvasX, toCanvasY(graphBounds.min));
+                ctx.lineTo(yAxisCanvasX, toCanvasY(graphBounds.max));
+                ctx.stroke();
+
+                // Axis Labels ("x" and "y")
+                ctx.fillText('y', yAxisCanvasX, toCanvasY(graphBounds.max) - 20);
+                ctx.fillText('x', toCanvasX(graphBounds.max) - 20, xAxisCanvasY);
+
+                // Number labels
+                for (let x = graphBounds.min; x <= graphBounds.max; x += 2) {
+                    if (x !== 0) {
+                        ctx.fillText(x, toCanvasX(x), xAxisCanvasY + 15);
+                    }
+                }
+                for (let y = graphBounds.min; y <= graphBounds.max; y += 2) {
+                    if (y !== 0) {
+                        ctx.fillText(y, yAxisCanvasX - 20, toCanvasY(y));
+                    }
+                }
+            }
+
+            /**
+             * The parabola function: y = a(x - h)^2 + k
+             * Relies on the global `currentProblem` object.
+             * @param {number} x - The x-input.
+             * @returns {number} The corresponding y-value.
+             */
+            function parabolaFunc(x) {
+                const { a, h, k } = currentProblem;
+                if (typeof a === 'undefined') return 0; // Guard against calls before init
+                return a * Math.pow(x - h, 2) + k;
+            }
+
+            /**
+             * Draws the current parabola segment by connecting integer coordinates.
+             */
+            function drawParabola() {
+                const { x_min, x_max } = currentProblem;
+                
+                ctx.strokeStyle = COLOR_PARABOLA;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                
+                // Start from the integer x_min
+                let startY = parabolaFunc(x_min);
+                ctx.moveTo(toCanvasX(x_min), toCanvasY(startY));
+
+                // Connect integer point to integer point
+                for (let x = x_min + 1; x <= x_max; x++) {
+                    const y = parabolaFunc(x);
+                    const canvasX = toCanvasX(x);
+                    const canvasY = toCanvasY(y);
+                    ctx.lineTo(canvasX, canvasY);
+                }
+                // Stroke the connected line
+                ctx.stroke();
+
+
+                // Draw endpoints (still needed)
+                const y_start = parabolaFunc(x_min);
+                const y_end = parabolaFunc(x_max);
+                ctx.fillStyle = COLOR_ENDPOINTS;
+                ctx.beginPath();
+                ctx.arc(toCanvasX(x_min), toCanvasY(y_start), 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(toCanvasX(x_max), toCanvasY(y_end), 6, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            /**
+             * Highlights the parabola based on the user's current input.
+             */
+            function drawHighlight() {
+                // Use a semi-transparent color for shading
+                ctx.fillStyle = 'rgba(249, 115, 22, 0.3)'; // orange-500 with 30% opacity
+                
+                if (gameState.mode === 'normal') {
+                    // --- Normal Mode Highlighting ---
+                    
+                    if (!normalVariable) return; 
+
+                    const type = normalVariable.value; // Read from user dropdown
+                    const lower = parseFloat(normalLowerInput.value);
+                    const upper = parseFloat(normalUpperInput.value);
+
+                    if (type === 'x') {
+                        // Draw a vertical rectangle for the domain interval
+                        const drawStart = isNaN(lower) ? graphBounds.min : lower;
+                        const drawEnd = isNaN(upper) ? graphBounds.max : upper;
+                        
+                        if (drawStart > drawEnd) return; // Don't draw if bounds are inverted
+
+                        const canvasX = toCanvasX(drawStart);
+                        const canvasY = toCanvasY(graphBounds.max); // Top of graph
+                        const rectWidth = toCanvasX(drawEnd) - canvasX;
+                        const rectHeight = height; // Full height of canvas
+                        
+                        ctx.fillRect(canvasX, canvasY, rectWidth, rectHeight);
+                        
+                    } else { // type === 'y'
+                        // Draw a horizontal rectangle for the range interval
+                        const drawStart = isNaN(lower) ? graphBounds.min : lower;
+                        const drawEnd = isNaN(upper) ? graphBounds.max : upper;
+
+                        if (drawStart > drawEnd) return; // Don't draw if bounds are inverted
+                        
+                        const canvasX = toCanvasX(graphBounds.min); // Left edge of graph
+                        const canvasY = toCanvasY(drawEnd); // Upper y-value (smaller canvasY)
+                        const rectWidth = width; // Full width of canvas
+                        const rectHeight = toCanvasY(drawStart) - canvasY; // (larger canvasY) - (smaller canvasY)
+
+                        ctx.fillRect(canvasX, canvasY, rectWidth, rectHeight);
+                    }
+                } else if (gameState.mode === 'challenge') {
+                    // --- Challenge Mode Highlighting ---
+                    
+                    // 1. Draw Domain Highlight (Vertical)
+                    const dLower = parseFloat(challengeDomainLower.value);
+                    const dUpper = parseFloat(challengeDomainUpper.value);
+                    const dStart = isNaN(dLower) ? graphBounds.min : dLower;
+                    const dEnd = isNaN(dUpper) ? graphBounds.max : dUpper;
+                    
+                    if (dStart <= dEnd) {
+                        const canvasX = toCanvasX(dStart);
+                        const canvasY = toCanvasY(graphBounds.max); // Top of graph
+                        const rectWidth = toCanvasX(dEnd) - canvasX;
+                        const rectHeight = height; // Full height of canvas
+                        ctx.fillRect(canvasX, canvasY, rectWidth, rectHeight);
+                    }
+                    
+                    // 2. Draw Range Highlight (Horizontal)
+                    const rLower = parseFloat(challengeRangeLower.value);
+                    const rUpper = parseFloat(challengeRangeUpper.value);
+                    const rStart = isNaN(rLower) ? graphBounds.min : rLower;
+                    const rEnd = isNaN(rUpper) ? graphBounds.max : rUpper;
+
+                    if (rStart <= rEnd) {
+                        const canvasX = toCanvasX(graphBounds.min); // Left edge of graph
+                        const canvasY = toCanvasY(rEnd); // Upper y-value (smaller canvasY)
+                        const rectWidth = width; // Full width of canvas
+                        const rectHeight = toCanvasY(rStart) - canvasY; // (larger canvasY) - (smaller canvasY)
+                        ctx.fillRect(canvasX, canvasY, rectWidth, rectHeight);
+                    }
+                }
+            }
+
+            /**
+             * Main drawing function: clears canvas and redraws all elements.
+             */
+            function mainDraw() {
+                drawGrid();
+                drawHighlight();
+                drawAxes();
+                drawParabola();
+            }
+
+            /**
+             * Generates a new random parabola problem that fits entirely on the graph
+             * and passes through whole number coordinates (by setting a = +/- 1).
+             */
+            function generateProblem() {
+                let a, h, k, x_min, x_max, y_min, y_max;
+                
+                // Randomly assign the challenge type for normal mode
+                const challengeType = gameState.mode === 'normal' ? 
+                                      (Math.random() < 0.5 ? 'domain' : 'range') : 'both';
+
+                do {
+                    // --- 1. Guarantee Whole Number Coordinates ---
+                    // Force a = +/- 1. This ensures y = a(x-h)^2 + k is an integer for any integer x.
+                    a = 1; 
+                    if (Math.random() < 0.5) a = -1; 
+                    
+                    // 2. h (x-vertex): [-6, 6] (Whole Number)
+                    h = Math.round(Math.random() * 12 - 6); 
+                    
+                    // 3. k (y-vertex): [-5, 5] (Whole Number)
+                    k = Math.round(Math.random() * 10 - 5); 
+
+                    // 4. Determine a valid x-segment [x_min, x_max]
+                    let x1 = Math.round(Math.random() * 18 - 9); // [-9, 9]
+                    let x2 = Math.round(Math.random() * 18 - 9); // [-9, 9]
+                    x_min = Math.min(x1, x2);
+                    x_max = Math.max(x1, x2);
+
+                    // Ensure minimum segment width (at least 3 units) and within bounds
+                    if (x_max - x_min < 3) {
+                        x_max = Math.min(graphBounds.max, x_min + 3);
+                    }
+                    if (x_min < graphBounds.min || x_max > graphBounds.max) continue;
+                    
+                    // 5. Calculate Y values (guaranteed to be integers now)
+                    const y1 = a * Math.pow(x_min - h, 2) + k;
+                    const y2 = a * Math.pow(x_max - h, 2) + k;
+
+                    // Find min/max y for the *segment*
+                    let vertexY = k;
+                    
+                    // Check if vertex is within the x-segment [x_min, x_max]
+                    const vertexInSegment = (h >= x_min && h <= x_max);
+                    
+                    if (vertexInSegment) {
+                        // If vertex is included, y_min/y_max will be the vertex k or one of the endpoints
+                        y_min = Math.min(y1, y2, vertexY);
+                        y_max = Math.max(y1, y2, vertexY);
+                    } else {
+                        // If vertex is not included, y_min/y_max are the endpoints
+                        y_min = Math.min(y1, y2);
+                        y_max = Math.max(y1, y2);
+                    }
+                    
+                    // 6. Final Boundary Check
+                    // Condition to check: all key points must be within [-10, 10]
+                    const check = (y_min >= graphBounds.min && y_max <= graphBounds.max) &&
+                                  (y1 >= graphBounds.min && y1 <= graphBounds.max) &&
+                                  (y2 >= graphBounds.min && y2 <= graphBounds.max);
+                    
+                    if (check) {
+                        // Store problem only if valid
+                        currentProblem = { a, h, k, x_min, x_max, y_min, y_max, challengeType };
+                        break;
+                    }
+                } while (true);
+
+                // Update UI for the new problem
+                resetInputs();
+                showFeedback('', 'none'); // Clear main feedback
+                showPointFeedback('', 'none'); // Clear point feedback
+                if (equationAnimationDiv) equationAnimationDiv.classList.add('hidden'); // Hide animation
+
+                // Update prompt
+                if (gameState.mode === 'normal') {
+                    if (challengeType === 'domain') {
+                        problemPrompt.innerHTML = `Find the <strong>Domain</strong> (x-values):`;
+                        if (normalVariable) normalVariable.value = 'x'; // Default to correct variable for convenience
+                    } else {
+                        problemPrompt.innerHTML = `Find the <strong>Range</strong> (y-values):`;
+                        if (normalVariable) normalVariable.value = 'y'; // Default to correct variable for convenience
+                    }
+                } else {
+                    problemPrompt.innerHTML = `<strong>Challenge:</strong> Find BOTH Domain and Range!`;
+                }
+
+                mainDraw(); // Redraw the graph with the new parabola
+            }
+
+            /**
+             * Resets all user input fields to their default state.
+             */
+            function resetInputs() {
+                // Normal mode inputs
+                normalLowerInput.value = '';
+                normalUpperInput.value = '';
+                if (normalLowerOp) normalLowerOp.value = '≤';
+                if (normalUpperOp) normalUpperOp.value = '≤';
+                if (normalVariable) normalVariable.value = 'x';
+                
+                // Challenge mode inputs
+                challengeDomainLower.value = '';
+                challengeDomainUpper.value = '';
+                if (challengeDomainLowerOp) challengeDomainLowerOp.value = '≤';
+                if (challengeDomainUpperOp) challengeDomainUpperOp.value = '≤';
+                challengeRangeLower.value = '';
+                challengeRangeUpper.value = '';
+                if (challengeRangeLowerOp) challengeRangeLowerOp.value = '≤';
+                if (challengeRangeUpperOp) challengeRangeUpperOp.value = '≤';
+
+                // Point checker inputs
+                if (pointXInput) pointXInput.value = '';
+                if (pointYInput) pointYInput.value = '';
+
+                // NEW: Hide equation animation
+                if (equationAnimationDiv) equationAnimationDiv.classList.add('hidden');
+            }
+            
+            /**
+             * Shows the "wrong answer" GIF for 4 seconds.
+             */
+            function showWrongAnswerGif() {
+                if (!wrongGif || !wrongGif.classList.contains('hidden')) return;
+
+                wrongGif.classList.remove('hidden', 'animate-recede');
+                wrongGif.classList.add('animate-pop-up');
+                
+                // Set timer to make it recede
+                setTimeout(() => {
+                    wrongGif.classList.remove('animate-pop-up');
+                    wrongGif.classList.add('animate-recede');
+                    
+                    // Set timer to hide it after recede animation finishes
+                    setTimeout(() => {
+                        wrongGif.classList.add('hidden');
+                        wrongGif.classList.remove('animate-recede'); 
+                    }, 300); 
+                }, 4000); 
+            }
+
+            /**
+             * Shows the "correct answer" GIF for 4 seconds.
+             */
+            function showCorrectAnswerGif() {
+                if (!correctGif || !correctGif.classList.contains('hidden')) return;
+
+                // Hide wrong GIF if somehow visible
+                wrongGif.classList.add('hidden');
+                
+                correctGif.classList.remove('hidden', 'animate-recede');
+                correctGif.classList.add('animate-pop-up');
+                
+                // Set timer to make it recede
+                setTimeout(() => {
+                    correctGif.classList.remove('animate-pop-up');
+                    correctGif.classList.add('animate-recede');
+                    
+                    // Set timer to hide it after recede animation finishes
+                    setTimeout(() => {
+                        correctGif.classList.add('hidden');
+                        correctGif.classList.remove('animate-recede'); 
+                    }, 300); 
+                }, 4000); 
+            }
+
+            /**
+             * Displays a feedback message to the user.
+             * @param {string} message - The text to display.
+             * @param {'success' | 'error' | 'none'} type - The type of message.
+             */
+            function showFeedback(message, type) {
+                if (!feedbackDiv) return;
+                
+                feedbackDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+                feedbackDiv.innerHTML = ''; // Clear content
+                
+                if (type === 'success') {
+                    feedbackDiv.classList.add('bg-green-100', 'text-green-800');
+                    feedbackDiv.innerHTML = message;
+                } else if (type === 'error') {
+                    feedbackDiv.classList.add('bg-red-100', 'text-red-800');
+                    feedbackDiv.innerHTML = message;
+                }
+            }
+
+            /**
+             * Displays feedback for the point checker.
+             * @param {string} message - The text to display.
+             * @param {'success' | 'error' | 'none'} type - The type of message.
+             */
+            function showPointFeedback(message, type) {
+                if (!pointFeedbackDiv) return;
+
+                pointFeedbackDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+                pointFeedbackDiv.innerHTML = ''; // Clear content
+                
+                if (type === 'success') {
+                    pointFeedbackDiv.classList.add('bg-green-100', 'text-green-800');
+                    pointFeedbackDiv.innerHTML = message;
+                } else if (type === 'error') {
+                    pointFeedbackDiv.classList.add('bg-red-100', 'text-red-800');
+                    pointFeedbackDiv.innerHTML = message;
+                }
+            }
+
+
+            /**
+             * Sets the game mode to 'normal', 'challenge', or 'point-check'.
+             * @param {'normal' | 'challenge' | 'point-check'} newMode - The new mode.
+             */
+            function setMode(newMode) {
+                gameState.mode = newMode;
+                
+                // Hide all control panels by default
+                if (normalControls) normalControls.classList.add('hidden');
+                if (challengeControls) challengeControls.classList.add('hidden');
+                if (pointCheckerControls) pointCheckerControls.classList.add('hidden');
+
+                if (newMode === 'normal') {
+                    if (normalControls) normalControls.classList.remove('hidden');
+                    if (instructionsText) instructionsText.innerHTML = `
+                        A parabola segment is shown on the graph. Read the prompt below to identify either the <strong>domain</strong> (x-values) or the <strong>range</strong> (y-values) of the function.
+                        <br>
+                        As you make selections, the portion of the graph representing your chosen interval will be highlighted.
+                        Once you correctly identify two intervals, you will face a challenge problem.
+                    `;
+                } else if (newMode === 'challenge') {
+                    if (challengeControls) challengeControls.classList.remove('hidden');
+                    if (instructionsText) instructionsText.innerHTML = `
+                        <strong>Challenge Time!</strong>
+                        <br>
+                        You've correctly identified ${gameState.correctAnswers} intervals. Now, find both the <strong>domain</strong> and the <strong>range</strong> for this new parabola to complete the challenge!
+                        <br>
+                        Your selections will now highlight both intervals on the graph.
+                    `;
+                } else if (newMode === 'point-check') {
+                    if (pointCheckerControls) pointCheckerControls.classList.remove('hidden');
+                    if (instructionsText) instructionsText.innerHTML = `
+                        <strong>One More Step!</strong>
+                        <br>
+                        You correctly identified the interval. Now, prove it by providing one <strong>(x, y)</strong> coordinate point that exists on the parabola segment shown.
+                    `;
+                }
+            }
+
+            /**
+             * Shows the point checker UI and sets the pending next problem.
+             * @param {'normal' | 'challenge'} nextMode - The mode to go to after success.
+             */
+            function showPointChecker(nextMode) {
+                gameState.pendingNextProblem = nextMode;
+                setMode('point-check');
+                showFeedback('', 'none'); // Clear main feedback
+                showPointFeedback('Enter an (x, y) point from the graph.', 'none');
+                pointXInput.value = '';
+                pointYInput.value = '';
+            }
+
+            /**
+             * Helper function to process a correct answer in normal mode.
+             * @param {string} type - 'Domain' or 'Range'.
+             */
+            function handleCorrectNormalAnswer(type) {
+                gameState.correctAnswers++;
+                showFeedback(`✅ Correct! You've found the ${type}. (${gameState.correctAnswers} correct interval${gameState.correctAnswers > 1 ? 's' : ''})`, 'success');
+                showCorrectAnswerGif(); // Show Correct GIF
+
+                // Instead of setting a timer, show the point checker
+                setTimeout(() => {
+                    showPointChecker('normal');
+                }, 4300); // Wait for GIF to recede (4000ms + 300ms)
+            }
+
+            /**
+             * Checks the answer for the normal mode.
+             */
+            function checkNormalAnswer() {
+                if (!normalVariable || !normalLowerInput || !normalUpperInput || !normalLowerOp || !normalUpperOp) {
+                    console.error("Missing normal control elements.");
+                    return;
+                }
+                
+                const selectedVar = normalVariable.value;
+                const lower = parseFloat(normalLowerInput.value);
+                const upper = parseFloat(normalUpperInput.value);
+                const lowerOp = normalLowerOp.value;
+                const upperOp = normalUpperOp.value;
+                const { x_min, x_max, y_min, y_max, challengeType } = currentProblem;
+                
+                const opsCorrect = (lowerOp === '≤' && upperOp === '≤');
+                
+                if (challengeType === 'domain') {
+                    if (selectedVar === 'y') {
+                        showFeedback('You selected \'y\' (range), but the prompt asked for the <strong>Domain</strong> (x-values).', 'error');
+                        showWrongAnswerGif();
+                        return;
+                    }
+                    
+                    const domainNumbersCorrect = (lower === x_min && upper === x_max);
+                    if (domainNumbersCorrect && opsCorrect) {
+                        handleCorrectNormalAnswer('Domain');
+                    } else if (domainNumbersCorrect && !opsCorrect) {
+                        showFeedback('Your domain numbers are correct! Now check the inequality symbols.', 'error');
+                        showWrongAnswerGif();
+                    } else {
+                        showFeedback('That is not the correct domain. Check your x-values again.', 'error');
+                        showWrongAnswerGif();
+                    }
+                    
+                } else { // challengeType === 'range'
+                    if (selectedVar === 'x') {
+                        showFeedback('You selected \'x\' (domain), but the prompt asked for the <strong>Range</strong> (y-values).', 'error');
+                        showWrongAnswerGif();
+                        return;
+                    }
+                    
+                    const rangeNumbersCorrect = (lower === y_min && upper === y_max);
+                    if (rangeNumbersCorrect && opsCorrect) {
+                        handleCorrectNormalAnswer('Range');
+                    } else if (rangeNumbersCorrect && !opsCorrect) {
+                        showFeedback('Your range numbers are correct! Now check the inequality symbols.', 'error');
+                        showWrongAnswerGif();
+                    } else {
+                        showFeedback('That is not the correct range. Check your y-values again.', 'error');
+                        showWrongAnswerGif();
+                    }
+                }
+            }
+
+            /**
+             * Checks the answer for the challenge mode.
+             */
+            function checkChallengeAnswer() {
+                if (!challengeDomainLower || !challengeDomainUpper || !challengeDomainLowerOp || !challengeDomainUpperOp ||
+                    !challengeRangeLower || !challengeRangeUpper || !challengeRangeLowerOp || !challengeRangeUpperOp) {
+                    console.error("Missing challenge control elements.");
+                    return;
+                }
+                
+                const dLower = parseFloat(challengeDomainLower.value);
+                const dUpper = parseFloat(challengeDomainUpper.value);
+                const dLowerOp = challengeDomainLowerOp.value;
+                const dUpperOp = challengeDomainUpperOp.value;
+                const rLower = parseFloat(challengeRangeLower.value);
+                const rUpper = parseFloat(challengeRangeUpper.value);
+                const rLowerOp = challengeRangeLowerOp.value;
+                const rUpperOp = challengeRangeUpperOp.value;
+                const { x_min, x_max, y_min, y_max } = currentProblem;
+
+                const domainNumbersCorrect = (dLower === x_min && dUpper === x_max);
+                const domainOpsCorrect = (dLowerOp === '≤' && dUpperOp === '≤');
+                const rangeNumbersCorrect = (rLower === y_min && rUpper === y_max);
+                const rangeOpsCorrect = (rLowerOp === '≤' && rUpperOp === '≤');
+
+                const domainCorrect = domainNumbersCorrect && domainOpsCorrect;
+                const rangeCorrect = rangeNumbersCorrect && rangeOpsCorrect;
+
+                if (domainCorrect && rangeCorrect) {
+                    showFeedback('🎉 Excellent work! You’ve mastered identifying the domain and range!', 'success');
+                    showCorrectAnswerGif(); // Show Correct GIF
+                    
+                    // NEW: Show point checker instead of moving on
+                    setTimeout(() => {
+                        showPointChecker('challenge');
+                    }, 4300); // Wait for GIF to recede
+
+                } else {
+                    if (!domainCorrect && !rangeCorrect) {
+                        showFeedback('Not quite. Check both intervals again!', 'error');
+                        showWrongAnswerGif(); 
+                    } else if (domainCorrect && !rangeCorrect) {
+                        showFeedback('So close! Your domain is correct, but check the range (y-values) again.', 'error');
+                        showWrongAnswerGif(); 
+                    } else if (!domainCorrect && rangeCorrect) {
+                        showFeedback('Almost! Your range is correct, but check the domain (x-values) again.', 'error');
+                        showWrongAnswerGif(); 
+                    } else if (domainNumbersCorrect && !domainOpsCorrect) {
+                        showFeedback('Your domain *numbers* are right, but check the domain *inequalities*!', 'error');
+                        showWrongAnswerGif(); 
+                    } else if (rangeNumbersCorrect && !rangeOpsCorrect) {
+                        showFeedback('Your range *numbers* are right, but check the range *inequalities*!', 'error');
+                        showWrongAnswerGif(); 
+                    } else {
+                        showFeedback('Not quite. Double-check all your values and symbols.', 'error');
+                        showWrongAnswerGif(); 
+                    }
+                }
+            }
+
+            /**
+             * Checks the (x, y) point submitted by the user.
+             */
+            function checkPointAnswer() {
+                const x = parseInt(pointXInput.value);
+                const y = parseInt(pointYInput.value);
+                
+                if (isNaN(x) || isNaN(y)) {
+                    showPointFeedback('Please enter valid integer numbers for both x and y.', 'error');
+                    return;
+                }
+
+                const { x_min, x_max, y_min, y_max } = currentProblem;
+
+                // 1. Check if x is in the domain
+                const inDomain = (x >= x_min && x <= x_max);
+                if (!inDomain) {
+                    showPointFeedback(`That x-value (${x}) is not in the domain [${x_min}, ${x_max}].`, 'error');
+                    return;
+                }
+
+                // 2. Check if the point is on the parabola
+                const correctY = parabolaFunc(x);
+                const onParabola = (y === correctY);
+                if (!onParabola) {
+                    showPointFeedback(`That point isn't on the parabola. For x = ${x}, the y-value should be ${correctY}.`, 'error');
+                    return;
+                }
+
+                // 3. Check if y is in the range (this should be true if #1 and #2 are true, but good to check)
+                const inRange = (y >= y_min && y <= y_max);
+                if (!inRange) {
+                    // This case is rare but possible if logic is flawed
+                    showPointFeedback(`That y-value (${y}) is not in the range [${y_min}, ${y_max}].`, 'error');
+                    return;
+                }
+
+                // --- All checks passed ---
+                showPointFeedback(`✅ Spot on! The point (${x}, ${y}) is on the graph.`, 'success');
+                showCorrectAnswerGif();
+                
+                // NEW: Trigger animation instead of proceeding
+                animateEquationSubstitution(x, y);
+            }
+
+            /**
+             * NEW: Helper function to append animated steps to the equation container.
+             */
+            function appendStep(container, text, delay) {
+                setTimeout(() => {
+                    const p = document.createElement('p');
+                    p.className = 'text-center font-mono text-lg p-1 animate-fade-in';
+                    p.innerHTML = text; // Use innerHTML to render <strong> and ✅
+                    container.appendChild(p);
+                }, delay);
+            }
+
+            /**
+             * NEW: Animates the substitution of the (x, y) point into the parabola's equation.
+             */
+            function animateEquationSubstitution(x, y) {
+                const { a, h, k } = currentProblem;
+                const animDiv = equationAnimationDiv;
+                animDiv.innerHTML = '<h4 class="text-lg font-bold text-center mb-3 text-gray-800">Let\'s check the math!</h4>';
+                animDiv.classList.remove('hidden');
+
+                let delay = 0;
+                const stepDelay = 1800; // 1.8 seconds per step
+
+                // Helper to format h and k in the equation string
+                // f_h(3) -> "(x - 3)"
+                // f_h(-3) -> "(x + 3)"
+                // f_k(2) -> " + 2"
+                // f_k(-2) -> " - 2"
+                // f_a(1) -> ""
+                // f_a(-1) -> "-"
+                const f_h = (h_val) => (h_val === 0 ? 'x' : (h_val > 0 ? `(x - ${h_val})` : `(x + ${Math.abs(h_val)})`));
+                const f_k = (k_val) => (k_val === 0 ? '' : (k_val > 0 ? ` + ${k_val}` : ` - ${Math.abs(k_val)}`));
+                const f_a = (a_val) => (a_val === 1 ? '' : (a_val === -1 ? '-' : `${a_val}`));
+
+                // Step 1: General Equation
+                delay += 500;
+                appendStep(animDiv, `y = ${f_a(a)}${f_h(h)}²${f_k(k)}`, delay);
+                
+                // Step 2: Substitute
+                delay += stepDelay;
+                appendStep(animDiv, `<strong>${y}</strong> = ${f_a(a)}${f_h(h).replace('x', `<strong>${x}</strong>`)}²${f_k(k)}`, delay);
+                
+                // Step 3: Solve Parentheses
+                delay += stepDelay;
+                const innerVal = x - h;
+                appendStep(animDiv, `<strong>${y}</strong> = ${f_a(a)}(${innerVal})²${f_k(k)}`, delay);
+
+                // Step 4: Solve Exponent
+                delay += stepDelay;
+                const squaredVal = innerVal * innerVal;
+                appendStep(animDiv, `<strong>${y}</strong> = ${f_a(a)}(${squaredVal})${f_k(k)}`, delay);
+                
+                // Step 5: Solve Multiplication
+                delay += stepDelay;
+                const multVal = a * squaredVal;
+                // Check if k is 0, to avoid "10 + 0"
+                const multStr = k === 0 ? `${multVal}` : `${multVal}${f_k(k)}`;
+                appendStep(animDiv, `<strong>${y}</strong> = ${multStr}`, delay);
+                
+                // Step 6: Solve Addition (if k wasn't 0)
+                const finalVal = multVal + k;
+                if (k !== 0) {
+                    delay += stepDelay;
+                    appendStep(animDiv, `<strong>${y}</strong> = ${finalVal}`, delay);
+                }
+                
+                // Step 7: Final Check
+                delay += stepDelay;
+                appendStep(animDiv, `<span class="text-2xl text-green-600 font-bold"><strong>${y}</strong> = ${finalVal} ✅</span>`, delay);
+
+                // Set the timer for the next problem
+                delay += 3000; // Give them 3 seconds to read the final line
+                setTimeout(() => {
+                    if (gameState.pendingNextProblem === 'normal') {
+                        if (gameState.correctAnswers >= 2) {
+                            setMode('challenge');
+                        } else {
+                            setMode('normal');
+                        }
+                    } else if (gameState.pendingNextProblem === 'challenge') {
+                        gameState.correctAnswers = 0;
+                        setMode('normal');
+                    }
+                    gameState.pendingNextProblem = null;
+                    generateProblem(); // Generate the next problem
+                }, delay);
+            }
+
+
+            // --- Event Listeners ---
+            
+            // Live highlighting on input
+            [normalLowerInput, normalUpperInput, normalVariable].filter(Boolean).forEach(input => {
+                input.addEventListener('input', mainDraw);
+            });
+            
+            // Add live highlighting for challenge inputs
+            [
+                challengeDomainLower, challengeDomainUpper, 
+                challengeRangeLower, challengeRangeUpper,
+                challengeDomainLowerOp, challengeDomainUpperOp,
+                challengeRangeLowerOp, challengeRangeUpperOp
+            ].filter(Boolean).forEach(input => {
+                input.addEventListener('input', mainDraw);
+            });
+            
+            // Check answer buttons
+            if (checkNormalBtn) checkNormalBtn.addEventListener('click', checkNormalAnswer);
+            if (checkChallengeBtn) checkChallengeBtn.addEventListener('click', checkChallengeAnswer);
+            
+            // Check point button
+            if (checkPointBtn) checkPointBtn.addEventListener('click', checkPointAnswer);
+
+
+            // --- Initialization ---
+            function init() {
+                setMode('normal');
+                generateProblem(); // Generate the first problem
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
+
+

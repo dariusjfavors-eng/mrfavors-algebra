@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polynomial Safe Cracker</title>
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load Tone.js for sounds --><script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    
+    <!-- Load a cartoonish Google Font --><link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Apply the cartoonish font */
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Styling for the draggable terms */
+        .term {
+            position: relative; 
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+            cursor: grab;
+            border: 3px solid rgba(0,0,0,0.2);
+            margin: 4px; /* Added margin for spacing in the flex line */
+            transition: opacity 0.2s ease;
+        }
+        
+        /* Hide default number input spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            text-align: center; /* Ensure text is centered in the input */
+        }
+
+        /* This class will be added during drag to make it absolute again */
+        .term.dragging {
+            opacity: 0.5;
+            transform: scale(1.1);
+        }
+
+        .term:active {
+            cursor: grabbing;
+        }
+        
+        /* The bins for grouping terms */
+        .grouping-bin {
+            border: 4px dashed #fff;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem; 
+        }
+
+        .grouping-bin.drag-over {
+            background: rgba(255, 255, 255, 0.6);
+            border-style: solid;
+            transform: scale(1.02);
+        }
+
+        /* Container for dropped terms within the bin */
+        .bin-terms-container {
+            display: flex;
+            flex-wrap: wrap; 
+            justify-content: center;
+            gap: 4px; 
+            min-height: 60px; 
+            margin-top: 8px; 
+            width: 100%; 
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        /* Style for dropped terms (relative position inside bin) */
+        .bin-terms-container .term {
+            position: relative; 
+            top: auto;
+            left: auto;
+            transform: none !important; 
+            margin: 2px;
+            /* cursor: default; NO, keep it grabbable */
+            font-size: 1rem; 
+            padding: 0.25rem 0.5rem;
+            box-shadow: none;
+            border: 1px solid rgba(0,0,0,0.1);
+            z-index: 10; 
+        }
+
+
+        /* The safe and its components */
+        #safe-area {
+            background-color: #5a677d;
+            border: 8px solid #3d4556;
+            border-radius: 20px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.2);
+            overflow-y: auto; 
+        }
+
+        /* Safe Dial Styles */
+        .safe-dial {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .dial-display {
+            width: 70px;
+            height: 70px;
+            font-size: 2rem;
+            font-weight: 700;
+            border: 5px solid #3d4556;
+            border-radius: 50%;
+            background-color: #cdd4e0;
+            color: #2a303a;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.2), 0 2px 0 #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4px 0;
+        }
+
+        .dial-btn {
+            width: 50px;
+            height: 30px;
+            background-color: #718096;
+            border: 2px solid #3d4556;
+            border-radius: 6px;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #3d4556;
+            transition: all 0.1s ease;
+        }
+
+        .dial-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #3d4556;
+        }
+
+        /* Big cartoonish unlock button */
+        #unlock-button {
+            background-color: #28a745;
+            border-bottom: 6px solid #1e7e34;
+            transition: all 0.1s ease;
+        }
+
+        #unlock-button:active {
+            transform: translateY(2px);
+            border-bottom-width: 4px;
+        }
+        
+        /* Reset button */
+        #reset-button {
+            background-color: #f7b731;
+            border-bottom: 4px solid #c79227;
+        }
+        
+        #reset-button:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
+        /* Modal transitions */
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Term area as a flex line */
+        #term-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px; /* Added gap for spacing */
+            padding: 8px;
+            overflow-y: auto; 
+            border: 4px dashed #fff;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            min-height: 100px; /* Ensure it has some height */
+        }
+
+        #term-area.drag-over {
+            background: rgba(255, 255, 255, 0.4);
+            border-style: solid;
+        }
+        
+        /* Specific Term Colors */
+        .term.bg-pink-300 { background-color: #f9a8d4; border-color: #c026d3; } /* x2 */
+        .term.bg-green-300 { background-color: #86efac; border-color: #15803d; } /* x */
+        .term.bg-yellow-300 { background-color: #fef08a; border-color: #a16207; } /* y */
+        .term.bg-red-300 { background-color: #fca5a5; border-color: #b91c1c; } /* const */
+        /* Dummy term color */
+        .term.bg-gray-300 { background-color: #d1d5db; border-color: #6b7280; } /* dummy */
+
+
+    </style>
+</head>
+<body class="w-screen h-screen p-4 overflow-hidden">
+
+    <div id="game-container" class="w-full h-full flex flex-col xl:flex-row gap-4">
+
+        <!-- Left Side: Term sorting area --><div class="w-full xl:w-2/3 h-full flex flex-col bg-white/40 rounded-2xl shadow-lg p-4">
+            <h1 id="main-title" class="text-3xl font-bold text-center text-gray-800 mb-2">1. Sort the Loot!</h1>
+            <!-- Problem statement for challenge mode -->
+            <h2 id="problem-statement" class="text-2xl font-bold text-center text-gray-700 mb-2 hidden bg-white/50 p-2 rounded-lg"></h2>
+            
+            <!-- This is where the draggable terms will appear -->
+            <div id="term-area" class="w-full h-1/3 mb-4">
+                <!-- Terms will be injected by JS as a flex line -->
+            </div>
+            
+            <!-- These are the bins to drop terms into -->
+            <!-- Layout changed to flex-col to accommodate dummy bin -->
+            <div id="grouping-area" class="w-full h-2/3 flex flex-col gap-3">
+                <!-- Main 4 Bins -->
+                <div id="main-bins" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="grouping-bin" data-type="x2">
+                        <h2 class="text-4xl font-bold text-pink-700">x²</h2>
+                        <div class="text-2xl font-semibold text-gray-800 mt-2">Total: <span id="total-x2" class="font-bold">0</span></div>
+                        <div class="bin-terms-container" id="bin-x2"></div>
+                    </div>
+                    <div class="grouping-bin" data-type="x">
+                        <h2 class="text-4xl font-bold text-green-700">x</h2>
+                        <div class="text-2xl font-semibold text-gray-800 mt-2">Total: <span id="total-x" class="font-bold">0</span></div>
+                        <div class="bin-terms-container" id="bin-x"></div>
+                    </div>
+                    <div class="grouping-bin" data-type="y">
+                        <h2 class="text-4xl font-bold text-yellow-700">y</h2>
+                        <div class="text-2xl font-semibold text-gray-800 mt-2">Total: <span id="total-y" class="font-bold">0</span></div>
+                        <div class="bin-terms-container" id="bin-y"></div>
+                    </div>
+                    <div class="grouping-bin" data-type="const">
+                        <h2 class="text-4xl font-bold text-red-700">#</h2>
+                        <div class="text-2xl font-semibold text-gray-800 mt-2">Total: <span id="total-const" class="font-bold">0</span></div>
+                        <div class="bin-terms-container" id="bin-const"></div>
+                    </div>
+                </div>
+                <!-- Dummy Bin for Challenge Mode -->
+                <div id="dummy-bin-container" class="grouping-bin hidden" data-type="dummy">
+                    <h2 class="text-3xl font-bold text-gray-800">Decoy Terms (Traps)</h2>
+                    <div class="bin-terms-container min-h-[40px]" id="bin-dummy"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Safe and puzzle --><div class="w-full xl:w-1/3 h-full flex flex-col items-center justify-center p-4" id="safe-area">
+            <h2 class="text-3xl font-bold text-white text-center mb-2 text-shadow">2. The Main Vault!</h2>
+            <p class="text-lg text-gray-200 text-center mb-3">Use your totals from the loot sort to find the combination!</p>
+
+            <!-- NEW: GIF Container -->
+            <div id="gif-container" class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                <img id="correct-gif" src="https://media.giphy.com/media/BhmVkWoUjQniiGDWU3/giphy.gif" alt="Correct!" class="w-48 h-48 rounded-lg hidden">
+                <img id="incorrect-gif" src="https://media.giphy.com/media/b2jicwWyJ8wTpQGKaX/giphy.gif" alt="Incorrect!" class="w-48 h-48 rounded-lg hidden">
+            </div>
+
+            <!-- The "Safe" SVG (w-36 h-36) -->
+            <svg id="safe-closed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-36 h-36 mb-3">
+                <path fill="#8a9ab0" d="M10 10h80v80H10z"/>
+                <path fill="#a0aec0" d="M12 12h76v76H12z"/>
+                <circle fill="#4a5568" cx="50" cy="50" r="30"/>
+                <circle fill="#718096" cx="50" cy="50" r="25"/>
+                <circle fill="#e2e8f0" cx="50" cy="50" r="18"/>
+                <path fill="#4a5568" d="M50 35h20a5 5 0 010 10H50a5 5 0 010-10zm0 20h15a5 5 0 010 10H50a5 5 0 010-10z"/>
+                <circle fill="#cbd5e0" cx="18" cy="18" r="2"/>
+                <circle fill="#cbd5e0" cx="82" cy="18" r="2"/>
+                <circle fill="#cbd5e0" cx="18" cy="82" r="2"/>
+                <circle fill="#cbd5e0" cx="82" cy="82" r="2"/>
+            </svg>
+            <svg id="safe-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-36 h-36 mb-3 hidden">
+                <path fill="#2d3748" d="M10 10h80v80H10z"/>
+                <path fill="#4a5568" d="M20 10h70v80H20z"/>
+                <path fill="#f7fafc" d="M22 12h66v76H22z"/>
+                <path fill="#f6e05e" d="M25 15h60v70H25z"/>
+                <path fill="#ecc94b" d="M30 20h50v60H30z"/>
+                <path fill="#8a9ab0" d="M10 10h10v80H10z"/>
+                <circle fill="#cbd5e0" cx="15" cy="50" r="3"/>
+            </svg>
+
+            <!-- Message Box --><div id="message-box" class="h-8 text-xl text-center font-semibold mb-3"></div>
+
+            <!-- Combination Dials --><div id="combination-lock" class="grid grid-cols-4 gap-2">
+                <div class="flex flex-col items-center">
+                    <label class="text-3xl font-bold text-pink-300">x²</label>
+                    <div class="safe-dial">
+                        <button class="dial-btn dial-up" data-type="x2" data-dir="up">▲</button>
+                        <input type="number" id="display-x2" class="dial-display" value="0">
+                        <button class="dial-btn dial-down" data-type="x2" data-dir="down">▼</button>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <label class="text-3xl font-bold text-green-300">x</label>
+                    <div class="safe-dial">
+                        <button class="dial-btn dial-up" data-type="x" data-dir="up">▲</button>
+                        <input type="number" id="display-x" class="dial-display" value="0">
+                        <button class="dial-btn dial-down" data-type="x" data-dir="down">▼</button>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <label class="text-3xl font-bold text-yellow-300">y</label>
+                    <div class="safe-dial">
+                        <button class="dial-btn dial-up" data-type="y" data-dir="up">▲</button>
+                        <input type="number" id="display-y" class="dial-display" value="0">
+                        <button class="dial-btn dial-down" data-type="y" data-dir="down">▼</button>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <label class="text-3xl font-bold text-red-300">#</label>
+                    <div class="safe-dial">
+                        <button class="dial-btn dial-up" data-type="const" data-dir="up">▲</button>
+                        <input type="number" id="display-const" class="dial-display" value="0">
+                        <button class="dial-btn dial-down" data-type="const" data-dir="down">▼</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unlock Button --><button id="unlock-button" class="w-full text-white text-3xl font-bold py-3 px-6 rounded-xl mt-4 shadow-lg">
+                CRACK IT!
+            </button>
+            <button id="reset-button" class="w-1/2 text-gray-800 text-xl font-bold py-2 px-4 rounded-lg mt-2 shadow-md">
+                New Heist
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Intro "Mission" Modal --><div id="intro-modal" class="modal absolute inset-0 w-full h-full bg-black/60 flex items-center justify-center p-4 z-50">
+        <div class="bg-gradient-to-br from-gray-700 to-gray-900 p-8 rounded-2xl shadow-2xl border-8 border-gray-500 text-center max-w-xl transform scale-100">
+            <h2 class="text-5xl font-bold text-red-500 mb-4">TOP SECRET</h2>
+            <h3 class="text-3xl font-semibold text-yellow-300 mb-6">Your Mission, Should You Choose to Accept It...</h3>
+            <p class="text-xl text-gray-200 mb-4">
+                You are an expert safe-cracker. Your target: the legendary Algebra Vault.
+            </p>
+            <p class="text-xl text-gray-200 mb-6">
+                To find the 4-part combination, you must first sort the jumbled polynomial terms (the "loot") from the top bar into their correct bins. The total from each bin is one number of the combination. As you sort, you'll see the totals compute themselves!
+            </p>
+            <p class="text-xl text-gray-200 mb-8">
+                Get the combination right, and the "Keys to the Regents" are yours. Good luck, thief.
+            </p>
+            <button id="start-heist-button" class="bg-green-600 text-white text-3xl font-bold py-3 px-10 rounded-xl border-b-4 border-green-800 shadow-lg">
+                Start Heist
+            </button>
+        </div>
+    </div>
+
+    <!-- Treasure Modal (hidden by default) --><div id="treasure-modal" class="modal absolute inset-0 w-full h-full bg-black/50 flex items-center justify-center opacity-0 -translate-y-full pointer-events-none z-50">
+        <div class="bg-gradient-to-br from-yellow-300 to-amber-500 p-8 rounded-2xl shadow-2xl border-8 border-yellow-600 text-center max-w-lg transform scale-90">
+            <h2 class="text-5xl font-bold text-red-700 mb-4">HEIST COMPLETE!</h2>
+            <!-- Treasure Chest SVG --><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-48 h-48 mx-auto mb-4">
+                <path fill="#a0522d" d="M10 40h80v40H10z"/>
+                <path fill="#8b4513" d="M12 42h76v36H12z"/>
+                <path fill="#daa520" d="M8 38h84v4H8zm0 40h84v4H8zM10 40h4v40h-4zm76 0h4v40h-4z"/>
+                <path fill="#f6e05e" d="M45 55h10v10H45z"/>
+                <path fill="#2d3748" d="M47 57h6v6h-6z"/>
+                <path fill="#a052d0" d="M20 20c0-10 10-10 30-10s30 0 30 10v20H20V20z"/>
+                <path fill="#8b4513"B" d="M22 22c0-8 8-8 28-8s28 0 28 8v18H22V22z"/>
+                <path fill="#daa520" d="M18 18h64v4H18zm0 20h64v4H18z"/>
+            </svg>
+            <p class="text-3xl font-semibold text-gray-800 mb-6">
+                You cracked the vault! The "Keys to the Regents" are yours!
+            </p>
+            <button id="close-modal-button" class="bg-blue-600 text-white text-2xl font-bold py-3 px-8 rounded-xl border-b-4 border-blue-800 shadow-lg">
+                Plan New Heist
+            </button>
+            <!-- Challenge Mode Button -->
+            <button id="challenge-heist-button" class="bg-red-600 text-white text-2xl font-bold py-3 px-8 rounded-xl border-b-4 border-red-800 shadow-lg mt-4">
+                Try Increased Security
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const mainTitle = document.getElementById('main-title');
+            const problemStatement = document.getElementById('problem-statement');
+            const termArea = document.getElementById('term-area');
+            const groupingBins = document.querySelectorAll('.grouping-bin');
+            const unlockButton = document.getElementById('unlock-button');
+            const resetButton = document.getElementById('reset-button');
+            const messageBox = document.getElementById('message-box');
+            const combinationLock = document.getElementById('combination-lock');
+            const dummyBinContainer = document.getElementById('dummy-bin-container'); 
+            
+            // Dials
+            const dialDisplays = {
+                x2: document.getElementById('display-x2'),
+                x: document.getElementById('display-x'),
+                y: document.getElementById('display-y'),
+                const: document.getElementById('display-const')
+            };
+            
+            const totalSpans = {
+                x2: document.getElementById('total-x2'),
+                x: document.getElementById('total-x'),
+                y: document.getElementById('total-y'),
+                const: document.getElementById('total-const')
+            };
+
+            const binTermContainers = {
+                x2: document.getElementById('bin-x2'),
+                x: document.getElementById('bin-x'),
+                y: document.getElementById('bin-y'),
+                const: document.getElementById('bin-const'),
+                dummy: document.getElementById('bin-dummy') 
+            };
+
+            const safeClosed = document.getElementById('safe-closed');
+            const safeOpen = document.getElementById('safe-open');
+            const treasureModal = document.getElementById('treasure-modal');
+            const closeModalButton = document.getElementById('close-modal-button');
+            const challengeHeistButton = document.getElementById('challenge-heist-button'); 
+            const introModal = document.getElementById('intro-modal');
+            const startHeistButton = document.getElementById('start-heist-button');
+            // NEW: GIF Elements
+            const correctGif = document.getElementById('correct-gif');
+            const incorrectGif = document.getElementById('incorrect-gif');
+
+            // --- Game State ---
+            let correctAnswer = {};
+            let currentTotals = {};
+            let studentAnswer = { x2: 0, x: 0, y: 0, const: 0 }; 
+            let allTerms = [];
+            let termCounter = 0;
+            let totalTermsInProblem = 0;
+            let draggedTerm = null; 
+            let challengeMode = false; 
+            
+            // --- NEW: State for re-dragging ---
+            let draggedTermOriginalBin = null;
+            let draggedTermValue = 0;
+            
+            // Color map for terms
+            const termColors = {
+                x2: 'bg-pink-300',
+                x: 'bg-green-300',
+                y: 'bg-yellow-300',
+                const: 'bg-red-300',
+                x3: 'bg-gray-300',
+                y2: 'bg-gray-300'
+            };
+            
+            // List of dummy types
+            const DUMMY_TYPES = ['x3', 'y2'];
+
+            // --- Audio Synths (using Tone.js) ---
+            let clickSynth, successSynth, failSynth, dropSynth, wrongBinSynth;
+
+            function initAudio() {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                if (!clickSynth) {
+                    clickSynth = new Tone.Synth({
+                        oscillator: { type: 'triangle' },
+                        envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }
+                    }).toDestination();
+                }
+                if (!successSynth) {
+                    successSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: 'sine' },
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 }
+                    }).toDestination();
+                }
+                if (!failSynth) {
+                    failSynth = new Tone.Synth({
+                        oscillator: { type: 'square' },
+                        envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 }
+                    }).toDestination();
+                }
+                if (!dropSynth) {
+                    dropSynth = new Tone.Synth({
+                        oscillator: { type: 'sine' },
+                        envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }
+                    }).toDestination();
+                }
+                if (!wrongBinSynth) {
+                    wrongBinSynth = new Tone.Synth({
+                        oscillator: { type: 'sawtooth' },
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 }
+                    }).toDestination();
+                }
+            }
+            
+            // --- Play Sound Functions ---
+            function playClickSound() {
+                initAudio();
+                clickSynth.triggerAttackRelease('C5', '16n', Tone.now());
+            }
+            function playSuccessSound() {
+                initAudio();
+                successSynth.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '8n', Tone.now());
+            }
+            function playFailSound() {
+                initAudio();
+                failSynth.triggerAttackRelease('F#3', '8n',Tone.now());
+            }
+            function playDropSound() {
+                initAudio();
+                dropSynth.triggerAttackRelease('G4', '16n', Tone.now());
+            }
+            function playWrongBinSound() {
+                initAudio();
+                wrongBinSynth.triggerAttackRelease('C3', '16n', Tone.now());
+            }
+
+            // --- Game Logic ---
+
+            function initGame() {
+                // 1. Reset state
+                correctAnswer = { x2: 0, x: 0, y: 0, const: 0 };
+                currentTotals = { x2: 0, x: 0, y: 0, const: 0 };
+                studentAnswer = { x2: 0, x: 0, y: 0, const: 0 };
+                allTerms = [];
+                termCounter = 0;
+                totalTermsInProblem = 0;
+                draggedTerm = null;
+                draggedTermOriginalBin = null;
+                draggedTermValue = 0;
+                messageBox.textContent = 'Sort the loot to find the combo!';
+                messageBox.className = "h-8 text-xl text-center font-semibold mb-3 text-gray-200";
+                
+                // 2. Clear UI
+                termArea.innerHTML = '';
+                groupingBins.forEach(bin => {
+                    const binType = bin.dataset.type;
+                    if (binTermContainers[binType]) {
+                        binTermContainers[binType].innerHTML = ''; 
+                    }
+                });
+                
+                Object.keys(totalSpans).forEach(type => {
+                    totalSpans[type].textContent = '0';
+                });
+                Object.keys(dialDisplays).forEach(type => {
+                    dialDisplays[type].value = '0'; 
+                });
+
+                // 3. Reset safe/modal
+                safeClosed.classList.remove('hidden');
+                safeOpen.classList.add('hidden');
+                treasureModal.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
+                treasureModal.firstElementChild.classList.add('scale-90');
+                unlockButton.disabled = false;
+                // NEW: Hide GIFs on reset
+                correctGif.classList.add('hidden');
+                incorrectGif.classList.add('hidden');
+
+                // 4. Update UI based on challenge mode
+                if (challengeMode) {
+                    mainTitle.textContent = "Increased Security!";
+                    problemStatement.classList.remove('hidden');
+                    dummyBinContainer.classList.remove('hidden'); 
+                } else {
+                    mainTitle.textContent = "1. Sort the Loot!";
+                    problemStatement.classList.add('hidden');
+                    dummyBinContainer.classList.add('hidden'); 
+                }
+
+                // 5. Generate new problem
+                generateProblem(challengeMode);
+                
+                // 6. Display terms in a line
+                displayTerms();
+            }
+
+            function generateProblem(isChallenge = false) {
+                let problemString = "";
+                allTerms = []; // Clear all terms
+                correctAnswer = { x2: 0, x: 0, y: 0, const: 0 }; // Reset answer
+
+                if (isChallenge) {
+                    // --- CHALLENGE MODE ---
+                    const numDistTerms = randInt(1, 2);
+                    const numRegTerms = randInt(1, 2);
+                    const numDummyTerms = randInt(1, 2); 
+                    let terms = [];
+
+                    // 1. Distribution Terms
+                    for (let i = 0; i < numDistTerms; i++) {
+                        let coeff = randInt(2, 5) * (Math.random() < 0.5 ? 1 : -1);
+                        let innerVal1, innerVal2, innerType1, innerType2;
+                        
+                        const typePool = ['x2', 'x', 'y', 'const'];
+                        innerType1 = typePool.splice(randInt(0, typePool.length - 1), 1)[0];
+                        innerType2 = typePool.splice(randInt(0, typePool.length - 1), 1)[0];
+                        
+                        innerVal1 = randInt(1, 5) * (Math.random() < 0.5 ? 1 : -1);
+                        innerVal2 = randInt(1, 5) * (Math.random() < 0.5 ? 1 : -1);
+
+                        let term1Str = formatTermString(innerVal1, innerType1, false);
+                        let term2Str = formatTermString(innerVal2, innerType2, true);
+                        
+                        terms.push(`${coeff}(${term1Str} ${term2Str})`);
+                        addTerm(innerType1, innerVal1 * coeff);
+                        addTerm(innerType2, innerVal2 * coeff);
+                    }
+
+                    // 2. Regular Terms
+                    for (let i = 0; i < numRegTerms; i++) {
+                        const typePool = ['x2', 'x', 'y', 'const'];
+                        let type = typePool.splice(randInt(0, typePool.length - 1), 1)[0];
+                        let val = randInt(-7, 7, true);
+                        
+                        terms.push(formatTermString(val, type, true));
+                        addTerm(type, val);
+                    }
+                    
+                    // 3. Dummy Terms
+                    for (let i = 0; i < numDummyTerms; i++) {
+                        const type = DUMMY_TYPES[randInt(0, DUMMY_TYPES.length - 1)];
+                        const val = randInt(-5, 5, true);
+                        
+                        terms.push(formatTermString(val, type, true));
+                        addTerm(type, val); // Add to allTerms, but not to correctAnswer
+                    }
+                    
+                    problemStatement.textContent = terms.join(' ');
+
+                } else {
+                    // --- NORMAL MODE ---
+                    correctAnswer.x2 = randInt(-5, 5, true); 
+                    correctAnswer.x = randInt(-10, 10, true);
+                    correctAnswer.y = randInt(-10, 10, true);
+                    correctAnswer.const = randInt(-20, 20, true);
+
+                    allTerms = [
+                        ...breakDownTerm('x2', correctAnswer.x2),
+                        ...breakDownTerm('x', correctAnswer.x),
+                        ...breakDownTerm('y', correctAnswer.y),
+                        ...breakDownTerm('const', correctAnswer.const)
+                    ];
+                }
+
+                totalTermsInProblem = allTerms.length;
+
+                // Helper to add term to lists
+                function addTerm(type, value) {
+                    if (value === 0) return;
+                    // Only add to correctAnswer if it's NOT a dummy term
+                    if (correctAnswer.hasOwnProperty(type)) {
+                        correctAnswer[type] += value;
+                    }
+                    allTerms.push(createTermObject(type, value));
+                }
+            }
+
+            function randInt(min, max, noZero = false) {
+                let val = Math.floor(Math.random() * (max - min + 1)) + min;
+                while (noZero && val === 0) {
+                    val = Math.floor(Math.random() * (max - min + 1)) + min;
+                }
+                return val;
+            }
+
+            // Helper for formatting strings
+            function formatTermString(value, type, includePlus) {
+                let text = '';
+                switch (type) {
+                    case 'x2': text = `${value}x²`; break;
+                    case 'x': text = `${value}x`; break;
+                    case 'y': text = `${value}y`; break;
+                    case 'const': text = `${value}`; break;
+                    case 'x3': text = `${value}x³`; break; 
+                    case 'y2': text = `${value}y²`; break; 
+                }
+                
+                text = text.replace(/^(1)x/, 'x').replace(/^(-1)x/, '-x');
+                text = text.replace(/^(1)y/, 'y').replace(/^(-1)y/, '-y');
+                
+                if (includePlus && value > 0) text = `+ ${text}`;
+                if (includePlus && value < 0) text = `- ${text.substring(1)}`;
+                
+                return text;
+            }
+
+            function breakDownTerm(type, totalValue) {
+                const terms = [];
+                let remaining = totalValue;
+                const numTerms = randInt(2, 4); 
+                
+                for (let i = 0; i < numTerms - 1; i++) {
+                    let val = randInt(1, Math.abs(remaining) - (numTerms - i - 1) || 1);
+                    if (remaining < 0) val = -val;
+                    if (Math.random() < 0.4) val = -val; 
+                    
+                    terms.push(createTermObject(type, val));
+                    remaining -= val;
+                }
+                if (remaining !== 0) {
+                     terms.push(createTermObject(type, remaining));
+                }
+                
+                return terms.filter(t => t.value !== 0); 
+            }
+
+            function createTermObject(type, value) {
+                let text = formatTermString(value, type, true); // Use formatter
+                // Adjust for single term display
+                if (text.startsWith('+ ')) text = text.substring(2);
+                if (text.startsWith('- ')) text = `-${text.substring(2)}`;
+                if (value > 0) text = `+${text}`; // Add plus for bin display
+
+                return {
+                    id: `term-${termCounter++}`,
+                    type: type,
+                    value: value,
+                    text: text
+                };
+            }
+
+            // Proper shuffle function (Fisher-Yates)
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function displayTerms() {
+                // Shuffle terms for variety
+                shuffleArray(allTerms); // <-- Use proper shuffle
+                
+                allTerms.forEach(term => {
+                    const el = document.createElement('div');
+                    el.id = term.id;
+                    el.className = `term ${termColors[term.type] || 'bg-gray-300'}`;
+                    el.textContent = term.text;
+                    el.draggable = true;
+                    el.dataset.type = term.type;
+                    el.dataset.value = term.value;
+                    
+                    makeTermDraggable(el); // NEW: Use helper
+                    termArea.appendChild(el);
+                });
+            }
+
+            // --- NEW: Re-draggable Logic ---
+
+            function makeTermDraggable(termElement) {
+                termElement.addEventListener('dragstart', handleDragStart);
+                termElement.addEventListener('dragend', handleDragEnd);
+            }
+
+            function handleDragStart(e) {
+                initAudio(); 
+                draggedTerm = e.target; 
+                draggedTermValue = parseInt(draggedTerm.dataset.value, 10);
+                
+                e.dataTransfer.setData('text/plain', e.target.id);
+                e.dataTransfer.setData('term-type', e.target.dataset.type);
+                e.dataTransfer.setData('term-value', draggedTerm.dataset.value);
+                
+                // Check if it's from a bin
+                const parentBin = e.target.closest('.grouping-bin');
+                if (parentBin) {
+                    draggedTermOriginalBin = parentBin.dataset.type;
+                    // SUBTRACT from total immediately
+                    if (currentTotals.hasOwnProperty(draggedTermOriginalBin)) {
+                        currentTotals[draggedTermOriginalBin] -= draggedTermValue;
+                        totalSpans[draggedTermOriginalBin].textContent = currentTotals[draggedTermOriginalBin];
+                    }
+                } else {
+                    draggedTermOriginalBin = null; // Came from loot area
+                }
+                
+                // Style after a short delay
+                setTimeout(() => {
+                    if (draggedTerm) {
+                        draggedTerm.classList.add('dragging');
+                    }
+                }, 0);
+            }
+            
+            function handleDragEnd(e) {
+                if (draggedTerm) {
+                    // If drag failed (e.g., dropped outside a valid target)
+                    // and it came from a bin, put it back
+                    if (draggedTermOriginalBin && !e.dataTransfer.dropEffect) {
+                         if (currentTotals.hasOwnProperty(draggedTermOriginalBin)) {
+                            currentTotals[draggedTermOriginalBin] += draggedTermValue;
+                            totalSpans[draggedTermOriginalBin].textContent = currentTotals[draggedTermOriginalBin];
+                        }
+                        binTermContainers[draggedTermOriginalBin].appendChild(draggedTerm);
+                    }
+                    draggedTerm.classList.remove('dragging');
+                }
+                // Reset state
+                draggedTerm = null;
+                draggedTermOriginalBin = null;
+                draggedTermValue = 0;
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault(); 
+                e.currentTarget.classList.add('drag-over');
+            }
+
+            function handleLeave(e) {
+                e.currentTarget.classList.remove('drag-over');
+            }
+
+            function handleDropOnBin(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+
+                const binType = e.currentTarget.dataset.type;
+                
+                const id = e.dataTransfer.getData('text/plain');
+                const termType = e.dataTransfer.getData('term-type');
+                const termValue = parseInt(e.dataTransfer.getData('term-value'), 10);
+                const termElement = document.getElementById(id);
+
+                if (!termElement) return; 
+
+                // --- Drop Logic ---
+                // 1. Visually drop the term
+                const dropTargetContainer = binTermContainers[binType];
+                dropTargetContainer.appendChild(termElement); 
+                makeTermDraggable(termElement); // Ensure it's still draggable
+
+                // 2. Check correctness
+                const isTermDummy = DUMMY_TYPES.includes(termType);
+                const isBinDummy = binType === 'dummy';
+                let isCorrectBin = (isTermDummy && isBinDummy) || (!isTermDummy && !isBinDummy && termType === binType);
+
+                if (isCorrectBin) {
+                    playDropSound();
+                } else {
+                    playWrongBinSound();
+                    // Give feedback
+                    let errorMessage = '';
+                    if (isTermDummy && !isBinDummy) errorMessage = "That's a decoy term... but OK.";
+                    else if (!isTermDummy && isBinDummy) errorMessage = "That's part of the combo! Are you sure?";
+                    else errorMessage = `Are you sure that's a ${binType.toUpperCase().replace('CONST', 'NUMBER')} term?`;
+                    
+                    messageBox.textContent = errorMessage;
+                    messageBox.className = "h-8 text-xl text-center font-semibold mb-3 text-orange-400";
+                    setTimeout(() => {
+                        if (totalTermsInProblem > 0) {
+                             messageBox.textContent = 'Sort the loot to find the combo!';
+                             messageBox.className = "h-8 text-xl text-center font-semibold mb-3 text-gray-200";
+                        }
+                    }, 2500);
+                }
+                
+                // 3. Update totals
+                // Value was already subtracted (if from bin). Now add to new bin.
+                if (currentTotals.hasOwnProperty(binType)) {
+                    currentTotals[binType] += termValue;
+                    totalSpans[binType].textContent = currentTotals[binType];
+                }
+                
+                // 4. Update term counter
+                if (draggedTermOriginalBin === null) {
+                    // Came from loot area
+                    totalTermsInProblem--;
+                }
+                
+                if (totalTermsInProblem === 0) {
+                    messageBox.textContent = 'All loot sorted! Crack the code!';
+                    messageBox.className = "h-8 text-xl text-center font-semibold mb-3 text-green-300";
+                }
+            }
+            
+            function handleDropOnLootArea(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+                
+                const id = e.dataTransfer.getData('text/plain');
+                const termElement = document.getElementById(id);
+                if (!termElement) return;
+
+                // 1. Visually drop term
+                termArea.appendChild(termElement);
+                makeTermDraggable(termElement); // Ensure it's draggable
+                
+                // 2. Update counter
+                if (draggedTermOriginalBin !== null) {
+                    // Only increment if it came from a bin
+                    totalTermsInProblem++;
+                }
+
+                if (totalTermsInProblem > 0) {
+                    messageBox.textContent = 'Sort the loot to find the combo!';
+                    messageBox.className = "h-8 text-xl text-center font-semibold mb-3 text-gray-200";
+                }
+            }
+            
+            // --- Handle Dial Clicks ---
+            function handleDialClick(e) {
+                const btn = e.target.closest('.dial-btn');
+                if (!btn) return;
+
+                const type = btn.dataset.type;
+                const dir = btn.dataset.dir;
+                let currentValue = parseInt(dialDisplays[type].value, 10) || 0;
+
+                if (dir === 'up') {
+                    currentValue++;
+                } else {
+                    currentValue--;
+                }
+                
+                dialDisplays[type].value = currentValue;
+                studentAnswer[type] = currentValue; // Update state
+                playClickSound();
+            }
+
+            // --- Handle Manual Typing in Dials ---
+            function handleDialInput(e) {
+                const input = e.target;
+                if (!input.classList.contains('dial-display')) return;
+
+                const type = input.id.replace('display-', '');
+                studentAnswer[type] = parseInt(input.value, 10) || 0;
+            }
+
+            // --- Check Answer ---
+            function checkAnswer() {
+                // Read values from state (which is updated by both click and input)
+                if (studentAnswer.x2 === correctAnswer.x2 &&
+                    studentAnswer.x === correctAnswer.x &&
+                    studentAnswer.y === correctAnswer.y &&
+                    studentAnswer.const === correctAnswer.const)
+                {
+                    // WIN!
+                    playSuccessSound();
+                    messageBox.textContent = 'Correct!';
+                    messageBox.className = "h-8 text-xl text-center font-semibold mb-3 text-green-300";
+                    unlockButton.disabled = true;
+                    safeClosed.classList.add('hidden');
+                    safeOpen.classList.remove('hidden');
+                    
+                    // NEW: Show correct GIF
+                    correctGif.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        treasureModal.classList.remove('opacity-0', '-translate-y-full', 'pointer-events-none');
+                        treasureModal.firstElementChild.classList.remove('scale-90');
+                    }, 500);
+
+                    // NEW: Hide GIF after 4 seconds
+                    setTimeout(() => {
+                        correctGif.classList.add('hidden');
+                    }, 4000);
+
+                } else {
+                    // FAIL!
+                    playFailSound();
+                    messageBox.textContent = 'Incorrect! Check your totals!';
+                    messageBox.className = "h-8 text-xl text-center font-semibold mb-3 text-red-300";
+
+                    // NEW: Show incorrect GIF
+                    incorrectGif.classList.remove('hidden');
+                    
+                    // NEW: Hide GIF after 4 seconds
+                    setTimeout(() => {
+                        incorrectGif.classList.add('hidden');
+                    }, 4000);
+                }
+            }
+            
+            // --- Close Modals ---
+            function startGame() {
+                initAudio(); 
+                introModal.classList.add('opacity-0', 'pointer-events-none');
+                introModal.firstElementChild.classList.add('scale-90');
+                initGame();
+            }
+
+            function resetGame() {
+                playClickSound();
+                initGame();
+            }
+
+            // --- Event Listeners ---
+            groupingBins.forEach(bin => {
+                bin.addEventListener('dragover', handleDragOver);
+                bin.addEventListener('dragleave', handleLeave);
+                bin.addEventListener('drop', handleDropOnBin); 
+            }); 
+            
+            // Add drop listeners to the loot area
+            termArea.addEventListener('dragover', handleDragOver);
+            termArea.addEventListener('dragleave', handleLeave);
+            termArea.addEventListener('drop', handleDropOnLootArea);
+
+            // Listen for clicks on dial buttons
+            combinationLock.addEventListener('click', handleDialClick);
+            // Listen for typing in dial inputs
+            combinationLock.addEventListener('input', handleDialInput);
+
+            unlockButton.addEventListener('click', checkAnswer);
+            startHeistButton.addEventListener('click', startGame);
+
+            // Modified Reset Listeners
+            resetButton.addEventListener('click', () => {
+                challengeMode = false;
+                resetGame();
+            });
+            closeModalButton.addEventListener('click', () => {
+                challengeMode = false;
+                resetGame();
+            });
+            challengeHeistButton.addEventListener('click', () => {
+                challengeMode = true;
+                resetGame();
+            });
+            
+        });
+    </script>
+</body>
+</html>
+
+
+

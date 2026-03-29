@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algebra 1: Substitution Simulator</title>
+    
+    <!-- 
+      TEACHER NOTES & EMBEDDING GUIDE
+
+      1. How Unique Solutions are Guaranteed:
+         The system works backward. We first choose a unique integer solution (x, y) 
+         within the allowed range (e.g., -5 to 5). Then, we generate random integer 
+         coefficients (a, b, c, d) based on the selected difficulty. Finally, we 
+         calculate the constants (e, f) by plugging in our chosen (x, y):
+         e = a*x + b*y
+         f = c*x + d*y
+         This process *guarantees* that the system (ax+by=e, cx+dy=f) has the exact 
+         integer solution (x, y).
+
+      2. How Difficulty Affects Coefficients:
+         The "Difficulty" setting (Easy, Medium, Hard) controls the absolute range 
+         of the coefficients (a, b, c, d) used to build the equations:
+         - Easy:   Coefficients are in the range [-3, 3] (excluding 0).
+         - Medium: Coefficients are in the range [-5, 5] (excluding 0).
+         - Hard:   Coefficients are in the range [-8, 8] (excluding 0).
+         Harder difficulties result in larger numbers, requiring more complex 
+         arithmetic (e.g., 8*7 vs 2*3) and potentially larger multipliers for 
+         elimination.
+
+      3. How Structural Validation Works:
+         We do *not* use `eval()` for validation, as that can be insecure and
+         only checks for numeric equality. Instead, we use a string normalization
+         process. For each step, we have a list of possible *correct* algebraic 
+         answers (e.g., "2x + 3" and "3 + 2x").
+         
+         When a student submits an answer, we:
+         1. Convert it to lowercase.
+         2. Remove all spaces ("2x+3").
+         We then compare this normalized student string against a list of pre-normalized
+         correct answers. This validates the *structure* of the algebra, not just the
+         final value. For simple value checks (like "x = 2"), we accept both "x=2" 
+         and "2".
+
+      4. How to Embed in Google Sites:
+         1. In your Google Site, on the page you want to add this to, click "Insert" 
+            from the right-hand menu.
+         2. Select the "<> Embed" tool.
+         3. A dialog will open. Click the "Embed code" tab.
+         4. Copy this *entire* HTML file (from <!DOCTYPE html> to </html>) and 
+            paste it into the text box.
+         5. Click "Next", then "Insert".
+         6. Resize the new embed block on your page to be large enough for the
+            simulator (e.g., 1200px wide by 800px tall).
+    --><style>
+        /* Base Styles */
+        :root {
+            --bg-color: #f0f4f8;
+            --container-bg: #ffffff;
+            --sim-bg: #0a0a23; /* Night sky */
+            --ground-color: #2a472a;
+            --pad-color: #9a9a9a;
+            --rocket-color: #f5f5f5;
+            --flame-color: #f8b400;
+            --text-color: #1a202c;
+            --header-color: #2d3748;
+            --primary-blue: #3182ce;
+            --primary-hover: #2b6cb0;
+            --success-green: #38a169;
+            --error-red: #e53e3e;
+            --disabled-gray: #a0aec0;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1400px;
+            background: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        /* Column Layout */
+        .controls-column {
+            flex: 1;
+            min-width: 400px;
+            padding: 24px;
+            border-right: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        .simulation-column {
+            flex: 2;
+            min-width: 600px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* Headings and Text */
+        h1, h2, h3 {
+            color: var(--header-color);
+            font-weight: 600;
+            margin-top: 0;
+        }
+        
+        h1 { font-size: 1.75rem; margin-bottom: 16px; }
+        h2 { font-size: 1.25rem; margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; }
+
+        /* Form Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button, select, input[type="text"], input[type="number"] {
+            font-size: 1rem;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M10 12a.75.75 0 01-.53-.22l-3-3a.75.75 0 011.06-1.06L10 10.94l2.47-2.47a.75.75 0 111.06 1.06l-3 3A.75.75 0 0110 12z' clip-rule='evenodd' /%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px;
+            padding-right: 40px;
+        }
+
+        button {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: var(--disabled-gray);
+            cursor: not-allowed;
+        }
+
+        button.toggle-btn {
+            background-color: #f6f6f6;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        button.toggle-btn.active {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+        
+        button#new-problem-btn {
+            background-color: var(--success-green);
+        }
+        button#new-problem-btn:hover {
+            background-color: #2f855a;
+        }
+        
+        /* Equations Display */
+        #equations-display {
+            background: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        /* Steps Accordion */
+        #steps-container .step {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            width: 100%; /* Ensuring all steps are full-width */
+            box-sizing: border-box; /* Good practice with explicit width */
+        }
+
+        #steps-container .step-header {
+            padding: 12px 16px;
+            background: #f9f9f9;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        #steps-container .step-header.locked {
+            background: #f7fafc;
+            cursor: not-allowed;
+            color: var(--disabled-gray);
+        }
+        
+        #steps-container .step-header.completed {
+            background: #f0fff4;
+            color: var(--success-green);
+        }
+        
+        #steps-container .step-header::after {
+            content: '\25BC'; /* Down arrow */
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+        
+        #steps-container .step.active .step-header::after {
+            transform: rotate(180deg); /* Up arrow */
+        }
+
+        #steps-container .step-content {
+            padding: 16px;
+            background: var(--container-bg);
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+
+        #steps-container .step.active .step-content {
+            display: block;
+        }
+
+        .step-content p {
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .step-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .step-input-group input {
+            flex-grow: 1;
+        }
+        
+        .step-input-group button {
+            flex-shrink: 0;
+            width: auto;
+        }
+        
+        .step-feedback {
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+        }
+
+        .step-feedback.error {
+            background: #fff5f5;
+            color: var(--error-red);
+            display: block;
+        }
+
+        .step-feedback.success {
+            background: #f0fff4;
+            color: var(--success-green);
+            display: block;
+        }
+
+        /* Launch Control */
+        .launch-control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .launch-control-grid label {
+            font-weight: 500;
+            margin-bottom: 0;
+            align-self: center;
+        }
+        
+        #practice-launch-btn {
+            background-color: #ecc94b;
+            color: #1a202c;
+        }
+        #practice-launch-btn:hover {
+            background-color: #d69e2e;
+        }
+
+        /* Simulation Column */
+        canvas#scene {
+            background-color: var(--sim-bg);
+            border-radius: 12px;
+            border: 2px solid #000;
+            width: 100%;
+            aspect-ratio: 720 / 420;
+        }
+
+        #status-message {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        
+        #status-message.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        #status-message.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        #status-message.info {
+            background: #bee3f8;
+            color: #2a4365;
+        }
+
+        /* Full Width Steps Column */
+        .steps-full-width-column {
+            width: 100%;
+            padding: 0 24px 24px 24px; /* Match horizontal padding */
+            box-sizing: border-box;
+            flex-basis: 100%; /* Ensure it takes full width on wrap */
+        }
+        
+        #steps-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+
+        /* Accessibility */
+        *:focus-visible {
+            outline: 3px solid var(--primary-blue);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- CONTROLS COLUMN --><div class="controls-column">
+            <h1>Substitution Rocket Sim</h1>
+            <p>Solve the system of equations to find the correct landing coordinates (x) and thrust (y) for your rocket.</p>
+            
+            <div class="control-group">
+                <button id="new-problem-btn" style="width: 100%;">Generate New Problem</button>
+            </div>
+
+            <h2>Equations</h2>
+            <div id="equations-display">
+                y = 2x + 1<br>
+                3x + 2y = 16
+            </div>
+
+            <!-- MOVED THIS SECTION
+            <h2>Steps to Solve</h2>
+            <div id="steps-container">
+                ...
+            </div>
+            --><h2>Launch Control</h2>
+            <p>Enter your final (x, y) solution. You can practice launch to test your guesses before all steps are complete.</p>
+            
+            <div class="launch-control-grid">
+                <label for="guess-x">Solution x =</label>
+                <input type="number" id="guess-x" placeholder="Enter x-value">
+                <label for="guess-y">Solution y =</label>
+                <input type="number" id="guess-y" placeholder="Enter y-value">
+            </div>
+            
+            <div class="button-group" style="margin-top: 10px;">
+                <button id="practice-launch-btn">Practice Launch</button>
+                <button id="final-submit-btn" disabled>Final Launch</button>
+            </div>
+
+        </div>
+
+        <!-- SIMULATION COLUMN --><div class="simulation-column">
+            <canvas id="scene" width="720" height="420">
+                Your browser does not support the canvas element.
+            </canvas>
+            <div id="status-message" class="info">
+                Solve the problem to get started!
+            </div>
+        </div>
+
+        <!-- NEW FULL-WIDTH STEPS SECTION --><div class="steps-full-width-column">
+            <h2>Steps to Solve</h2>
+            <div id="steps-container">
+                <!-- Steps will be dynamically generated here --></div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- STATE & CONSTANTS ---
+            const currentMode = 'substitution';
+            const currentDifficulty = 'easy'; // Hardcoded
+            let currentSystem = {};
+            let stepData = [];
+            let stepAttempts = [];
+            let solutionFound = false;
+
+            // Animation state
+            let rocket = { x: -7, y: 0, vx: 0, vy: 0, rotation: 0 };
+            let launchPad = { x: -7, width: 60 }; // Fixed launch pad position
+            let landingPad = { x: 0, width: 60 }; // Landing pad x is world-x, width is canvas-px
+            let animationFrameId = null;
+            let rocketState = 'idle'; // idle, launching, landed
+            const GRAVITY = 0.015;
+            const GROUND_Y_PERCENT = 0.9;
+            let worldBounds = { xMin: -10, xMax: 10, yMin: 0, yMax: 20 };
+            
+            // Rocket dimensions in world units (approximate) for collision
+            const ROCKET_HEIGHT_WORLD = 0.7; // Approx height of rocket in world units (adjusted from 40px)
+            const ROCKET_WIDTH_WORLD = 0.3; // Approx width of rocket in world units
+
+            // --- DOM ELEMENTS ---
+            const newProblemBtn = document.getElementById('new-problem-btn');
+            const equationsDisplay = document.getElementById('equations-display');
+            const stepsContainer = document.getElementById('steps-container');
+            const guessXInput = document.getElementById('guess-x');
+            const guessYInput = document.getElementById('guess-y');
+            const practiceLaunchBtn = document.getElementById('practice-launch-btn');
+            const finalSubmitBtn = document.getElementById('final-submit-btn');
+            const canvas = document.getElementById('scene');
+            const ctx = canvas.getContext('2d');
+            const statusMessage = document.getElementById('status-message');
+
+            // --- CACHE CSS VARIABLES ---
+            const styles = getComputedStyle(document.documentElement);
+            const cssVars = {
+                simBg: styles.getPropertyValue('--sim-bg').trim(),
+                groundColor: styles.getPropertyValue('--ground-color').trim(),
+                padColor: styles.getPropertyValue('--pad-color').trim(),
+                rocketColor: styles.getPropertyValue('--rocket-color').trim(),
+                flameColor: styles.getPropertyValue('--flame-color').trim(),
+                errorRed: styles.getPropertyValue('--error-red').trim()
+            };
+
+            // --- EVENT LISTENERS ---
+            newProblemBtn.addEventListener('click', generateNewProblem);
+            practiceLaunchBtn.addEventListener('click', runPracticeLaunch);
+            finalSubmitBtn.addEventListener('click', runFinalLaunch);
+            
+            // Event delegation for steps
+            stepsContainer.addEventListener('click', (e) => {
+                const stepHeader = e.target.closest('.step-header');
+                const checkButton = e.target.closest('.check-step-btn');
+
+                if (stepHeader) {
+                    // Do not allow toggling if locked
+                    if (stepHeader.classList.contains('locked')) {
+                        return;
+                    }
+                    const stepIndex = parseInt(stepHeader.parentElement.dataset.step, 10);
+                    toggleStep(stepIndex);
+                }
+
+                if (checkButton) {
+                    const stepIndex = parseInt(checkButton.dataset.step, 10);
+                    checkStep(stepIndex);
+                }
+            });
+
+            // --- CORE FUNCTIONS ---
+
+            function setStatus(message, type = 'info') {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status-message'; // Clear previous types
+                if (type) {
+                    statusMessage.classList.add(type);
+                }
+            }
+
+            /**
+             * Generates a random integer between min and max (inclusive)
+             * @param {number} min
+             * @param {number} max
+             * @returns {number}
+             */
+            function randInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            /**
+             * Generates a random integer, ensuring it's not zero.
+             * @param {number} min
+             * @param {number} max
+             * @returns {number}
+             */
+            function randIntNoZero(min, max) {
+                let val = 0;
+                while (val === 0) {
+                    val = randInt(min, max);
+                }
+                return val;
+            }
+            
+            /**
+             * Formats an expression like mx + b, handling signs.
+             * e.g., (2, 3, 'x') -> "2x + 3"
+             * e.g., (1, -3, 'x') -> "x - 3"
+             * e.g., (-1, 5, 'x') -> "-x + 5"
+             * e.g., (0, 2, 'x') -> "2"
+             * e.g., (2, 0, 'x') -> "2x"
+             */
+            function formatLinearExpr(m, b, variable = 'x') {
+                let mTerm = '';
+                if (m === 1) mTerm = variable;
+                else if (m === -1) mTerm = `-${variable}`;
+                else if (m !== 0) mTerm = `${m}${variable}`;
+                
+                let bTerm = '';
+                if (b !== 0) {
+                    if (mTerm === '') {
+                        bTerm = `${b}`; // First term
+                    } else {
+                        bTerm = b > 0 ? ` + ${b}` : ` - ${Math.abs(b)}`;
+                    }
+                }
+                
+                if (mTerm === '' && bTerm === '') return '0';
+                return `${mTerm}${bTerm}`;
+            }
+            
+            /**
+             * Formats a linear equation from coefficients
+             * e.g., (2, -1, 5) -> "2x - y = 5"
+             */
+            function formatEq(a, b, e) {
+                let xTerm = '';
+                if (a !== 0) {
+                    xTerm = a === 1 ? 'x' : (a === -1 ? '-x' : `${a}x`);
+                }
+
+                let yTerm = '';
+                if (b !== 0) {
+                    if (b === 1) {
+                        yTerm = xTerm ? ' + y' : 'y';
+                    } else if (b === -1) {
+                        yTerm = ' - y';
+                    } else if (b > 1) {
+                        yTerm = xTerm ? ` + ${b}y` : `${b}y`;
+                    } else { // b < -1
+                        yTerm = ` - ${Math.abs(b)}y`;
+                    }
+                }
+                return `${xTerm}${yTerm} = ${e}`;
+            }
+            
+            /**
+             * Generates the system of equations and all intermediate steps
+             */
+            function generateSystem() {
+                // Hardcoded to 'easy'
+                const [minC, maxC] = [1, 3];
+                
+                // 1. Pick solution (x, y)
+                const x = randInt(-5, 5);
+                const y = randInt(-5, 5);
+                
+                let a, b, c, d, e, f;
+                let eq1, eq2;
+                stepData = [];
+                
+                // Force one equation to be y = mx + k or x = my + k
+                // We'll make it y = mx + k (i.e., b=1, a=-m, e=k)
+                a = randIntNoZero(-maxC, maxC);
+                b = 1; // This makes it y = -ax + e
+                e = y + a*x; // e = y - (-a)x = y + ax
+                
+                // The other equation
+                c = randIntNoZero(-maxC, maxC);
+                d = randIntNoZero(-maxC, maxC);
+                
+                // Ensure systems aren't parallel (ad - bc != 0)
+                while (a*d - b*c === 0) {
+                    d = randIntNoZero(-maxC, maxC);
+                }
+                f = c*x + d*y;
+                
+                eq1 = `y = ${formatLinearExpr(-a, e)}`; // User-friendly form
+                eq2 = formatEq(c, d, f);
+
+                // --- Generate Substitution Step Data ---
+                const isolatedVar = 'y';
+                    const isolatedExpr = formatLinearExpr(-a, e);
+                    
+                    // Generate alternate answer form (e.g., "b + mx")
+                    const mTerm = formatLinearExpr(-a, 0);
+                    let altExpr = '';
+                    if (e !== 0) {
+                        altExpr = `${e}`;
+                        if (mTerm !== '0' && mTerm !== '') {
+                             if (-a > 0) {
+                                altExpr += ` + ${mTerm}`;
+                            } else if (-a < 0) {
+                                // mTerm is e.g. "-x", so we need " - x"
+                                altExpr += ` - ${formatLinearExpr(a, 0)}`;
+                            }
+                        }
+                    } else {
+                        altExpr = mTerm;
+                    }
+
+                    stepData.push({
+                        title: "Step 1: Identify isolated variable",
+                        prompt: `The first equation is already solved for y. What is the expression y is equal to?`,
+                        answers: [isolatedExpr, altExpr], // e.g., ["2x - 3", "-3 + 2x"]
+                        hint: `Look at the first equation: y = ...`,
+                        checkFn: checkExpression
+                    });
+                    
+                    const substEq = formatEq(c, d, f).replace('y', `(${isolatedExpr})`);
+                    stepData.push({
+                        title: "Step 2: Show substituted equation",
+                        prompt: `Substitute this expression for ${isolatedVar} into the *second* equation.`,
+                        answers: [substEq],
+                        hint: `Replace the 'y' in ${eq2} with (${isolatedExpr}).`,
+                        checkFn: checkExpression
+                    });
+                    
+                    // c*x + d*(-a*x + e) = f -> c*x + (d*-a)*x + (d*e) = f
+                    // We need: "cx + (dm)x + (db) = f"
+                    
+                    let term1 = formatLinearExpr(c, 0); // "3x"
+                    let term2_val = d * -a; // -6
+                    let term2 = '';
+                    if (term2_val === 1) term2 = ` + x`;
+                    else if (term2_val === -1) term2 = ` - x`;
+                    else if (term2_val > 1) term2 = ` + ${term2_val}x`;
+                    else if (term2_val < -1) term2 = ` - ${Math.abs(term2_val)}x`;
+
+                    let term3_val = d * e; // -9
+                    let term3 = '';
+                    if (term3_val > 0) term3 = ` + ${term3_val}`;
+                    else if (term3_val < 0) term3 = ` - ${Math.abs(term3_val)}`;
+                    
+                    // Handle if c=0
+                    if (term1 === '0' || term1 === '') {
+                        if (term2.startsWith(' + ')) term2 = term2.substring(3); // " + 3x" -> "3x"
+                        if (term2.startsWith(' - ')) term2 = term2.substring(1); // " - 3x" -> "-3x" (keep minus)
+                    }
+                    
+                    const distEqFinal = `${term1}${term2}${term3} = ${f}`;
+
+                    stepData.push({
+                        title: "Step 3: Distribute",
+                        prompt: `Distribute to remove the parentheses.`,
+                        answers: [distEqFinal],
+                        hint: `Multiply ${d} by each term inside the parentheses.`,
+                        checkFn: checkExpression
+                    });
+
+                    const combinedX = c + (d * -a);
+                    const combinedConst = d * e;
+                    const combinedEq = `${formatLinearExpr(combinedX, combinedConst, 'x')} = ${f}`;
+                    stepData.push({
+                        title: "Step 4: Combine like terms",
+                        prompt: `Combine the 'x' terms.`,
+                        answers: [combinedEq],
+                        hint: `Add ${c}x and ${d * -a}x.`,
+                        checkFn: checkExpression
+                    });
+
+                    const isolatedXEq = `${formatLinearExpr(combinedX, 0, 'x')} = ${f - combinedConst}`;
+                    stepData.push({
+                        title: "Step 5: Solve for first variable",
+                        prompt: `Isolate and solve for x. (e.g., x = 3)`,
+                        answers: [`x=${x}`, `${x}`, isolatedXEq],
+                        hint: `Move the constant to the right side, then divide.`,
+                        checkFn: checkValue
+                    });
+                    
+                    const backSubEq = `y = ${formatLinearExpr(-a, e).replace('x', `(${x})`)}`;
+                    stepData.push({
+                        title: "Step 6: Back-substitute",
+                        prompt: `Now plug your value for x back into the isolated equation (${eq1}).`,
+                        answers: [backSubEq],
+                        hint: `Replace x with ${x} in the first equation.`,
+                        checkFn: checkExpression
+                    });
+                    
+                    stepData.push({
+                        title: "Step 7: Solve for second variable",
+                        prompt: `Solve for y. (e.g., y = -2)`,
+                        answers: [`y=${y}`, `${y}`],
+                        hint: `Calculate ${-a * x} + ${e}.`,
+                    checkFn: checkValue
+                });
+                
+                return {
+                    eq1Str: eq1,
+                    eq2Str: eq2,
+                    solution: { x, y }
+                };
+            }
+
+            function generateNewProblem() {
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                rocketState = 'idle';
+                currentSystem = generateSystem();
+                stepAttempts = new Array(stepData.length).fill(0);
+                solutionFound = false;
+
+                equationsDisplay.innerHTML = `${currentSystem.eq1Str}<br>${currentSystem.eq2Str}`;
+                // Set landing pad x to the solution x
+                landingPad.x = currentSystem.solution.x;
+                
+                buildStepsUI();
+                
+                // Close all steps except the first one (which buildStepsUI opens)
+                stepsContainer.querySelectorAll('.step.active').forEach((activeStep, i) => {
+                    if (i > 0) {
+                        const stepIndex = parseInt(activeStep.dataset.step, 10);
+                        toggleStep(stepIndex, false); // force close
+                    }
+                });
+                
+                guessXInput.value = '';
+                guessYInput.value = '';
+                finalSubmitBtn.disabled = true;
+                setStatus('New problem generated. Good luck!', 'info');
+                drawScene(); // Redraw with new landing pad
+            }
+
+            function buildStepsUI() {
+                stepsContainer.innerHTML = '';
+                stepData.forEach((step, index) => {
+                    const stepEl = document.createElement('div');
+                    stepEl.className = 'step';
+                    stepEl.dataset.step = index;
+                    
+                    const isLocked = index > 0;
+                    const lockedClass = isLocked ? 'locked' : '';
+                    const ariaDisabled = isLocked ? 'aria-disabled="true"' : '';
+
+                    stepEl.innerHTML = `
+                        <div class="step-header ${lockedClass}" id="step-header-${index}" role="button" aria-expanded="false" aria-controls="step-content-${index}" ${ariaDisabled}>
+                            <span>${step.title}</span>
+                            <span class="step-status"></span>
+                        </div>
+                        <div class="step-content" id="step-content-${index}" role="region" aria-labelledby="step-header-${index}">
+                            <p>${step.prompt}</p>
+                            <div class="step-input-group">
+                                <input type="text" id="step-input-${index}" placeholder="Enter answer" aria-label="${step.prompt}">
+                                <button class="check-step-btn" data-step="${index}">Check</button>
+                            </div>
+                            <div class="step-feedback" id="step-feedback-${index}"></div>
+                        </div>
+                    `;
+                    stepsContainer.appendChild(stepEl);
+                });
+
+                // Unlock the first step
+                if (stepData.length > 0) {
+                    toggleStep(0, true); // Force open first step
+                }
+            }
+            
+            function toggleStep(index, forceOpen = false) {
+                const stepEl = stepsContainer.querySelector(`.step[data-step="${index}"]`);
+                if (!stepEl) return;
+                
+                const header = stepEl.querySelector('.step-header');
+                const content = stepEl.querySelector('.step-content');
+                
+                if (forceOpen) {
+                    stepEl.classList.add('active');
+                    content.style.display = 'block';
+                    header.setAttribute('aria-expanded', 'true');
+                } else {
+                    const isActive = stepEl.classList.contains('active');
+                    if (isActive) {
+                        stepEl.classList.remove('active');
+                        content.style.display = 'none';
+                        header.setAttribute('aria-expanded', 'false');
+                    } else {
+                        // DO NOT close other steps in this layout
+                        // stepsContainer.querySelectorAll('.step.active').forEach(activeStep => {
+                        //     activeStep.classList.remove('active');
+                        //     activeStep.querySelector('.step-content').style.display = 'none';
+                        //     activeStep.querySelector('.step-header').setAttribute('aria-expanded', 'false');
+                        // });
+                        
+                        // Open this one
+                        stepEl.classList.add('active');
+                        content.style.display = 'block';
+                        header.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            }
+
+            // --- VALIDATION ---
+            
+            /**
+             * Normalizes a string for comparison.
+             * "2x + y = 5" -> "2x+1y=5"
+             * "y = 2" -> "1y=2"
+             * "x - 3y = 2" -> "1x-3y=2"
+             * "x" -> "1x"
+             * "-x" -> "-1x"
+             */
+            function normalize(str) {
+                let normStr = str.toLowerCase().replace(/\s+/g, '');
+
+                // This regex finds 'x' or 'y' that is NOT preceded by a letter, digit, or decimal.
+                // (e.g., at start of string, or after +, -, =, ( )
+                // It correctly replaces "x" with "1x" and "y" with "1y"
+                
+                // Replaces x -> 1x (e.g., "x", "-x", "=x", "(x")
+                normStr = normStr.replace(/(^|[^a-z0-9.])x/g, '$11x');
+                // Replaces y -> 1y (e.g., "y", "-y", "=y", "(y")
+                normStr = normStr.replace(/(^|[^a-z0-9.])y/g, '$11y');
+
+                return normStr;
+            }
+            
+            /**
+             * Checks if the student's input matches any of the correct answers.
+             * @param {string} input - Student's input
+             * @param {string[]} answers - Array of possible correct answers
+             * @param {Function} normalizeFn - The normalization function to use
+             * @returns {boolean}
+             */
+            function checkAnswer(input, answers, normalizeFn = normalize) {
+                const normInput = normalizeFn(input);
+                for (const answer of answers) {
+                    if (normInput === normalizeFn(answer)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Validation function for full expressions (e.g., "2x+3y=10")
+            function checkExpression(input, answers) {
+                return checkAnswer(input, answers, normalize);
+            }
+            
+            // Validation function for simple values (e.g., "x=2" or "2")
+            function checkValue(input, answers) {
+                return checkAnswer(input, answers, normalize);
+            }
+
+            function checkStep(index) {
+                const step = stepData[index];
+                const inputEl = document.getElementById(`step-input-${index}`);
+                const feedbackEl = document.getElementById(`step-feedback-${index}`);
+                const headerEl = document.getElementById(`step-header-${index}`);
+                const statusEl = headerEl.querySelector('.step-status');
+                
+                const studentInput = inputEl.value;
+                const isCorrect = step.checkFn(studentInput, step.answers);
+                
+                if (isCorrect) {
+                    feedbackEl.textContent = 'Correct! Great job.';
+                    feedbackEl.className = 'step-feedback success';
+                    statusEl.textContent = '✅';
+                    headerEl.classList.add('completed');
+                    
+                    // Disable this step's inputs
+                    inputEl.disabled = true;
+                    inputEl.parentElement.querySelector('button').disabled = true;
+                    
+                    // Unlock next step
+                    if (index < stepData.length - 1) {
+                        const nextStepHeader = document.getElementById(`step-header-${index + 1}`);
+                        if (nextStepHeader) {
+                            nextStepHeader.classList.remove('locked');
+                            nextStepHeader.removeAttribute('aria-disabled');
+                        }
+                        toggleStep(index + 1, true); // Force open next step
+                    } else {
+                        // This was the last step
+                        solutionFound = true;
+                        finalSubmitBtn.disabled = false;
+                        setStatus('All steps complete! Ready for final launch!', 'success');
+                        // Auto-fill launch controls
+                        guessXInput.value = currentSystem.solution.x;
+                        guessYInput.value = currentSystem.solution.y;
+                    }
+                } else {
+                    stepAttempts[index]++;
+                    let errorMsg = "That doesn't look quite right. Try again.";
+                    if (stepAttempts[index] >= 2) {
+                        errorMsg += ` HINT: ${step.hint}`;
+                    }
+                    feedbackEl.textContent = errorMsg;
+                    feedbackEl.className = 'step-feedback error';
+                    statusEl.textContent = '❌';
+                }
+            }
+
+            // --- SIMULATION & ANIMATION ---
+
+            function runPracticeLaunch() {
+                const guessX = parseFloat(guessXInput.value);
+                const guessY = parseFloat(guessYInput.value);
+
+                if (isNaN(guessX) || isNaN(guessY)) {
+                    setStatus("Please enter valid numbers for x and y.", 'error');
+                    return;
+                }
+                
+                setStatus("Launching practice rocket...", 'info');
+                simulateLaunch(guessX, guessY, false);
+            }
+            
+            function runFinalLaunch() {
+                if (!solutionFound) {
+                    setStatus("Complete all the steps before the final launch!", 'error');
+                    return;
+                }
+                
+                const { x, y } = currentSystem.solution;
+                guessXInput.value = x;
+                guessYInput.value = y;
+                setStatus("Final launch! Cross your fingers...", 'info');
+                simulateLaunch(x, y, true);
+            }
+
+            function mapWorldToCanvas(wx, wy) {
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                
+                const { xMin, xMax, yMin, yMax } = worldBounds;
+                
+                // Scale X: Map worldX from [xMin, xMax] to [0, canvasWidth]
+                const cx = (wx - xMin) / (xMax - xMin) * canvasWidth;
+                
+                // Scale Y: Map worldY from [yMin, yMax] to [canvasHeight * (1-GROUND_Y_PERCENT), 0]
+                // (0 at ground, positive up in world; inverted for canvas Y, 0 at top, positive down)
+                const groundLevelCanvas = canvasHeight * GROUND_Y_PERCENT;
+                const worldYRange = yMax - yMin;
+                const canvasYRange = groundLevelCanvas; // Rocket only flies above ground
+                
+                // Adjust worldY so that 0 worldY corresponds to the top of the ground (not the bottom of the canvas)
+                // And invert for canvas y
+                const cy = groundLevelCanvas - (wy / worldYRange * canvasYRange);
+                
+                return { x: cx, y: cy };
+            }
+
+            function drawStars() {
+                const numStars = 100;
+                for (let i = 0; i < numStars; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height * 0.7; // Keep stars in upper sky
+                    const radius = Math.random() * 0.8 + 0.2;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.7 + 0.3})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function drawMoon() {
+                ctx.fillStyle = '#cccccc'; // Grey moon
+                ctx.beginPath();
+                ctx.arc(canvas.width * 0.85, canvas.height * 0.15, 25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#b0b0b0'; // Craters
+                ctx.beginPath();
+                ctx.arc(canvas.width * 0.84, canvas.height * 0.14, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(canvas.width * 0.87, canvas.height * 0.17, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawGroundAndPads() {
+                const groundY = canvas.height * GROUND_Y_PERCENT;
+                ctx.fillStyle = cssVars.groundColor;
+                ctx.fillRect(0, groundY, canvas.width, canvas.height * (1 - GROUND_Y_PERCENT));
+
+                // Draw Launch Pad
+                const launchPadCanvasPos = mapWorldToCanvas(launchPad.x, 0); // 0 for ground level
+                ctx.fillStyle = cssVars.padColor;
+                ctx.fillRect(launchPadCanvasPos.x - launchPad.width / 2, launchPadCanvasPos.y - 10, launchPad.width, 15);
+                ctx.fillStyle = '#f0a0a0';
+                ctx.textAlign = 'center';
+                ctx.font = '12px Arial';
+                ctx.fillText(`Launch`, launchPadCanvasPos.x, launchPadCanvasPos.y + 10);
+
+                // Draw Landing Pad
+                const landingPadCanvasPos = mapWorldToCanvas(landingPad.x, 0); // 0 for ground level
+                ctx.fillStyle = cssVars.padColor;
+                ctx.fillRect(landingPadCanvasPos.x - landingPad.width / 2, landingPadCanvasPos.y - 10, landingPad.width, 15);
+                ctx.fillStyle = '#a0f0a0';
+                ctx.fillText(`Landing`, landingPadCanvasPos.x, landingPadCanvasPos.y + 10);
+            }
+            
+            function drawScene() {
+                ctx.fillStyle = cssVars.simBg;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                drawStars();
+                drawMoon();
+                drawGroundAndPads();
+
+                // Draw the rocket based on state
+                if (rocketState === 'launching') {
+                    // Draw rocket in motion
+                    const rocketCanvasPos = mapWorldToCanvas(rocket.x, rocket.y);
+                    const currentThrust = Math.max(0, rocket.vy / (rocket.gravity * 20)); // scale thrust based on velocity
+                    drawRocket(rocketCanvasPos.x, rocketCanvasPos.y, 0, currentThrust);
+                } else if (rocketState === 'idle') {
+                    // Draw rocket at launch pad, slightly above
+                    const rocketCanvasPos = mapWorldToCanvas(launchPad.x, 0.1); 
+                    drawRocket(rocketCanvasPos.x, rocketCanvasPos.y, 0, 0);
+                } else { // 'landed'
+                    // Draw rocket at its final landed position
+                    const rocketCanvasPos = mapWorldToCanvas(rocket.x, 0); // Landed flat on ground
+                    drawRocket(rocketCanvasPos.x, rocketCanvasPos.y, 0, 0);
+                }
+            }
+            
+            const ROCKET_CANVAS_HEIGHT = 40; // Pixels
+            const ROCKET_CANVAS_WIDTH = 20; // Pixels
+
+            function drawRocket(canvasX, canvasYBottom, rotation, thrustIntensity) {
+                // canvasYBottom is the bottom of the rocket in canvas coordinates
+                // We need to translate to the center of the rocket for rotation and drawing
+                ctx.save();
+                ctx.translate(canvasX, canvasYBottom - ROCKET_CANVAS_HEIGHT / 2); // Center of rocket for rotation
+                ctx.rotate(rotation);
+                
+                // Draw rocket centered around (0,0) in its own translated context
+                const halfWidth = ROCKET_CANVAS_WIDTH / 2;
+                const halfHeight = ROCKET_CANVAS_HEIGHT / 2;
+
+                // Main Body (ellipse centered at (0, 0))
+                ctx.fillStyle = cssVars.rocketColor;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, halfWidth, ROCKET_CANVAS_HEIGHT * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Nose Cone (above body)
+                ctx.fillStyle = cssVars.errorRed;
+                ctx.beginPath();
+                ctx.moveTo(0, -halfHeight); // Top tip relative to center
+                ctx.lineTo(-halfWidth, -ROCKET_CANVAS_HEIGHT * 0.1);
+                ctx.lineTo(halfWidth, -ROCKET_CANVAS_HEIGHT * 0.1);
+                ctx.closePath();
+                ctx.fill();
+
+                // Fins (below body)
+                ctx.fillStyle = cssVars.errorRed;
+                ctx.beginPath();
+                ctx.moveTo(-halfWidth, ROCKET_CANVAS_HEIGHT * 0.1);
+                ctx.lineTo(-halfWidth - 10, halfHeight); // Extend outward
+                ctx.lineTo(-5, halfHeight);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(halfWidth, ROCKET_CANVAS_HEIGHT * 0.1);
+                ctx.lineTo(halfWidth + 10, halfHeight); // Extend outward
+                ctx.lineTo(5, halfHeight);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Window (simple circle)
+                ctx.fillStyle = '#aaddff';
+                ctx.beginPath();
+                ctx.arc(0, -ROCKET_CANVAS_HEIGHT * 0.2, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Flame
+                if (thrustIntensity > 0.1) { // Only draw flame if there's significant thrust
+                    ctx.fillStyle = `rgba(255, 165, 0, ${Math.min(1, thrustIntensity)})`; // Orange
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = `rgba(255, 100, 0, ${Math.min(1, thrustIntensity)})`;
+                    
+                    const flameHeight = ROCKET_CANVAS_HEIGHT * 0.3 + (Math.random() * 10 * thrustIntensity);
+                    const flameWidth = ROCKET_CANVAS_WIDTH * 0.8 * thrustIntensity;
+
+                    ctx.beginPath();
+                    ctx.moveTo(-flameWidth / 2, halfHeight);
+                    ctx.lineTo(flameWidth / 2, halfHeight);
+                    ctx.lineTo(0, halfHeight + flameHeight);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Inner, brighter flame
+                    ctx.fillStyle = `rgba(255, 255, 0, ${Math.min(1, thrustIntensity)})`; // Yellow
+                    const innerFlameHeight = flameHeight * 0.7;
+                    const innerFlameWidth = flameWidth * 0.6;
+                    ctx.beginPath();
+                    ctx.moveTo(-innerFlameWidth / 2, halfHeight);
+                    ctx.lineTo(innerFlameWidth / 2, halfHeight);
+                    ctx.lineTo(0, halfHeight + innerFlameHeight);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.shadowBlur = 0; // Reset shadow
+                }
+                
+                ctx.restore();
+            }
+
+            function simulateLaunch(guessX, guessY, isFinal) {
+                if (rocketState === 'launching') return;
+                
+                rocketState = 'launching';
+                
+                const { solution } = currentSystem;
+                
+                // Rocket starts slightly above the launch pad (0.1 world units)
+                rocket.x = launchPad.x; 
+                rocket.y = 0.1; 
+                
+                // Rocket's "thrust" (initial y-velocity) is based on guessY
+                // We'll scale it so the *correct* y gives a "perfect" flight
+                const targetFlightTime = 150; // frames
+                const targetMaxHeight = 10; // world units
+                
+                const simGravity = (2 * targetMaxHeight) / Math.pow(targetFlightTime / 2, 2);
+                const targetVy = simGravity * (targetFlightTime / 2);
+                
+                const solutionY = solution.y === 0 ? 0.01 : solution.y; // Avoid division by zero, use a tiny thrust for 0
+                const guess_Y = guessY === 0 ? 0.01 : guessY; // Use a tiny thrust for 0
+                
+                rocket.vy = targetVy * (guess_Y / solutionY);
+                rocket.gravity = simGravity;
+                
+                // --- X (Horizontal) Physics ---
+                // New logic: guessX controls horizontal velocity (inversely)
+                const distanceToTarget = landingPad.x - launchPad.x;
+                const vx_correct = distanceToTarget / targetFlightTime;
+                
+                // User's logic: low x = overshoot, high x = undershoot
+                // This logic is inverse: (solutionX - guessX)
+                // If guess < solution, (4 - 2) = 2 (positive delta, add to vx -> faster/further)
+                // If guess > solution, (4 - 6) = -2 (negative delta, subtract from vx -> slower/shorter)
+                const deltaX = solution.x - guessX; 
+                
+                // The change in velocity is the "miss" distance spread over the flight time
+                const vx_delta = deltaX / targetFlightTime; 
+                
+                rocket.vx = vx_correct + vx_delta;
+                // --- End X Physics ---
+                
+                let frame = 0;
+                let maxRocketHeight = 0;
+
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+
+                function animationLoop() {
+                    frame++;
+                    
+                    // Update physics
+                    rocket.y += rocket.vy;
+                    rocket.vy -= rocket.gravity;
+                    
+                    // Update rocket's X position to target the landing pad
+                    // This creates the visual effect of moving towards the target X
+                    rocket.x += rocket.vx; // Use constant horizontal velocity
+
+                    if (rocket.y > maxRocketHeight) maxRocketHeight = rocket.y;
+
+                    // Draw
+                    drawScene();
+                    
+                    // Check for landing
+                    // The rocket's bottom (rocket.y) should be at world 0, or slightly above due to initial lift-off
+                    const LANDING_THRESHOLD = 0.05; // Small buffer for landing on the pad
+                    if (rocket.y <= LANDING_THRESHOLD && frame > 10) {
+                        rocket.y = 0; // Snap to ground level
+                        rocketState = 'landed';
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                        
+                        // Check results
+                        // Check if it landed *on* the landing pad's x-coordinate
+                        // landingPad.width is in canvas pixels, convert to world units for comparison
+                        const landingPadWidthWorld = landingPad.width / canvas.width * (worldBounds.xMax - worldBounds.xMin);
+                        const xCorrect = Math.abs(rocket.x - landingPad.x) < (landingPadWidthWorld / 2); 
+                        
+                        const yCorrect = Math.abs(guessY - solution.y) < 0.1; // Still check y for thrust accuracy
+                        
+                        let messages = [];
+                        
+                        // Check X (Placement)
+                        if (!xCorrect) {
+                            messages.push(`Missed! Landed at x=${rocket.x.toFixed(1)} (target x=${solution.x}).`);
+                            
+                            // Add specific feedback based on the inverted logic
+                            if (guessX < solution.x) {
+                                 messages.push("Your x-value was too low, causing an OVERSHOOT.");
+                            } else if (guessX > solution.x) {
+                                messages.push("Your x-value was too high, causing an UNDERSHOOT.");
+                            }
+
+                        }
+                        
+                        // Check Y (Thrust)
+                        if (guessY > solution.y + 0.5) {
+                            messages.push("Overshoot! Too much thrust.");
+                        } else if (guessY < solution.y - 0.5) {
+                            messages.push("Undershoot! Not enough thrust.");
+                        }
+
+                        if (xCorrect && yCorrect) {
+                            setStatus("Mission Success! Perfect landing!", 'success');
+                        } else {
+                            if (messages.length === 0) {
+                                messages.push("Close, but not quite! Check your values.");
+                            }
+                            setStatus(messages.join(' '), 'error');
+                        }
+                        
+                        // If it was the *final* launch and it failed, keep button disabled
+                        if (isFinal && !(xCorrect && yCorrect)) {
+                            finalSubmitBtn.disabled = true;
+                            solutionFound = false; // Force them to re-solve
+                            setStatus(messages.join(' ') + " Resetting steps.", 'error');
+                            generateNewProblem(); 
+                        }
+                        
+                        return;
+                    }
+                    
+                    animationFrameId = requestAnimationFrame(animationLoop);
+                }
+                
+                animationFrameId = requestAnimationFrame(animationLoop);
+            }
+
+            // --- INITIALIZATION ---
+            function initialize() {
+                generateNewProblem();
+                // Set initial focus for accessibility
+                newProblemBtn.focus();
+            }
+
+            initialize();
+        });
+    </script>
+</body>
+</html>
+

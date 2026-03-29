@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Ensures proper rendering and touch zooming on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race of Change: The Slope Challenge!</title>
+    
+    <!-- CSS styles are embedded in the <style> tag as requested -->
+    <style>
+        /* --- Basic Setup & Typography --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f7ff; /* Light blue background */
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            color: #005a9c; /* Dark blue */
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* --- Main Application Container --- */
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid #d4e8ff;
+        }
+
+        /* --- Game Header (Name & Timer) --- */
+        .game-header {
+            display: none; /* Hidden by default, shown on game start */
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .header-item {
+            margin: 5px 0;
+        }
+
+        #timer-display {
+            color: #007bff;
+        }
+
+        /* --- Screen Management --- */
+        .screen {
+            display: none; /* All screens hidden by default */
+            padding: 25px 30px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .screen.active {
+            display: block; /* The active screen is shown */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Forms, Inputs & Buttons --- */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box; /* Important for 100% width */
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="number"] {
+            width: 150px;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+            outline: none;
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background-color: #007bff; /* Bright blue */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,123,255,0.2);
+        }
+        
+        .btn-secondary {
+            background-color: #ffc107; /* Bright yellow */
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255,193,7,0.2);
+        }
+
+        .btn-danger {
+            background-color: #dc3545; /* Red */
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #a71d2a;
+        }
+
+        /* --- Problem & Feedback --- */
+        .problem-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 25px 0;
+            border: 2px dashed #d4e8ff;
+        }
+
+        .problem-display h3 {
+            margin-top: 0;
+        }
+
+        .problem-table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            font-size: 1.1em;
+        }
+
+        .problem-table th, .problem-table td {
+            border: 2px solid #005a9c;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .problem-table th {
+            background-color: #e0f0ff;
+        }
+        
+        #equation-problem {
+            font-size: 2em;
+            font-weight: bold;
+            font-family: "Courier New", Courier, monospace;
+            color: #005a9c;
+        }
+        
+        #graph-canvas {
+            width: 100%;
+            height: 400px; /* Default height */
+            border: 2px solid #005a9c;
+            border-radius: 8px;
+            background: #fdfdfd;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            text-align: center;
+            height: 30px; /* Reserve space to prevent layout jump */
+        }
+        
+        .feedback.correct {
+            color: #28a745; /* Green */
+        }
+        
+        .feedback.incorrect {
+            color: #dc3545; /* Red */
+        }
+
+        .scratchpad-area {
+            margin-top: 25px;
+        }
+        
+        /* --- New Flow-Chart Styles --- */
+        .flow-chart-area {
+            background: #fdfdfa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+        
+        .flow-chart-area label {
+            font-weight: bold;
+            font-style: normal;
+            color: #333;
+            font-size: 1em;
+        }
+        
+        .slope-input {
+            width: 70px;
+            padding: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            margin: 0 8px;
+            display: inline-block;
+        }
+        
+        .point-input-group {
+            margin: 10px 0;
+            font-size: 1.2em;
+            font-family: monospace;
+        }
+        
+        .btn-compute {
+            background-color: #28a745; /* Green */
+            color: white;
+            min-width: 120px;
+            padding: 8px 15px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .btn-compute:hover {
+            background-color: #218838;
+        }
+        
+        .setup-feedback {
+            font-style: italic;
+            color: #dc3545;
+            height: 20px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .calculation-display {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #005a9c;
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            min-height: 30px;
+            text-align: left;
+            line-height: 1.5;
+        }
+        
+        /* --- End New Flow-Chart Styles --- */
+        
+        .scratchpad-area label {
+            font-weight: normal;
+            font-style: italic;
+            color: #555;
+        }
+        
+        .scratchpad {
+            background-color: #fdfdfa; /* A very light cream */
+            border-color: #e0e0e0;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.1em;
+            height: 120px; /* A bit taller */
+        }
+
+        .progress-indicator {
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ffc107; /* Star yellow */
+            height: 36px;
+        }
+
+        /* --- Leaderboard & Reflection --- */
+        .leaderboard-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        
+        .leaderboard-table th, .leaderboard-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .leaderboard-table th {
+            background-color: #e9ecef;
+            color: #005a9c;
+        }
+
+        .leaderboard-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        #reset-area {
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff8e1;
+            border: 1px solid #ffecb3;
+            border-radius: 8px;
+        }
+
+        #reset-feedback {
+            color: #dc3545;
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .completion-badge {
+            font-size: 5em;
+            text-align: center;
+            display: block;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+            60% { transform: translateY(-15px); }
+        }
+
+        /* --- Responsive Design --- */
+        @media (min-width: 600px) {
+            .game-header {
+                flex-direction: row;
+            }
+            .header-item {
+                margin: 0 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .screen {
+                padding: 20px 15px;
+            }
+            .problem-table {
+                width: 100%;
+                font-size: 1em;
+            }
+            #equation-problem {
+                font-size: 1.5em;
+            }
+            button {
+                padding: 12px 15px;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main container for the entire application -->
+    <div class="app-container">
+
+        <!-- Header for Name and Timer, hidden until game starts -->
+        <div class="game-header" id="game-header">
+            <div class="header-item">Student: <span id="student-name-display"></span></div>
+            <div class="header-item">Time: <span id="timer-display">00:00</span></div>
+        </div>
+
+        <!-- Screen 1: Start Screen -->
+        <div class="screen active" id="start-screen">
+            <h1>Race of Change: The Slope Challenge!</h1>
+            <p>Welcome! Your mission is to become a <strong>Slope Master</strong>.
+            <br>Pass 3 levels by finding the rate of change from tables, graphs, and equations.
+            <br>Your time starts when you click "Start"!
+            </p>
+            <div class="form-group">
+                <label for="student-name-input">Enter Your Name:</label>
+                <input type="text" id="student-name-input" placeholder="e.g., Alex Johnson">
+            </div>
+            <div class="button-container">
+                <button class="btn-primary" id="start-button">Start Challenge</button>
+            </div>
+        </div>
+
+        <!-- Screen 2: Level 1 (Tables) -->
+        <div class="screen" id="level-1-screen">
+            <h2>Level 1: Tables of Change</h2>
+            <div class="progress-indicator" id="level-1-progress"></div>
+            <p>Find the rate of change (slope) from the table of values.</p>
+            
+            <div class="problem-display">
+                <h3>Problem</h3>
+                <table class="problem-table" id="table-problem">
+                    <!-- JS will populate this -->
+                </table>
+            </div>
+
+            <!-- Modified Scratchpad to Flow-Chart -->
+            <div class="flow-chart-area">
+                <label>1. Enter two points from the table:</label>
+                <div class="point-input-group">
+                    Point 1: ( <input type="number" id="l1-x1" class="slope-input">, <input type="number" id="l1-y1" class="slope-input"> )
+                </div>
+                <div class="point-input-group">
+                    Point 2: ( <input type="number" id="l1-x2" class="slope-input">, <input type="number" id="l1-y2" class="slope-input"> )
+                </div>
+                
+                <label style="margin-top: 15px;">2. Check your setup:</label><br>
+                <button class="btn-compute" id="l1-compute-btn">Show Calculation</button>
+                <div class="setup-feedback" id="l1-setup-feedback"></div>
+                
+                <label style="margin-top: 15px;">3. Calculation:</label>
+                <div class="calculation-display" id="l1-calculation-display">
+                    m = (y₂ - y₁) / (x₂ - x₁)
+                </div>
+            </div>
+            <!-- End Modified Area -->
+
+            <div class="form-group" style="margin-top: 25px;">
+                <label for="level-1-answer">4. Final Answer - Rate of Change (m):</label>
+                <input type="number" id="level-1-answer">
+            </div>
+            
+            <div class="feedback" id="level-1-feedback"></div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="level-1-check-btn">Check Answer</button>
+                <button class="btn-secondary" id="level-1-new-btn">New Problem</button>
+            </div>
+        </div>
+        
+        <!-- Screen 3: Level 2 (Graphs) -->
+        <div class="screen" id="level-2-screen">
+            <h2>Level 2: Graphs of Change</h2>
+            <div class="progress-indicator" id="level-2-progress"></div>
+            <p>Find the rate of change (slope) from the graph.</p>
+
+            <div class="problem-display">
+                <h3>Graph</h3>
+                <!-- The canvas will be drawn here -->
+                <canvas id="graph-canvas"></canvas>
+            </div>
+
+            <!-- Modified Scratchpad to Flow-Chart -->
+            <div class="flow-chart-area">
+                <label>1. Pick two points and find the Rise & Run:</label>
+                <div class="point-input-group">
+                    Rise (vertical change): <input type="number" id="l2-rise" class="slope-input">
+                </div>
+                <div class="point-input-group">
+                    Run (horizontal change): <input type="number" id="l2-run" class="slope-input">
+                </div>
+                
+                <label style="margin-top: 15px;">2. Check your setup:</label><br>
+                <button class="btn-compute" id="l2-compute-btn">Show Calculation</button>
+                <div class="setup-feedback" id="l2-setup-feedback"></div>
+                
+                <label style="margin-top: 15px;">3. Calculation:</label>
+                <div class="calculation-display" id="l2-calculation-display">
+                    m = Rise / Run
+                </div>
+            </div>
+            <!-- End Modified Area -->
+
+            <div class="form-group" style="margin-top: 25px;">
+                <label for="level-2-answer">4. Final Answer - Rate of Change (m):</label>
+                <input type="number" id="level-2-answer">
+            </div>
+            
+            <div class="feedback" id="level-2-feedback"></div>
+            
+            <div class="button-group">
+                <button class="btn-primary" id="level-2-check-btn">Check Answer</button>
+                <button class="btn-secondary" id="level-2-new-btn">New Problem</button>
+            </div>
+        </div>
+        
+        <!-- Screen 4: Level 3 (Equations) -->
+        <div class="screen" id="level-3-screen">
+            <h2>Level 3: Algebraic Equations</h2>
+            <div class="progress-indicator" id="level-3-progress"></div>
+            <p>Find the rate of change (slope) from the equation.</p>
+
+            <div class="problem-display">
+                <h3>Equation</h3>
+                <div id="equation-problem">
+                    <!-- JS will populate this -->
+                </div>
+            </div>
+
+            <div class="form-group scratchpad-area">
+                <label for="level-3-scratchpad">Show Your Work (Optional):</label>
+                <textarea id="level-3-scratchpad" class="scratchpad" placeholder="The equation is in the form y = mx + b.
+The 'm' value is the slope.
+In this equation, m = ?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="level-3-answer">Rate of Change (m):</label>
+                <input type="number" id="level-3-answer">
+            </div>
+            
+            <div class="feedback" id="level-3-feedback"></div>
+            
+            <div class="button-group">
+                <button class="btn-primary" id="level-3-check-btn">Check Answer</button>
+                <button class="btn-secondary" id="level-3-new-btn">New Problem</button>
+            </div>
+        </div>
+
+        <!-- Screen 5: Completion Screen -->
+        <div class="screen" id="completion-screen">
+            <h1>Challenge Complete!</h1>
+            <span class="completion-badge" role="img" aria-label="trophy badge">🏅</span>
+            <h2>Congratulations, <span id="completion-name"></span>!</h2>
+            <p>You are now a <strong>Slope Master</strong>!</p>
+            <p style="font-size: 1.5em; font-weight: bold;">Your Final Time: <span id="final-time">00:00</span></p>
+            <div class="button-container">
+                <button class="btn-primary" id="submit-to-leaderboard-btn">Save Score & Reflect</button>
+            </div>
+        </div>
+
+        <!-- Screen 6: Reflection Screen -->
+        <div class="screen" id="reflection-screen">
+            <h2>Slope Master Reflection</h2>
+            <p>Think about what you learned. (Your answers will not be saved).</p>
+            
+            <div class="form-group">
+                <label for="reflection-1">How can you tell if a line is increasing or decreasing just by looking at its slope?</label>
+                <textarea id="reflection-1"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="reflection-2">Which representation (table, graph, or equation) helped you find the slope the fastest? Why?</label>
+                <textarea id="reflection-2"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="reflection-3">How does the rate of change relate to how steep a line is?</label>
+                <textarea id="reflection-3"></textarea>
+            </div>
+
+            <div class="button-container">
+                <button class="btn-primary" id="finish-reflection-btn">Finish & See Leaderboard</button>
+            </div>
+        </div>
+
+        <!-- Screen 7: Leaderboard Screen -->
+        <div class="screen" id="leaderboard-screen">
+            <h2>Leaderboard of Change</h2>
+            <table class="leaderboard-table" id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Time</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- JS will populate this -->
+                </tbody>
+            </table>
+            
+            <div class="button-group">
+                <button class="btn-primary" id="play-again-btn">Play Again</button>
+                <button class="btn-secondary" id="show-reset-btn">Reset Options</button>
+            </div>
+
+            <!-- Hidden reset area for teacher -->
+            <div id="reset-area">
+                <h3>Teacher Options</h3>
+                <div class="form-group">
+                    <label for="reset-password-input">Enter Password to Reset:</label>
+                    <input type="password" id="reset-password-input" placeholder="Teacher password">
+                </div>
+                <button class="btn-danger" id="reset-leaderboard-btn">Reset Leaderboard</R>
+                <div id="reset-feedback"></div>
+            </div>
+        </div>
+
+    </div> <!-- End .app-container -->
+
+
+    <!-- JavaScript is embedded in the <script> tag as requested -->
+    <script>
+        // Wait for the DOM to be fully loaded before running the script
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 1. STATE VARIABLES ---
+            let studentName = "";
+            let currentLevel = 0;
+            let levelProgress = { 1: 0, 2: 0, 3: 0 };
+            let currentSlope = 0;
+            
+            // Timer variables
+            let timerInterval = null;
+            let startTime = 0;
+            let totalTime = 0; // in seconds
+            
+            // Leaderboard data
+            let leaderboard = [];
+            let level1Points = []; // Stores points for level 1 validation
+            
+            // Audio Context
+            let audioCtx = null;
+            
+            // Canvas variables
+            const canvas = document.getElementById('graph-canvas');
+            const ctx = canvas.getContext('2d');
+            const gridRange = { xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
+
+            // --- 2. DOM ELEMENT REFERENCES ---
+            const screens = document.querySelectorAll('.screen');
+            const gameHeader = document.getElementById('game-header');
+            const studentNameDisplay = document.getElementById('student-name-display');
+            const timerDisplay = document.getElementById('timer-display');
+
+            // Start Screen
+            const startScreen = document.getElementById('start-screen');
+            const studentNameInput = document.getElementById('student-name-input');
+            const startButton = document.getElementById('start-button');
+            
+            // Level 1 (Tables)
+            const level1Screen = document.getElementById('level-1-screen');
+            const level1Progress = document.getElementById('level-1-progress');
+            const tableProblem = document.getElementById('table-problem');
+            const level1Answer = document.getElementById('level-1-answer');
+            const level1Feedback = document.getElementById('level-1-feedback');
+            const level1CheckBtn = document.getElementById('level-1-check-btn');
+            const level1NewBtn = document.getElementById('level-1-new-btn');
+            // Level 1 Flow-Chart DOM Refs
+            const l1x1 = document.getElementById('l1-x1');
+            const l1y1 = document.getElementById('l1-y1');
+            const l1x2 = document.getElementById('l1-x2');
+            const l1y2 = document.getElementById('l1-y2');
+            const l1ComputeBtn = document.getElementById('l1-compute-btn');
+            const l1SetupFeedback = document.getElementById('l1-setup-feedback');
+            const l1CalculationDisplay = document.getElementById('l1-calculation-display');
+            
+            // Level 2 (Graphs)
+            const level2Screen = document.getElementById('level-2-screen');
+            const level2Progress = document.getElementById('level-2-progress');
+            const level2Answer = document.getElementById('level-2-answer');
+            const level2Feedback = document.getElementById('level-2-feedback');
+            const level2CheckBtn = document.getElementById('level-2-check-btn');
+            const level2NewBtn = document.getElementById('level-2-new-btn');
+            // Level 2 Flow-Chart DOM Refs
+            const l2Rise = document.getElementById('l2-rise');
+            const l2Run = document.getElementById('l2-run');
+            const l2ComputeBtn = document.getElementById('l2-compute-btn');
+            const l2SetupFeedback = document.getElementById('l2-setup-feedback');
+            const l2CalculationDisplay = document.getElementById('l2-calculation-display');
+            
+            // Level 3 (Equations)
+            const level3Screen = document.getElementById('level-3-screen');
+            const level3Progress = document.getElementById('level-3-progress');
+            const equationProblem = document.getElementById('equation-problem');
+            const level3Answer = document.getElementById('level-3-answer');
+            const level3Feedback = document.getElementById('level-3-feedback');
+            const level3CheckBtn = document.getElementById('level-3-check-btn');
+            const level3NewBtn = document.getElementById('level-3-new-btn');
+            const level3Scratchpad = document.getElementById('level-3-scratchpad');
+            
+            // Completion Screen
+            const completionScreen = document.getElementById('completion-screen');
+            const completionName = document.getElementById('completion-name');
+            const finalTime = document.getElementById('final-time');
+            const submitToLeaderboardBtn = document.getElementById('submit-to-leaderboard-btn');
+            
+            // Reflection Screen
+            const reflectionScreen = document.getElementById('reflection-screen');
+            const finishReflectionBtn = document.getElementById('finish-reflection-btn');
+            
+            // Leaderboard Screen
+            const leaderboardScreen = document.getElementById('leaderboard-screen');
+            const leaderboardTableBody = document.getElementById('leaderboard-table').querySelector('tbody');
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const showResetBtn = document.getElementById('show-reset-btn');
+            const resetArea = document.getElementById('reset-area');
+            const resetPasswordInput = document.getElementById('reset-password-input');
+            const resetLeaderboardBtn = document.getElementById('reset-leaderboard-btn');
+            const resetFeedback = document.getElementById('reset-feedback');
+
+            // --- 3. CORE FUNCTIONS ---
+
+            /**
+             * Hides all screens and shows the one with the specified ID.
+             * @param {string} screenId - The ID of the screen to show.
+             */
+            function showScreen(screenId) {
+                screens.forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                document.getElementById(screenId).classList.add('active');
+                
+                // Special setup for specific screens
+                if (screenId === 'level-1-screen') {
+                    currentLevel = 1;
+                    generateLevel1Problem();
+                } else if (screenId === 'level-2-screen') {
+                    currentLevel = 2;
+                    generateLevel2Problem();
+                } else if (screenId === 'level-3-screen') {
+                    currentLevel = 3;
+                    generateLevel3Problem();
+                } else if (screenId === 'leaderboard-screen') {
+                    displayLeaderboard();
+                } else if (screenId === 'start-screen') {
+                    // Reset game state for play-again
+                    gameHeader.style.display = 'none';
+                    levelProgress = { 1: 0, 2: 0, 3: 0 };
+                    updateProgress(1);
+                    updateProgress(2);
+                    updateProgress(3);
+                    studentNameInput.value = "";
+                }
+            }
+
+            /**
+             * Formats total seconds into a MM:SS string.
+             * @param {number} totalSeconds - The number of seconds to format.
+             * @returns {string} The formatted time string.
+             */
+            function formatTime(totalSeconds) {
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+
+            // --- 4. TIMER FUNCTIONS ---
+            
+            // --- 4. AUDIO FUNCTIONS ---
+            
+            /** Initializes the AudioContext. Must be called after a user interaction. */
+            function initAudio() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.error("Web Audio API is not supported in this browser");
+                    }
+                }
+                // Resume audio context if it was suspended (common in modern browsers)
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+        
+            /** Plays a "correct" sound effect. */
+            function playCorrectSound() {
+                if (!audioCtx) return;
+                try {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.type = 'sine'; // A clean "ding"
+                    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); // Start pitch
+                    oscillator.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.1); // Go up
+                    
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); // Start volume (lowered)
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); // Fade out
+            
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                } catch (e) {
+                    console.error("Error playing correct sound:", e);
+                }
+            }
+        
+            /** Plays an "incorrect" sound effect. */
+            function playIncorrectSound() {
+                if (!audioCtx) return;
+                try {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+            
+                    oscillator.type = 'square'; // A "buzz" sound
+                    oscillator.frequency.setValueAtTime(150, audioCtx.currentTime); // Low pitch
+                    
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); // Start volume (lowered)
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                } catch (e) {
+                    console.error("Error playing incorrect sound:", e);
+                }
+            }
+
+            function startTimer() {
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+                gameHeader.style.display = 'flex';
+            }
+
+            function updateTimer() {
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                timerDisplay.textContent = formatTime(elapsedSeconds);
+            }
+
+            function stopTimer() {
+                clearInterval(timerInterval);
+                totalTime = Math.floor((Date.now() - startTime) / 1000);
+                finalTime.textContent = formatTime(totalTime);
+            }
+
+            // --- 5. PROBLEM GENERATION ---
+
+            /**
+             * Generates a random integer slope between -5 and 5 (excluding 0).
+             * @returns {number} A random slope.
+             */
+            function getRandomSlope() {
+                let slope;
+                do {
+                    slope = Math.floor(Math.random() * 11) - 5; // -5 to 5
+                } while (slope === 0);
+                return slope;
+            }
+
+            /**
+             * Generates a random integer y-intercept between -5 and 5.
+             * @returns {number} A random intercept.
+             */
+            function getRandomIntercept() {
+                return Math.floor(Math.random() * 11) - 5; // -5 to 5
+            }
+            
+            /**
+             * Clears an input field and feedback message.
+             * @param {HTMLElement} inputEl - The input element to clear.
+             * @param {HTMLElement} feedbackEl - The feedback element to clear.
+             */
+            function clearProblemState(inputEl, feedbackEl) {
+                inputEl.value = "";
+                feedbackEl.textContent = "";
+                feedbackEl.className = 'feedback';
+            }
+
+            // Level 1: Tables
+            function generateLevel1Problem() {
+                clearProblemState(level1Answer, level1Feedback);
+                level1Points = []; // Reset points array
+                l1x1.value = "";
+                l1y1.value = "";
+                l1x2.value = "";
+                l1y2.value = "";
+                l1SetupFeedback.textContent = "";
+                l1CalculationDisplay.innerHTML = "m = (y₂ - y₁) / (x₂ - x₁)";
+
+                currentSlope = getRandomSlope();
+                const b = getRandomIntercept();
+                
+                let tableHTML = `<thead><tr><th>x</th><th>y</th></tr></thead><tbody>`;
+                const startX = -1;
+                for (let i = 0; i < 4; i++) {
+                    const x = startX + i;
+                    const y = currentSlope * x + b;
+                    level1Points.push({x, y}); // Store the point
+                    tableHTML += `<tr><td>${x}</td><td>${y}</td></tr>`;
+                }
+                tableHTML += `</tbody>`;
+                tableProblem.innerHTML = tableHTML;
+            }
+
+            // Level 2: Graphs
+            function generateLevel2Problem() {
+                clearProblemState(level2Answer, level2Feedback);
+                l2Rise.value = "";
+                l2Run.value = "";
+                l2SetupFeedback.textContent = "";
+                l2CalculationDisplay.innerHTML = "m = Rise / Run";
+
+                currentSlope = getRandomSlope();
+                const b = getRandomIntercept();
+                drawGraph(currentSlope, b);
+            }
+            
+            // Level 3: Equations
+            function generateLevel3Problem() {
+                clearProblemState(level3Answer, level3Feedback);
+                level3Scratchpad.value = ""; // This one still uses the original scratchpad
+                currentSlope = getRandomSlope();
+                const b = getRandomIntercept();
+                
+                let bString = "";
+                if (b > 0) {
+                    bString = ` + ${b}`;
+                } else if (b < 0) {
+                    bString = ` - ${Math.abs(b)}`;
+                }
+                // Handle slope of 1 or -1
+                let mString = (currentSlope === 1) ? "x" : (currentSlope === -1) ? "-x" : `${currentSlope}x`;
+                
+                equationProblem.innerHTML = `y = ${mString}${bString}`;
+            }
+
+            // --- 6. CANVAS DRAWING (Level 2) ---
+
+            /**
+             * Draws the entire graph on the canvas for Level 2.
+             * @param {number} m - The slope of the line.
+             * @param {number} b - The y-intercept of the line.
+             */
+            function drawGraph(m, b) {
+                // Set canvas size based on its display size for responsiveness
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+                
+                const w = canvas.width;
+                const h = canvas.height;
+                const { xMin, xMax, yMin, yMax } = gridRange;
+                const xRange = xMax - xMin;
+                const yRange = yMax - yMin;
+                
+                const xScale = w / xRange;
+                const yScale = h / yRange;
+                
+                // Find the canvas coordinates for the algebraic origin (0,0)
+                const xOrigin = (0 - xMin) * xScale;
+                const yOrigin = (yMax - 0) * yScale;
+
+                /** Helper: Converts algebraic (x,y) to canvas (px, py) */
+                function getCanvasCoords(algX, algY) {
+                    const canvasX = (algX - xMin) * xScale;
+                    const canvasY = (yMax - algY) * yScale;
+                    return { x: canvasX, y: canvasY };
+                }
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, w, h);
+                
+                // --- Draw Grid Lines (light gray) ---
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+                
+                // Vertical lines
+                for (let x = xMin; x <= xMax; x++) {
+                    const p = getCanvasCoords(x, 0);
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, 0);
+                    ctx.lineTo(p.x, h);
+                    ctx.stroke();
+                }
+                // Horizontal lines
+                for (let y = yMin; y <= yMax; y++) {
+                    const p = getCanvasCoords(0, y);
+                    ctx.beginPath();
+                    ctx.moveTo(0, p.y);
+                    ctx.lineTo(w, p.y);
+                    ctx.stroke();
+                }
+
+                // --- Draw Axes (black) ---
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                // X-Axis
+                ctx.beginPath();
+                ctx.moveTo(0, yOrigin);
+                ctx.lineTo(w, yOrigin);
+                ctx.stroke();
+                // Y-Axis
+                ctx.beginPath();
+                ctx.moveTo(xOrigin, 0);
+                ctx.lineTo(xOrigin, h);
+                ctx.stroke();
+
+                // --- Draw The Line y = mx + b (red) ---
+                const y1 = m * xMin + b;
+                const y2 = m * xMax + b;
+                const p1 = getCanvasCoords(xMin, y1);
+                const p2 = getCanvasCoords(xMax, y2);
+                
+                ctx.strokeStyle = '#dc3545'; // Red
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+                
+                // --- Draw two points on the line (blue) ---
+                // We'll pick two simple, distinct x-values
+                const algX1 = 1;
+                const algY1 = m * algX1 + b;
+                const algX2 = 3;
+                const algY2 = m * algX2 + b;
+
+                /** Helper: Draws a labeled point on the canvas */
+                function drawPoint(algX, algY) {
+                    const p = getCanvasCoords(algX, algY);
+                    // Draw circle
+                    ctx.fillStyle = '#007bff'; // Blue
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    // Draw label
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(`(${algX}, ${algY})`, p.x + 10, p.y - 10);
+                }
+                
+                drawPoint(algX1, algY1);
+                drawPoint(algX2, algY2);
+            }
+
+            /**
+             * Helper function to check if a point (x,y) exists in the Level 1 table data.
+             * @param {number} x - The x-coordinate.
+             * @param {number} y - The y-coordinate.
+             * @param {Array} tableData - The array of {x, y} objects.
+             * @returns {boolean}
+             */
+            function isPointInTable(x, y, tableData) {
+                return tableData.some(point => point.x === x && point.y === y);
+            }
+
+            // --- 7. ANSWER CHECKING ---
+
+            /**
+             * Checks the student's answer for the current level.
+             * @param {number} level - The level (1, 2, or 3) to check.
+             */
+            function checkAnswer(level) {
+                let answer, inputEl, feedbackEl, genProblemFn, progressEl;
+                
+                if (level === 1) {
+                    inputEl = level1Answer;
+                    feedbackEl = level1Feedback;
+                    genProblemFn = generateLevel1Problem;
+                    progressEl = level1Progress;
+                } else if (level === 2) {
+                    inputEl = level2Answer;
+                    feedbackEl = level2Feedback;
+                    genProblemFn = generateLevel2Problem;
+                    progressEl = level2Progress;
+                } else {
+                    inputEl = level3Answer;
+                    feedbackEl = level3Feedback;
+                    genProblemFn = generateLevel3Problem;
+                    progressEl = level3Progress;
+                }
+                
+                answer = parseFloat(inputEl.value);
+
+                if (isNaN(answer)) {
+                    feedbackEl.textContent = "Please enter a number.";
+                    feedbackEl.className = 'feedback incorrect';
+                    playIncorrectSound(); // Play sound on invalid input
+                    return;
+                }
+                
+                if (answer === currentSlope) {
+                    // --- CORRECT ---
+                    feedbackEl.textContent = "Correct! ✅";
+                    feedbackEl.className = 'feedback correct';
+                    playCorrectSound();
+                    levelProgress[level]++;
+                    updateProgress(level);
+                    
+                    if (levelProgress[level] === 3) {
+                        // Level Complete!
+                        feedbackEl.textContent = `Level ${level} Complete! 🎉 Moving to next level...`;
+                        setTimeout(() => {
+                            advanceLevel(level);
+                        }, 2000);
+                    } else {
+                        // Next problem in this level
+                        setTimeout(genProblemFn, 1500);
+                    }
+                    
+                } else {
+                    // --- INCORRECT ---
+                    feedbackEl.textContent = "Not quite. Try again! ❌";
+                    feedbackEl.className = 'feedback incorrect';
+                    playIncorrectSound();
+                }
+            }
+
+            /**
+             * Updates the progress (stars) for a given level.
+             * @param {number} level - The level to update.
+             */
+            function updateProgress(level) {
+                const progressEl = document.getElementById(`level-${level}-progress`);
+                progressEl.textContent = '⭐'.repeat(levelProgress[level]);
+            }
+            
+            /**
+             * Advances the user to the next level or completion screen.
+             * @param {number} completedLevel - The level that was just finished.
+             */
+            function advanceLevel(completedLevel) {
+                if (completedLevel === 1) {
+                    showScreen('level-2-screen');
+                } else if (completedLevel === 2) {
+                    showScreen('level-3-screen');
+                } else if (completedLevel === 3) {
+                    stopTimer();
+                    completionName.textContent = studentName;
+                    showScreen('completion-screen');
+                }
+            }
+            
+            // --- 8. LEADERBOARD (localStorage) ---
+
+            /** Loads the leaderboard from localStorage. */
+            function loadLeaderboard() {
+                const data = localStorage.getItem('slopeChallengeLeaderboard');
+                if (data) {
+                    leaderboard = JSON.parse(data);
+                } else {
+                    leaderboard = [];
+                }
+            }
+            
+            /** Saves the leaderboard to localStorage. */
+            function saveLeaderboard() {
+                localStorage.setItem('slopeChallengeLeaderboard', JSON.stringify(leaderboard));
+            }
+
+            /**
+             * Adds the current score to the leaderboard and saves it.
+             * @param {string} name - The student's name.
+             * @param {number} time - The student's time in seconds.
+             */
+            function saveScore(name, time) {
+                const date = new Date().toLocaleDateString();
+                leaderboard.push({ name, time, date });
+                // Sort by time (ascending)
+                leaderboard.sort((a, b) => a.time - b.time);
+                saveLeaderboard();
+            }
+
+            /** Displays the leaderboard data in the table. */
+            function displayLeaderboard() {
+                loadLeaderboard();
+                leaderboardTableBody.innerHTML = ""; // Clear existing table
+                
+                if (leaderboard.length === 0) {
+                    leaderboardTableBody.innerHTML = '<tr><td colspan="4">No scores yet. Be the first!</td></tr>';
+                    return;
+                }
+                
+                leaderboard.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${entry.name}</td>
+                        <td>${formatTime(entry.time)}</td>
+                        <td>${entry.date}</td>
+                    `;
+                    leaderboardTableBody.appendChild(row);
+                });
+            }
+            
+            // --- 9. EVENT LISTENERS ---
+
+            // Start Button
+            startButton.addEventListener('click', () => {
+                initAudio(); // Initialize audio on first click
+                studentName = studentNameInput.value.trim();
+                if (studentName === "") {
+                    // Replaced alert with a DOM message for better UX
+                    studentNameInput.style.borderColor = '#dc3545';
+                    studentNameInput.placeholder = 'Please enter your name!';
+                    return;
+                }
+                // Reset border color if it was an error
+                studentNameInput.style.borderColor = '#ccc'; 
+                studentNameInput.placeholder = 'e.g., Alex Johnson';
+
+                studentNameDisplay.textContent = studentName;
+                startTimer();
+                showScreen('level-1-screen');
+            });
+            
+            // --- New Flow-Chart Event Listeners ---
+
+            // Level 1 Compute Button
+            l1ComputeBtn.addEventListener('click', () => {
+                initAudio(); // Initialize audio on click
+                l1SetupFeedback.textContent = ""; // Clear old feedback
+                let x1, y1, x2, y2;
+                
+                try {
+                    x1 = parseFloat(l1x1.value);
+                    y1 = parseFloat(l1y1.value);
+                    x2 = parseFloat(l1x2.value);
+                    y2 = parseFloat(l1y2.value);
+
+                    if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
+                        throw new Error("Please fill in all four input boxes.");
+                    }
+                    if (!isPointInTable(x1, y1, level1Points)) {
+                        throw new Error(`Point (${x1}, ${y1}) is not in the table.`);
+                    }
+                    if (!isPointInTable(x2, y2, level1Points)) {
+                        throw new Error(`Point (${x2}, ${y2}) is not in the table.`);
+                    }
+                    if (x1 === x2 && y1 === y2) {
+                        throw new Error("Please pick two different points.");
+                    }
+
+                    // All checks passed
+                    const yDiff = y2 - y1;
+                    const xDiff = x2 - x1;
+                    
+                    if (xDiff === 0) {
+                        // Should not happen with our slope generator, but good to check.
+                        l1CalculationDisplay.innerHTML = `(${y2} - ${y1}) / (${x2} - ${x1}) = ${yDiff} / 0<br>Slope is Undefined!`;
+                    } else {
+                        const computedSlope = yDiff / xDiff;
+                        l1CalculationDisplay.innerHTML = `m = (${y2} - ${y1}) / (${x2} - ${x1})<br>
+                                                     m = ${yDiff} / ${xDiff}<br>
+                                                     m = ${computedSlope}`;
+                    }
+
+                } catch (err) {
+                    l1SetupFeedback.textContent = err.message;
+                    l1CalculationDisplay.innerHTML = "m = (y₂ - y₁) / (x₂ - x₁)";
+                }
+            });
+
+            // Level 2 Compute Button
+            l2ComputeBtn.addEventListener('click', () => {
+                initAudio(); // Initialize audio on click
+                l2SetupFeedback.textContent = ""; // Clear old feedback
+                l2SetupFeedback.style.color = "#dc3545"; // Reset color to red
+                try {
+                    const rise = parseFloat(l2Rise.value);
+                    const run = parseFloat(l2Run.value);
+
+                    if (isNaN(rise) || isNaN(run)) {
+                        throw new Error("Please fill in both Rise and Run.");
+                    }
+                    if (run === 0) {
+                        throw new Error("Run (horizontal change) cannot be zero.");
+                    }
+                    
+                    const computedSlope = rise / run;
+
+                    // Check if the computed slope matches the line's actual slope
+                    if (Math.abs(computedSlope - currentSlope) < 0.001) { // Use tolerance for float comparison
+                        l2SetupFeedback.textContent = "Great! That ratio is correct.";
+                        l2SetupFeedback.style.color = "#28a745"; // Green
+                        l2CalculationDisplay.innerHTML = `m = Rise / Run<br>
+                                                         m = ${rise} / ${run}<br>
+                                                         m = ${computedSlope}`;
+                    } else {
+                        throw new Error("That Rise/Run doesn't match the slope of the line. Try counting again!");
+                    }
+
+                } catch (err) {
+                    l2SetupFeedback.textContent = err.message;
+                    l2CalculationDisplay.innerHTML = "m = Rise / Run";
+                }
+            });
+
+
+            // Level 1 Buttons
+            level1CheckBtn.addEventListener('click', () => {
+                initAudio(); // Initialize audio on click
+                checkAnswer(1);
+            });
+            level1NewBtn.addEventListener('click', generateLevel1Problem);
+            
+            // Level 2 Buttons
+            level2CheckBtn.addEventListener('click', () => {
+                initAudio(); // Initialize audio on click
+                checkAnswer(2);
+            });
+            level2NewBtn.addEventListener('click', generateLevel2Problem);
+
+            // Level 3 Buttons
+            level3CheckBtn.addEventListener('click', () => {
+                initAudio(); // Initialize audio on click
+                checkAnswer(3);
+            });
+            level3NewBtn.addEventListener('click', generateLevel3Problem);
+
+            // Completion Screen Button
+            submitToLeaderboardBtn.addEventListener('click', () => {
+                saveScore(studentName, totalTime);
+                showScreen('reflection-screen');
+            });
+            
+            // Reflection Screen Button
+            finishReflectionBtn.addEventListener('click', () => {
+                showScreen('leaderboard-screen');
+            });
+            
+            // Leaderboard Screen Buttons
+            playAgainBtn.addEventListener('click', () => {
+                showScreen('start-screen');
+            });
+            
+            showResetBtn.addEventListener('click', () => {
+                resetArea.style.display = 'block';
+                resetPasswordInput.value = "";
+                resetFeedback.textContent = "";
+            });
+            
+            resetLeaderboardBtn.addEventListener('click', () => {
+                const password = resetPasswordInput.value;
+                if (password === 'letmein') {
+                    leaderboard = [];
+                    saveLeaderboard();
+                    displayLeaderboard();
+                    resetArea.style.display = 'none';
+                    resetFeedback.textContent = "";
+                } else {
+                    resetFeedback.textContent = "Incorrect password.";
+                }
+            });
+
+            // --- 10. INITIALIZATION ---
+            loadLeaderboard(); // Load data on start
+            showScreen('start-screen'); // Show the first screen
+
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
+
+
+

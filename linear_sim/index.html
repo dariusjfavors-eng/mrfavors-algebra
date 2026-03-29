@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slope-Intercept Graphing Simulator</title>
+    <!-- Load Tailwind CSS FIRST -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Global Font and Antialiasing */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Highlight for the current step */
+        .highlight-step {
+            color: #facc15; /* yellow-400 */
+            font-weight: 600;
+            background-color: rgba(250, 204, 21, 0.1);
+            border-left-width: 4px;
+            border-color: #facc15;
+            padding-left: 0.75rem; /* pl-3 */
+        }
+        
+        /* New style for completed steps */
+        .step-completed {
+            color: #4ade80; /* green-400 */
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+        
+        /* TI-84 button styling */
+        .calc-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem; /* rounded-md */
+            font-weight: 600;
+            color: white;
+            padding: 0.5rem;
+            min-height: 40px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s ease;
+            border: 1px solid #4b5563; /* gray-600 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .calc-button:active {
+            transform: scale(0.95);
+            filter: brightness(0.8);
+        }
+
+        /* Compact arrow buttons */
+        .btn-arrow {
+            min-height: 24px;
+            padding: 0;
+            font-size: 0.75rem;
+        }
+        
+        /* Specific button colors */
+        .btn-gray { background-color: #4b5563; /* gray-600 */ }
+        .btn-gray:hover { background-color: #374151; /* gray-700 */ }
+        .btn-blue { background-color: #3b82f6; /* blue-500 */ }
+        .btn-blue:hover { background-color: #2563eb; /* blue-600 */ }
+        .btn-dark { background-color: #1f2937; /* gray-800 */ }
+        .btn-dark:hover { background-color: #111827; /* gray-900 */ }
+        .btn-on { background-color: #374151; /* gray-700 */ }
+        .btn-on:hover { background-color: #1f2937; /* gray-800 */ }
+        
+        /* Specific coloring for the ALPHA key */
+        .btn-alpha { background-color: #10b981; /* emerald-500 */ }
+        .btn-alpha:hover { background-color: #059669; /* emerald-600 */ }
+
+        /* "2ND" key active state */
+        .second-active {
+            background-color: #1d4ed8; /* blue-700 */
+            box-shadow: 0 0 10px #3b82f6;
+        }
+        
+        /* ALPHA key active state */
+        .alpha-active {
+            background-color: #059669; /* emerald-600 */
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        /* Calculator screen styles */
+        .calc-screen {
+            background-color: #1e293b; /* slate-800 */
+            border: 4px solid #4b5563; /* gray-600 */
+            aspect-ratio: 16 / 10;
+        }
+        
+        #screen-y-equals pre, #screen-home pre {
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Blinking cursor for Y= screen */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background-color: white;
+            animation: blink 1s steps(1) infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        /* Table styles */
+        #table-container {
+            font-family: monospace;
+            background-color: #1e293b; /* slate-800 */
+            color: white;
+        }
+        #table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #table-container th, #table-container td {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #4b5563; /* gray-600 */
+            text-align: center;
+        }
+        #table-container th {
+            background-color: #334155; /* slate-700 */
+        }
+
+        /* Main graph canvas */
+        #main-graph-canvas {
+            background-color: #1f2937; /* gray-800 */
+            border-radius: 0.5rem; /* rounded-lg */
+            cursor: crosshair;
+        }
+        
+        /* Color classes for highlighting */
+        .text-red-400 { color: #f87171; } /* Slope / Rate of Change */
+        .text-green-400 { color: #4ade80; } /* Y-Intercept / Starting Value */
+
+        /* Fraction display styles */
+        .fraction {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0 0.25em;
+            text-align: center;
+            font-size: 0.8em;
+        }
+        .fraction > span {
+            display: block;
+            padding: 0;
+        }
+        .fraction > span.numerator {
+            border-bottom: 1px solid currentColor;
+        }
+        .fraction > span.denominator {
+            display: block;
+        }
+
+        /* Feedback modal animation */
+        @keyframes greatJob {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .animated-feedback {
+            animation: greatJob 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-yellow-400">Linear Graphing Simulator (Student Edition)</h1>
+            <p class="text-lg text-gray-400">Follow the steps to graph the equation y = mx + b.</p>
+        </header>
+
+        <!-- Main content area -->
+        <div class="flex flex-col md:flex-row gap-6 md:gap-8">
+
+            <!-- Left Panel: Instructions -->
+            <div class="w-full md:w-1/3 bg-gray-800 p-6 rounded-lg shadow-xl">
+                <h2 class="text-2xl font-semibold mb-2">Current Equation:</h2>
+                <!-- Cleaned up HTML header - No LaTeX -->
+                <h3 class="text-xl font-semibold text-gray-400 mb-4">Slope/Growth (m) & Starting Value (b)</h3>
+                
+                <!-- Display the color-coded equation here -->
+                <div id="colored-equation" class="text-3xl font-bold mb-6 bg-gray-900 p-4 rounded-md text-center border border-gray-700 min-h-[80px] flex items-center justify-center">
+                    <!-- Dynamic content injected by JS -->
+                </div>
+                
+                <h3 class="text-2xl font-semibold mb-4">Steps:</h3>
+                <ol id="steps-list" class="space-y-3 list-decimal list-inside text-gray-300">
+                    <li data-step="1">Turn on your calculator.</li>
+                    <li data-step="2">Press [y=].</li>
+                    <li data-step="3">Type your equation into the first "y=" line. (Use [÷] or [ALPHA]+[Y=] for fractions!)</li>
+                    <li data-step="4">Press [Graph] to see the function.</li>
+                    <li data-step="5">Press [2nd] then [Graph] to get a table. Use arrows to scroll.</li>
+                    <li data-step="6">Plot at least 2 whole number points on the large graph.</li>
+                    <li data-step="7">Connect the points with the "Draw Line" button.</li>
+                    <li data-step="8">Put arrows on the line with the "Add Arrows" button.</li>
+                </ol>
+            </div>
+
+            <!-- Right Panel: Interactive Area -->
+            <div class="w-full md:w-2/3">
+                
+                <!-- View 1: Calculator -->
+                <div id="calculator-view">
+                    <div class="max-w-sm mx-auto bg-gray-700 p-4 rounded-lg shadow-2xl border-4 border-gray-600">
+                        <!-- Calculator Screen -->
+                        <div class="calc-screen w-full rounded-md p-2 mb-4 overflow-hidden shadow-inner shadow-black">
+                            <!-- Screen: OFF -->
+                            <div id="screen-off" class="w-full h-full"></div>
+                            
+                            <!-- Screen: HOME (ON) -->
+                            <div id="screen-home" class="w-full h-full text-white p-2 hidden">
+                                <pre>TI-84 Plus
+Silver Edition
+
+<span class="cursor"></span></pre>
+                            </div>
+
+                            <!-- Screen: Y= -->
+                            <div id="screen-y-equals" class="w-full h-full text-white p-2 hidden">
+                                <pre>Plot1 Plot2 Plot3
+\Y1=<span id="y1-input-display"></span><span class="cursor"></span>
+\Y2=
+\Y3=
+\Y4=
+\Y5=
+\Y6=
+\Y7=</pre>
+                            </div>
+
+                            <!-- Screen: Graph -->
+                            <div id="screen-graph" class="w-full h-full hidden">
+                                <canvas id="calc-graph-canvas" class="w-full h-full"></canvas>
+                            </div>
+
+                            <!-- Screen: Table -->
+                            <div id="screen-table" class="w-full h-full hidden overflow-y-auto">
+                                <div id="table-container">
+                                    <!-- Table will be generated here -->
+                                </div>
+                                <!-- New Button for Returning to Plot -->
+                                <button id="return-plot-btn" class="calc-button btn-blue w-full mt-2 hidden">
+                                    Return to Plotting (Step 6)
+                                </button>
+                            </div>
+
+                        </div>
+                        
+                        <!-- Calculator Buttons -->
+                        <div id="calculator-buttons-container" class="grid grid-cols-5 gap-2">
+                            <!-- Row 1 -->
+                            <button data-key="Y=" class="calc-button btn-gray">y=</button>
+                            <button data-key="WINDOW" class="calc-button btn-gray opacity-50" disabled>WINDOW</button>
+                            <button data-key="ZOOM" class="calc-button btn-gray opacity-50" disabled>ZOOM</button>
+                            <button data-key="TRACE" class="calc-button btn-gray opacity-50" disabled>TRACE</button>
+                            <button data-key="GRAPH" class="calc-button btn-gray">GRAPH</button>
+
+                            <!-- Row 2 -->
+                            <button data-key="2ND" id="2nd-button" class="calc-button btn-blue">2nd</button>
+                            <button data-key="MODE" class="calc-button btn-gray opacity-50" disabled>MODE</button>
+                            <!-- DEL button is now enabled and functional -->
+                            <button data-key="DEL" class="calc-button btn-gray">DEL</button>
+                            
+                            <!-- Arrow pad (Up, Down, Left, Right) -->
+                            <div class="col-span-2 row-span-2 flex flex-col justify-center items-center gap-1 bg-gray-800 rounded p-1">
+                                <button data-key="UP" class="calc-button btn-dark btn-arrow w-full h-6">▲</button>
+                                <div class="flex w-full gap-1">
+                                    <button data-key="LEFT" class="calc-button btn-dark btn-arrow w-1/2 h-6 opacity-50" disabled>◄</button>
+                                    <button data-key="RIGHT" class="calc-button btn-dark btn-arrow w-1/2 h-6 opacity-50" disabled>►</button>
+                                </div>
+                                <button data-key="DOWN" class="calc-button btn-dark btn-arrow w-full h-6">▼</button>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <button data-key="ALPHA" id="alpha-button" class="calc-button btn-alpha">ALPHA</button>
+                            <button data-key="X" class="calc-button btn-gray">X,T,θ,n</button>
+                            <button data-key="STAT" class="calc-button btn-gray opacity-50" disabled>STAT</button>
+                            <!-- Arrow pad is spanning this row -->
+
+                            <!-- Row 4 -->
+                            <button data-key="MATH" class="calc-button btn-gray opacity-50" disabled>MATH</button>
+                            <button data-key="APPS" class="calc-button btn-blue opacity-50" disabled>APPS</button>
+                            <button data-key="PRGM" class="calc-button btn-gray opacity-50" disabled>PRGM</button>
+                            <button data-key="VARS" class="calc-button btn-gray opacity-50" disabled>VARS</button>
+                            <button data-key="CLEAR" class="calc-button btn-gray">CLEAR</button>
+
+                            <!-- Row 5 -->
+                            <button data-key="INV" class="calc-button btn-gray opacity-50" disabled>x⁻¹</button>
+                            <button data-key="SIN" class="calc-button btn-gray opacity-50" disabled>SIN</button>
+                            <button data-key="COS" class="calc-button btn-gray opacity-50" disabled>COS</button>
+                            <button data-key="TAN" class="calc-button btn-gray opacity-50" disabled>TAN</button>
+                            <button data-key="POW" class="calc-button btn-gray opacity-50" disabled>^</button>
+
+                            <!-- Row 6 -->
+                            <button data-key="SQ" class="calc-button btn-gray opacity-50" disabled>x²</button>
+                            <button data-key="COMMA" class="calc-button btn-gray opacity-50" disabled>,</button>
+                            <button data-key="LP" class="calc-button btn-gray opacity-50" disabled>(</button>
+                            <button data-key="RP" class="calc-button btn-gray opacity-50" disabled>)</button>
+                            <!-- DIV button is now enabled and functional -->
+                            <button data-key="DIV" class="calc-button btn-dark">÷</button>
+
+                            <!-- Row 7 -->
+                            <button data-key="LOG" class="calc-button btn-dark opacity-50" disabled>LOG</button>
+                            <button data-key="7" class="calc-button btn-dark">7</button>
+                            <button data-key="8" class="calc-button btn-dark">8</button>
+                            <button data-key="9" class="calc-button btn-dark">9</button>
+                            <button data-key="MULT" class="calc-button btn-dark opacity-50" disabled>×</button>
+
+                            <!-- Row 8 -->
+                            <button data-key="LN" class="calc-button btn-dark opacity-50" disabled>LN</button>
+                            <button data-key="4" class="calc-button btn-dark">4</button>
+                            <button data-key="5" class="calc-button btn-dark">5</button>
+                            <button data-key="6" class="calc-button btn-dark">6</button>
+                            <button data-key="SUB" class="calc-button btn-dark">-</button>
+
+                            <!-- Row 9 -->
+                            <button data-key="STO" class="calc-button btn-dark opacity-50" disabled>STO▸</button>
+                            <button data-key="1" class="calc-button btn-dark">1</button>
+                            <button data-key="2" class="calc-button btn-dark">2</button>
+                            <button data-key="3" class="calc-button btn-dark">3</button>
+                            <button data-key="ADD" class="calc-button btn-dark">+</button>
+
+                            <!-- Row 10 -->
+                            <button data-key="ON" class="calc-button btn-on">ON</button>
+                            <button data-key="0" class="calc-button btn-dark">0</button>
+                            <button data-key="." class="calc-button btn-dark opacity-50" disabled>.</button>
+                            <button data-key="NEG" class="calc-button btn-dark">(−)</button>
+                            <button data-key="ENTER" class="calc-button btn-blue">ENTER</button>
+                        </div>
+                    </div>
+                    <!-- This button is now outside the new layout, which is correct -->
+                    <div id="start-plotting-container" class="text-center mt-4 hidden">
+                        <button id="start-plotting-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-200 ease-in-out">
+                            Ready to Plot (Step 6)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- View 2: Plotting Area -->
+                <div id="plot-area-view" class="hidden">
+                    <canvas id="main-graph-canvas" width="600" height="600" class="w-full h-auto max-w-2xl mx-auto shadow-2xl"></canvas>
+                    
+                    <div id="plot-controls" class="flex flex-col items-center gap-4 mt-4">
+                        <div class="flex flex-row gap-4">
+                            <button data-action="draw-line" id="draw-line-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Step 7: Draw Line
+                            </button>
+                            <button data-action="add-arrows" id="add-arrows-btn" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-6 rounded-lg shadow-lg transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Step 8: Add Arrows
+                            </button>
+                        </div>
+                        <!-- NEW BUTTON: Check Table -->
+                        <button id="check-table-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded shadow transition duration-200 ease-in-out">
+                            Check Table Again
+                        </button>
+                    </div>
+                    
+                     <p id="plot-message" class="text-center text-yellow-400 font-semibold mt-4"></p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-lg w-full border-4 border-yellow-400">
+            <div id="feedback-animation" class="text-center">
+                <h2 class="text-5xl font-bold text-yellow-400" style="text-shadow: 0 0 10px #facc15;">Great Job!</h2>
+                <p class="text-3xl font-semibold text-white mt-2">Problem Solved!</p>
+            </div>
+            <div class="mt-6 text-center">
+                <h3 class="text-xl font-semibold text-white mb-2">Real-World Scenario:</h3>
+                <p id="real-world-scenario" class="text-lg text-gray-300 whitespace-pre-wrap"></p>
+            </div>
+            <button id="next-problem-btn" class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg shadow-lg transition duration-200 ease-in-out">
+                Next Problem
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- SOUND MANAGER ---
+            let audioCtx = null;
+
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+
+            function playSound(type) {
+                if (!audioCtx) return;
+                
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'success') {
+                    // Happy major arpeggio
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                    
+                    gainNode.gain.setValueAtTime(0.1, now);
+                    gainNode.gain.linearRampToValueAtTime(0.1, now + 0.3);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'error') {
+                    // Low buzz
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                    
+                    gainNode.gain.setValueAtTime(0.1, now);
+                    gainNode.gain.linearRampToValueAtTime(0.001, now + 0.3);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'click') {
+                    // Thocky Keyboard Sound
+                    // Triangle wave dropping pitch quickly mimics mechanical switch
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.04);
+                    
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                }
+            }
+
+            // --- STATE MANAGEMENT ---
+            let appState = {
+                step: 0, // 0=Off, 1=On, 2=Y=, 3=Eq typed, 4=Graph, 5=Table, 6=Plotting, 7=Line, 8=Arrows, 9=Done
+                y1Input: "",
+                is2ndPressed: false,
+                isAlphaPressed: false,
+                plottedPoints: [], // Array of {x, y}
+                lineDrawn: false,
+                arrowsDrawn: false,
+                tableStartX: -5
+            };
+
+            let currentEquation = {
+                m: 2,
+                b: 1,
+                // The 'string' is how the user should input it (using ÷)
+                string: "2x+1", 
+                // The 'displayString' is for the instruction panel (using / for fraction bar)
+                displayString: "2x+1", 
+                scenario: ""
+            };
+
+            // --- DOM ELEMENTS ---
+            const stepsList = document.getElementById('steps-list');
+            const coloredEquationEl = document.getElementById('colored-equation');
+            
+            // Views
+            const calculatorView = document.getElementById('calculator-view');
+            const plotAreaView = document.getElementById('plot-area-view');
+            const feedbackModal = document.getElementById('feedback-modal');
+
+            // Calculator
+            const calcScreens = {
+                off: document.getElementById('screen-off'),
+                home: document.getElementById('screen-home'),
+                yEquals: document.getElementById('screen-y-equals'),
+                graph: document.getElementById('screen-graph'),
+                table: document.getElementById('screen-table'),
+            };
+            const y1InputDisplay = document.getElementById('y1-input-display');
+            const secondButton = document.getElementById('2nd-button');
+            const alphaButton = document.getElementById('alpha-button');
+            const calcButtonsContainer = document.getElementById('calculator-buttons-container');
+            const calcGraphCanvas = document.getElementById('calc-graph-canvas');
+            const calcGraphCtx = calcGraphCanvas.getContext('2d');
+            const tableContainer = document.getElementById('table-container');
+            const returnPlotBtn = document.getElementById('return-plot-btn');
+
+            // Plotting Area
+            const mainGraphCanvas = document.getElementById('main-graph-canvas');
+            const mainGraphCtx = mainGraphCanvas.getContext('2d');
+            const drawLineBtn = document.getElementById('draw-line-btn');
+            const addArrowsBtn = document.getElementById('add-arrows-btn');
+            const plotMessage = document.getElementById('plot-message');
+            const plotControls = document.getElementById('plot-controls');
+            const startPlottingContainer = document.getElementById('start-plotting-container');
+            const startPlottingBtn = document.getElementById('start-plotting-btn');
+            const checkTableBtn = document.getElementById('check-table-btn');
+
+            // Modal
+            const scenarioEl = document.getElementById('real-world-scenario');
+            const nextProblemBtn = document.getElementById('next-problem-btn');
+            const feedbackAnimation = document.getElementById('feedback-animation');
+
+            // --- CANVAS CONSTANTS ---
+            const G_RANGE = 10; // Graph from -10 to 10
+            const G_COLOR = '#475569'; // slate-600
+            const G_AXIS_COLOR = '#94a3b8'; // slate-400
+            const G_LABEL_COLOR = '#f87171'; // red-400
+            const G_LINE_COLOR = '#3b82f6'; // blue-500
+            const G_POINT_COLOR = '#facc15'; // yellow-400
+
+            // --- HELPER FUNCTIONS ---
+
+            /** Generates a new random equation, now including fractional slopes (m/n) */
+            function generateNewProblem() {
+                let m_num, m_den, m, b;
+                
+                // Ensure a non-zero slope (m) that is sometimes fractional
+                if (Math.random() < 0.5) { // 50% chance of integer slope
+                    m = Math.floor(Math.random() * 6) - 3; // -3 to 2
+                    if (m === 0) m = 1; // Avoid m=0
+                    m_num = m;
+                    m_den = 1;
+                } else { // 50% chance of fractional slope (n/d, usually +/- 1/2, 1/3, 2/3, 3/2)
+                    const numerators = [1, 2, 3];
+                    const denominators = [2, 3];
+                    m_num = numerators[Math.floor(Math.random() * numerators.length)];
+                    m_den = denominators[Math.floor(Math.random() * denominators.length)];
+                    if (Math.random() < 0.5) m_num *= -1; // Make it negative half the time
+                    
+                    // Simplify: if 2/2 or 3/3, make it 1 or -1
+                    if (Math.abs(m_num) === m_den) {
+                        m_num = m_num > 0 ? 1 : -1;
+                        m_den = 1;
+                    }
+                    m = m_num / m_den;
+                }
+
+                b = Math.floor(Math.random() * 9) - 4; // -4 to 4 (keeps y-intercept on the graph)
+                
+                // --- String for Calculator Input (using ÷) ---
+                let mInputString;
+                if (m_den === 1) {
+                    mInputString = m_num === 1 ? "x" : (m_num === -1 ? "-x" : `${m_num}x`);
+                } else {
+                    mInputString = `${m_num}÷${m_den}x`;
+                }
+                
+                let bInputString = b === 0 ? "" : (b > 0 ? `+${b}` : `${b}`);
+
+                let finalInputString = `${mInputString}${bInputString}`;
+                finalInputString = finalInputString.replace("+-", "-"); // Clean up double signs
+
+                // --- String for Instruction Display (using HTML fraction) ---
+                let mDisplayHtml;
+                 if (m_den === 1) {
+                    // Integer or -x / x
+                    mDisplayHtml = m_num === 1 ? "x" : (m_num === -1 ? "-x" : `<span class="text-red-400">${m_num}</span>x`);
+                } else {
+                    // Proper fraction display
+                    const sign = m_num < 0 ? '-' : '';
+                    const absNum = Math.abs(m_num);
+                    mDisplayHtml = `<span class="text-red-400">${sign}<span class="fraction"><span class="numerator">${absNum}</span><span class="denominator">${m_den}</span></span></span>x`;
+                }
+                
+                let bDisplayHtml = b === 0 ? "" : (b > 0 ? ` + <span class="text-green-400">${b}</span>` : ` - <span class="text-green-400">${Math.abs(b)}</span>`);
+
+                let finalDisplayHtml = `y = ${mDisplayHtml}${bDisplayHtml}`;
+                
+                // Cleanup for m=1 or m=-1 when b is also present
+                if (m_den === 1 && Math.abs(m_num) === 1) {
+                    const mSign = m_num < 0 ? '-' : '';
+                    finalDisplayHtml = `y = <span class="text-red-400">${mSign}x</span>${bDisplayHtml}`;
+                }
+
+
+                currentEquation = {
+                    m: m,
+                    b: b,
+                    string: finalInputString,
+                    displayString: finalDisplayHtml,
+                    scenario: getRealWorldScenario(m, b, m_num, m_den)
+                };
+            }
+
+            /** Gets a student-focused real-world scenario string with updated terminology and context */
+            function getRealWorldScenario(m, b, m_num, m_den) {
+                const bAbs = Math.abs(b);
+                const mAbs = Math.abs(m);
+                const isFractional = m_den !== 1;
+                
+                // Scenarios related to NYC student life (9th/10th grade)
+                const scenarios = [
+                    // Allowance and Spending
+                    {
+                        context: "Your Weekly Allowance and Bodega Spending",
+                        mPos: `earning ${mAbs} dollars for every extra chore (x)`,
+                        mNeg: `spending ${mAbs} dollars for every candy bar purchased at the bodega (x)`,
+                        mFracPos: `gaining ${m_num} dollars for every ${m_den} days you study (x)`,
+                        mFracNeg: `losing ${Math.abs(m_num)} dollars for every ${m_den} vending machine purchases (x)`,
+                        bPos: `start the week with ${b} dollars of allowance (the Starting Value)`,
+                        bNeg: `start the week with a ${bAbs} dollar debt you owe a friend (the Starting Value)`,
+                        bZero: `start the week with 0 dollars`,
+                    },
+                    // Class Points and Assignments
+                    {
+                        context: "Points in Your History Class",
+                        mPos: `earning ${mAbs} bonus points for every extra credit assignment (x)`,
+                        mNeg: `losing ${mAbs} points for every assignment turned in late (x)`,
+                        mFracPos: `earning ${m_num} points for every ${m_den} vocabulary words you get right on a quiz (x)`,
+                        mFracNeg: `losing ${Math.abs(m_num)} points for every ${m_den} chapters you didn't read (x)`,
+                        bPos: `start the marking period with ${b} guaranteed attendance points (the Starting Value)`,
+                        bNeg: `start with a ${bAbs} point penalty for a missing textbook (the Starting Value)`,
+                        bZero: `start the semester at 0 points`,
+                    }
+                ];
+
+                const s = scenarios[Math.floor(Math.random() * scenarios.length)];
+                
+                // Select rate part (Slope/Growth)
+                let mPart;
+                if (isFractional) {
+                    mPart = m > 0 ? s.mFracPos : s.mFracNeg;
+                } else {
+                    mPart = m > 0 ? s.mPos : s.mNeg;
+                }
+
+                // Select starting value part (Starting Value)
+                let bPart;
+                if (b === 0) {
+                    bPart = s.bZero;
+                } else {
+                    bPart = b > 0 ? s.bPos : s.bNeg;
+                }
+
+                // Construct the final scenario description without Markdown bolding
+                return `Context: ${s.context}\n\nThis equation means you ${bPart}, and the total changes because you are ${mPart}. The 'y' represents your total value, and 'x' represents the number of actions (like chores or candy).`;
+            }
+
+
+            /** Renders the color-coded equation display using the displayString (with fractions) */
+            function renderColoredEquation() {
+                coloredEquationEl.innerHTML = currentEquation.displayString;
+            }
+
+
+            /**
+             * Parses an equation input string (e.g., '-2x+1' or '1/2x-3') into 
+             * its slope (m) and y-intercept (b) components.
+             */
+            function parseInput(input) {
+                // Support both ÷ and / for division
+                const cleanInput = input.replace(/\s/g, '').toLowerCase().replace('÷', '/'); 
+                let m = 0;
+                let b = 0;
+                
+                // 1. Find the slope component ('mx' part)
+                // Looks for: -2/3x, 1/2x, -x, 5x, x
+                let slopePartMatch = cleanInput.match(/(-?\d*(\/)\d*x|-?\d*x|x)/);
+                if (slopePartMatch) {
+                    const slopePart = slopePartMatch[0];
+                    const coeffStr = slopePart.replace('x', '');
+
+                    if (coeffStr === '') {
+                        m = 1; // Case: x
+                    } else if (coeffStr === '-') {
+                        m = -1; // Case: -x
+                    } else if (coeffStr.includes('/')) {
+                        const parts = coeffStr.split('/');
+                        // Handle potential negative sign on the numerator for input like -1/2x
+                        const num = parseFloat(parts[0]);
+                        const den = parseFloat(parts[1]);
+                        m = num / den;
+                    } else {
+                        m = parseFloat(coeffStr);
+                    }
+                }
+
+                // 2. Find the intercept 'b' component
+                let bMatch = cleanInput.match(/([+\-]\d+)$/);
+                if (bMatch) {
+                    b = parseFloat(bMatch[1]);
+                }
+
+                return { m, b };
+            }
+
+
+            /** Resets app to initial state for a new problem */
+            function loadNewProblem() {
+                generateNewProblem();
+                
+                appState = {
+                    step: 0,
+                    y1Input: "",
+                    is2ndPressed: false,
+                    isAlphaPressed: false,
+                    plottedPoints: [],
+                    lineDrawn: false,
+                    arrowsDrawn: false,
+                    tableStartX: -5
+                };
+
+                renderColoredEquation(); // RENDER the new color-coded equation
+                
+                updateStepUI(0);
+                showView('calculator');
+                showCalcScreen('off');
+                hideModal();
+                
+                // Reset buttons
+                drawLineBtn.disabled = true;
+                addArrowsBtn.disabled = true;
+                plotMessage.textContent = "";
+                startPlottingContainer.classList.add('hidden');
+                
+                // Ensure the toggle buttons are reset
+                checkTableBtn.classList.remove('hidden');
+                returnPlotBtn.classList.add('hidden');
+
+                // Initialize main graph
+                initMainGraph();
+            }
+
+            /** Updates the instruction list highlight */
+            function updateStepUI(step) {
+                // Skip directly to step 4 if step 3 is achieved
+                if (step === 3) {
+                     // Since step 3 is just typing, we don't need a separate state for it.
+                     // The equation check happens on [GRAPH] press.
+                     return; 
+                }
+                
+                appState.step = step;
+                stepsList.querySelectorAll('li').forEach((li, index) => {
+                    const stepNumber = index + 1;
+                    
+                    // We map the visible steps to the internal state: 
+                    // Visible steps are 1, 2, 3, 4, 5, 6, 7, 8
+                    // Internal states are 1, 2, 4, 5, 6, 7, 8, 9 (step 3 is skipped)
+                    let currentStepMap = step;
+                    if (step > 2) currentStepMap = step - 1; // Shift steps 4-8 back to correspond to list indices 3-7
+                    
+                    if (stepNumber === currentStepMap) {
+                        // Current step
+                        li.classList.add('highlight-step');
+                        li.classList.remove('step-completed');
+                    } else if (stepNumber < currentStepMap) {
+                        // Completed step
+                        li.classList.remove('highlight-step');
+                        li.classList.add('step-completed');
+                    } else {
+                        // Future step
+                        li.classList.remove('highlight-step');
+                        li.classList.remove('step-completed');
+                    }
+                });
+
+                // Show/hide start plotting button
+                startPlottingContainer.classList.toggle('hidden', step !== 5);
+
+                // Show plot area when step 6 is reached
+                if (step === 6) {
+                    showView('plot-area');
+                    plotMessage.textContent = "Click on the graph to plot whole number points from your table.";
+                }
+                
+                if (step === 7) {
+                    drawLineBtn.disabled = false;
+                    plotMessage.textContent = "Great! Now press 'Draw Line'.";
+                }
+                
+                if (step === 8) {
+                    addArrowsBtn.disabled = false;
+                    plotMessage.textContent = "Almost done! Press 'Add Arrows'.";
+                }
+                
+                if (step === 9) {
+                    drawLineBtn.disabled = true;
+                    addArrowsBtn.disabled = true;
+                }
+            }
+
+            /** Shows a main view (calc or plot) */
+            function showView(viewId) {
+                calculatorView.classList.toggle('hidden', viewId !== 'calculator');
+                plotAreaView.classList.toggle('hidden', viewId !== 'plot-area');
+                if (viewId === 'plot-area') {
+                     // Ensure the graph is correctly sized and drawn when switching views
+                    initMainGraph(); 
+                    redrawMainGraph();
+                }
+            }
+
+            /** Shows a specific calculator screen */
+            function showCalcScreen(screenId) {
+                Object.values(calcScreens).forEach(screen => screen.classList.add('hidden'));
+                if (calcScreens[screenId]) {
+                    calcScreens[screenId].classList.remove('hidden');
+                }
+            }
+
+            /** Hides the feedback modal */
+            function hideModal() {
+                feedbackModal.classList.add('hidden');
+                feedbackAnimation.classList.remove('animated-feedback');
+            }
+
+            /** Shows the feedback modal */
+            function showModal() {
+                scenarioEl.textContent = currentEquation.scenario; // Use textContent for plain text
+                feedbackModal.classList.remove('hidden');
+                // Trigger animation
+                feedbackAnimation.classList.add('animated-feedback');
+                playSound('success'); // Final success sound
+            }
+            
+            /** Updates the Y1= input display */
+            function updateY1Display() {
+                y1InputDisplay.textContent = appState.y1Input;
+            }
+
+            // --- CALCULATOR LOGIC ---
+            function handleCalcButton(e) {
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                // Init audio on first interaction
+                initAudio();
+                playSound('click');
+
+                const key = button.dataset.key;
+
+                // Handle '2ND' key separately
+                if (key === '2ND') {
+                    appState.is2ndPressed = !appState.is2ndPressed;
+                    // Deactivate alpha if 2nd pressed
+                    appState.isAlphaPressed = false;
+                    alphaButton.classList.remove('alpha-active');
+                    
+                    secondButton.classList.toggle('second-active', appState.is2ndPressed);
+                    return; 
+                }
+
+                // Handle 'ALPHA' key separately
+                if (key === 'ALPHA') {
+                    appState.isAlphaPressed = !appState.isAlphaPressed;
+                    // Deactivate 2nd if Alpha pressed
+                    appState.is2ndPressed = false;
+                    secondButton.classList.remove('second-active');
+                    
+                    alphaButton.classList.toggle('alpha-active', appState.isAlphaPressed);
+                    return;
+                }
+
+                // Handle 'ON' key separately
+                if (key === 'ON') {
+                    if (appState.step === 0) {
+                        updateStepUI(1);
+                        showCalcScreen('home');
+                    } else {
+                        // On a real TI-84, ON acts as OFF if pressed while on
+                        updateStepUI(0);
+                        showCalcScreen('off');
+                    }
+                    return;
+                }
+                
+                // Fraction Shortcut: Alpha + Y=
+                if (key === 'Y=' && appState.isAlphaPressed && appState.step === 2) {
+                    appState.y1Input += '/';
+                    updateY1Display();
+                    
+                    // Reset alpha
+                    appState.isAlphaPressed = false;
+                    alphaButton.classList.remove('alpha-active');
+                    return;
+                }
+
+                // Store Modifier states before resetting them
+                let was2ndPressed = appState.is2ndPressed;
+                // Reset modifiers after any normal key press
+                if (key !== '2ND' && key !== 'ALPHA') {
+                    appState.is2ndPressed = false;
+                    secondButton.classList.remove('second-active');
+                    appState.isAlphaPressed = false;
+                    alphaButton.classList.remove('alpha-active');
+                }
+
+                // Main logic based on current step
+                switch (appState.step) {
+                    case 1: // Home screen
+                        if (key === 'Y=') {
+                            updateStepUI(2);
+                            showCalcScreen('yEquals');
+                        }
+                        break;
+                        
+                    case 2: // Y= screen (Typing equation)
+                        handleTyping(key);
+                        
+                        // Check equation and advance on [GRAPH] press
+                         if (key === 'GRAPH') {
+                            const inputValues = parseInput(appState.y1Input);
+                            const target = currentEquation;
+                            
+                            // Using a small tolerance for floating point comparison (for fractional slopes)
+                            const isMatch = Math.abs(inputValues.m - target.m) < 0.0001 && inputValues.b === target.b;
+
+                            if (isMatch) {
+                                playSound('success');
+                                updateStepUI(4); // Jump to step 4 (Graph)
+                                drawCalcGraph();
+                                showCalcScreen('graph');
+                            } else {
+                                playSound('error');
+                                y1InputDisplay.textContent = "ERR: SYNTAX";
+                                setTimeout(updateY1Display, 1000); // Clear error after a short delay
+                            }
+                        }
+                        break;
+                        
+                    case 4: // Graph screen
+                        if (key === 'GRAPH' && was2ndPressed) {
+                            updateStepUI(5);
+                            generateTable();
+                            showCalcScreen('table');
+                        }
+                        if (key === 'Y=') { // Allow going back
+                            updateStepUI(2);
+                            showCalcScreen('yEquals');
+                        }
+                        break;
+                        
+                    case 5: // Table screen
+                        if (key === 'Y=') { // Allow going back
+                            updateStepUI(2);
+                            showCalcScreen('yEquals');
+                        }
+                        if (key === 'GRAPH' && !was2ndPressed) { // Allow going back
+                            updateStepUI(4);
+                            showCalcScreen('graph');
+                        }
+                        // Handle Table Scrolling
+                        if (key === 'UP') {
+                            appState.tableStartX -= 1;
+                            generateTable();
+                        }
+                        if (key === 'DOWN') {
+                            appState.tableStartX += 1;
+                            generateTable();
+                        }
+                        break;
+                }
+            }
+            
+            /** Handles key presses while on the Y= screen (Step 2) */
+            function handleTyping(key) {
+                if (appState.step !== 2) return;
+                
+                const lastChar = appState.y1Input.slice(-1);
+                const inputIsEmpty = appState.y1Input.length === 0;
+
+                const validKeys = '0123456789X';
+                let error = false;
+
+                if (validKeys.includes(key)) {
+                    // Simple input for now, allowing sequences like '23' or 'X'
+                    appState.y1Input += key;
+                } else if (key === 'ADD') {
+                    // Addition: must follow a number or X
+                    if (!inputIsEmpty && (validKeys.includes(lastChar) || lastChar === ')')) {
+                         appState.y1Input += '+';
+                    } else { error = true; }
+                } else if (key === 'SUB') {
+                    // Subtraction: must follow a number or X (e.g., 2-3 or 2x-3)
+                    if (!inputIsEmpty && (validKeys.includes(lastChar) || lastChar === ')')) {
+                         appState.y1Input += '-';
+                    } else { error = true; }
+                } else if (key === 'DIV') {
+                    // Division: must follow a number (for fractions like 1÷2)
+                    if (!inputIsEmpty && '0123456789'.includes(lastChar)) {
+                         appState.y1Input += '÷';
+                    } else { error = true; }
+                } else if (key === 'NEG') {
+                    // Negation: only allowed if input is empty, or after +,-,÷,/
+                    if (inputIsEmpty || ['+', '-', '÷', '/'].includes(lastChar)) {
+                        appState.y1Input += '-';
+                    } else { 
+                        error = true;
+                    }
+                } else if (key === 'DEL') {
+                    // Delete last character
+                    appState.y1Input = appState.y1Input.slice(0, -1);
+                } else if (key === 'CLEAR') {
+                    // Clear all input
+                    appState.y1Input = "";
+                }
+                
+                if (error) {
+                    playSound('error');
+                    y1InputDisplay.textContent = "ERR: SYNTAX";
+                    // Wait 1 second before clearing the error and showing previous input
+                    setTimeout(() => {
+                        if (y1InputDisplay.textContent === "ERR: SYNTAX") {
+                            updateY1Display(); // Redisplay the correct input without the error keypress
+                        }
+                    }, 1000);
+                } else {
+                    updateY1Display();
+                }
+            }
+            
+            function generateTable() {
+                const { m, b } = currentEquation;
+                const startX = appState.tableStartX;
+                let tableHTML = '<table><thead><tr><th>X</th><th>Y1</th></tr></thead><tbody>';
+                
+                // Show 11 rows
+                for (let i = 0; i <= 10; i++) {
+                    let x = startX + i;
+                    let y = m * x + b;
+                    // Handle small floating point inaccuracies
+                    y = Math.round(y * 10000) / 10000;
+                    // Format y to two decimal places if it's a non-integer
+                    const yDisplay = Number.isInteger(y) ? y.toString() : y.toFixed(2);
+                    
+                    tableHTML += `<tr><td>${x}</td><td>${yDisplay}</td></tr>`;
+                }
+                
+                tableHTML += '</tbody></table>';
+                tableContainer.innerHTML = tableHTML;
+            }
+
+            // --- CANVAS DRAWING ---
+
+            // Map math coordinates to canvas pixels
+            function mapCoords(ctx, x, y) {
+                const { width, height } = ctx.canvas;
+                const scaleX = width / (G_RANGE * 2);
+                const scaleY = height / (G_RANGE * 2);
+                const midX = width / 2;
+                const midY = height / 2;
+                
+                return {
+                    px: midX + x * scaleX,
+                    py: midY - y * scaleY // Y is inverted in canvas
+                };
+            }
+            
+            // Map canvas pixels to math coordinates
+            function unmapCoords(ctx, px, py) {
+                const { width, height } = ctx.canvas;
+                const scaleX = width / (G_RANGE * 2);
+                const scaleY = height / (G_RANGE * 2);
+                const midX = width / 2;
+                const midY = height / 2;
+                
+                const x = (px - midX) / scaleX;
+                const y = (midY - py) / scaleY; // Y is inverted in canvas
+                
+                return { x, y };
+            }
+            
+            function drawGrid(ctx, isCalcGraph = false) {
+                const { width, height } = ctx.canvas;
+                ctx.clearRect(0, 0, width, height);
+                
+                // Fill background to match calc screen
+                ctx.fillStyle = isCalcGraph ? '#1e293b' : '#1f2937'; // slate-800 or gray-800
+                ctx.fillRect(0, 0, width, height);
+                
+                ctx.strokeStyle = G_COLOR;
+                ctx.lineWidth = 1;
+                
+                const scaleX = width / (G_RANGE * 2);
+                const scaleY = height / (G_RANGE * 2);
+                const labelSize = isCalcGraph ? 10 : 14; // Increased font size
+                const numberStep = 5; 
+
+                ctx.font = `bold ${labelSize}px monospace`; // Added bold
+                ctx.fillStyle = G_LABEL_COLOR;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Draw vertical grid lines and numbers
+                for (let x = -G_RANGE; x <= G_RANGE; x++) {
+                    const { px } = mapCoords(ctx, x, 0);
+                    ctx.beginPath();
+                    ctx.moveTo(px, 0);
+                    ctx.lineTo(px, height);
+                    ctx.stroke();
+                    
+                    if (x % numberStep === 0 && x !== 0) {
+                        const { py: yPos } = mapCoords(ctx, 0, 0);
+                        ctx.fillText(x, px, yPos + labelSize * 1.5); // Numbers below x-axis
+                    }
+                }
+                // Draw horizontal grid lines and numbers
+                for (let y = -G_RANGE; y <= G_RANGE; y++) {
+                    const { py } = mapCoords(ctx, 0, y);
+                    ctx.beginPath();
+                    ctx.moveTo(0, py);
+                    ctx.lineTo(width, py);
+                    ctx.stroke();
+
+                    if (y % numberStep === 0 && y !== 0) {
+                        const { px: xPos } = mapCoords(ctx, 0, 0);
+                        ctx.fillText(y, xPos - labelSize * 1.5, py); // Numbers left of y-axis
+                    }
+                }
+
+                // Draw axes
+                ctx.strokeStyle = G_AXIS_COLOR;
+                ctx.lineWidth = 2;
+                const { px: midX, py: midY } = mapCoords(ctx, 0, 0);
+                // X-Axis
+                ctx.beginPath();
+                ctx.moveTo(0, midY);
+                ctx.lineTo(width, midY);
+                ctx.stroke();
+                // Y-Axis
+                ctx.beginPath();
+                ctx.moveTo(midX, 0);
+                ctx.lineTo(midX, height);
+                ctx.stroke();
+                
+                // Draw X/Y Labels
+                ctx.font = `bold ${labelSize * 1.2}px sans-serif`; // Added bold
+                ctx.fillStyle = G_LABEL_COLOR;
+                ctx.fillText('Y', midX - labelSize * 1.5, 10); // Y label at top
+                ctx.fillText('X', width - 10, midY + labelSize * 1.5); // X label at right
+            }
+
+            function drawCalcGraph() {
+                const ctx = calcGraphCtx;
+                drawGrid(ctx, true); // Pass true for calc graph
+                
+                const { m, b } = currentEquation;
+                
+                // Find y at x=-10 and x=10
+                const y1 = m * (-G_RANGE) + b;
+                const y2 = m * (G_RANGE) + b;
+                
+                const { px: px1, py: py1 } = mapCoords(ctx, -G_RANGE, y1);
+                const { px: px2, py: py2 } = mapCoords(ctx, G_RANGE, y2);
+                
+                ctx.strokeStyle = "red"; // Graph line is red on the calculator screen
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(px1, py1);
+                ctx.lineTo(px2, py2);
+                ctx.stroke();
+            }
+
+            function initMainGraph() {
+                // Set canvas size based on container
+                const canvas = mainGraphCanvas;
+                const container = plotAreaView;
+                // Get the width of the parent container
+                const containerWidth = container.clientWidth > 0 ? container.clientWidth : 600;
+                // Set size to be the minimum of container width or max allowed (600px)
+                const size = Math.min(containerWidth, 600);
+                canvas.width = size;
+                canvas.height = size;
+                drawGrid(mainGraphCtx, false); // Pass false for main graph
+            }
+            
+            function redrawMainGraph() {
+                drawGrid(mainGraphCtx, false); // Pass false for main graph
+                
+                // Redraw points
+                appState.plottedPoints.forEach(p => {
+                    drawPoint(mainGraphCtx, p.x, p.y);
+                });
+                
+                // Redraw line if drawn
+                if (appState.lineDrawn) {
+                    drawMainGraphLine(appState.arrowsDrawn); // Will draw with/without arrows
+                }
+            }
+            
+            function drawPoint(ctx, x, y) {
+                const { px, py } = mapCoords(ctx, x, y);
+                ctx.fillStyle = G_POINT_COLOR;
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            function drawMainGraphLine(withArrows = false) {
+                if (appState.plottedPoints.length < 2) return;
+                
+                const { m, b } = currentEquation;
+                
+                // Find y at x=-10 and x=10
+                const y1 = m * (-G_RANGE) + b;
+                const y2 = m * (G_RANGE) + b;
+                
+                const { px: px1, py: py1 } = mapCoords(mainGraphCtx, -G_RANGE, y1);
+                const { px: px2, py: py2 } = mapCoords(mainGraphCtx, G_RANGE, y2);
+                
+                mainGraphCtx.strokeStyle = G_LINE_COLOR;
+                mainGraphCtx.lineWidth = 3;
+                mainGraphCtx.beginPath();
+                mainGraphCtx.moveTo(px1, py1);
+                mainGraphCtx.lineTo(px2, py2);
+                mainGraphCtx.stroke();
+                
+                if (withArrows) {
+                    drawArrowhead(mainGraphCtx, px1, py1, px2, py2);
+                    drawArrowhead(mainGraphCtx, px2, py2, px1, py1);
+                }
+            }
+            
+            function drawArrowhead(ctx, fromX, fromY, toX, toY) {
+                const angle = Math.atan2(toY - fromY, toX - fromX); // Corrected math here
+                const headlen = 15;
+                ctx.fillStyle = G_LINE_COLOR;
+                ctx.beginPath();
+                
+                // Move to the end point (toX, toY)
+                ctx.moveTo(toX, toY);
+
+                // Calculate points for the arrow head
+                const p1x = toX - headlen * Math.cos(angle - Math.PI / 6);
+                const p1y = toY - headlen * Math.sin(angle - Math.PI / 6);
+                
+                const p2x = toX - headlen * Math.cos(angle + Math.PI / 6);
+                const p2y = toY - headlen * Math.sin(angle + Math.PI / 6);
+
+                ctx.lineTo(p1x, p1y);
+                ctx.lineTo(p2x, p2y);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // --- PLOTTING LOGIC ---
+            
+            function handlePlotClick(e) {
+                // Ensure audio is ready
+                initAudio();
+
+                if (appState.step !== 6) return;
+                
+                const rect = mainGraphCanvas.getBoundingClientRect();
+                // Get mouse click coordinates relative to the canvas
+                const px = e.clientX - rect.left;
+                const py = e.clientY - rect.top;
+                
+                const { x, y } = unmapCoords(mainGraphCtx, px, py);
+                
+                // Snap to nearest integer
+                const gridX = Math.round(x);
+                const gridY = Math.round(y);
+                
+                // Check if this point is already plotted
+                if (appState.plottedPoints.find(p => p.x === gridX && p.y === gridY)) {
+                    playSound('error');
+                    plotMessage.textContent = "You already plotted that point!";
+                    return;
+                }
+                
+                // Check if the snapped point is within the graph bounds
+                if (gridX < -G_RANGE || gridX > G_RANGE || gridY < -G_RANGE || gridY > G_RANGE) {
+                    playSound('error');
+                    plotMessage.textContent = "Please plot points within the visible -10 to 10 grid.";
+                    return;
+                }
+
+                // Check if this is a correct whole-number point
+                const { m, b } = currentEquation;
+                const expectedY = m * gridX + b;
+                
+                // Check if the expected Y is an integer. If not, don't allow plotting it.
+                if (!Number.isInteger(expectedY)) {
+                     playSound('error');
+                     plotMessage.textContent = `(${gridX}, ${expectedY.toFixed(2)}) is not a whole number point. Try scrolling the table for better points!`;
+                     return;
+                }
+
+                if (Math.abs(gridY - expectedY) < 0.001) { // Check for correct point (using tolerance)
+                    playSound('success');
+                    appState.plottedPoints.push({ x: gridX, y: gridY });
+                    drawPoint(mainGraphCtx, gridX, gridY);
+                    plotMessage.textContent = `Plotted (${gridX}, ${gridY}). Good!`;
+                    
+                    if (appState.plottedPoints.length >= 2) {
+                        updateStepUI(7);
+                    }
+                } else {
+                    playSound('error');
+                    plotMessage.textContent = `(${gridX}, ${gridY}) is not on the line. Try another point from the table.`;
+                }
+            }
+            
+            function handlePlotActions(e) {
+                const button = e.target.closest('button');
+                if (!button || button.disabled) return;
+                
+                initAudio();
+                playSound('click');
+
+                const action = button.dataset.action;
+                
+                if (action === 'draw-line' && appState.step === 7) {
+                    appState.lineDrawn = true;
+                    redrawMainGraph(); // Will draw line
+                    updateStepUI(8);
+                }
+                
+                if (action === 'add-arrows' && appState.step === 8) {
+                    appState.arrowsDrawn = true;
+                    redrawMainGraph(); // Will draw line with arrows
+                    
+                    // Final check
+                    if (appState.plottedPoints.length >= 2 && appState.lineDrawn && appState.arrowsDrawn) {
+                        updateStepUI(9);
+                        setTimeout(showModal, 500); // Short delay for effect
+                    }
+                }
+            }
+
+            // --- LISTENERS FOR NEW BUTTONS ---
+            
+            checkTableBtn.addEventListener('click', () => {
+                initAudio();
+                playSound('click');
+                // Switch view to calculator
+                showView('calculator');
+                // Ensure calc screen is table
+                showCalcScreen('table');
+                // Show the return button inside the calculator view
+                returnPlotBtn.classList.remove('hidden');
+                // Update button text to be clear
+                returnPlotBtn.textContent = "Return to Plotting (Step 6)";
+            });
+
+            returnPlotBtn.addEventListener('click', () => {
+                initAudio();
+                playSound('click');
+                // Switch back to plot view
+                showView('plot-area');
+            });
+
+
+            // --- EVENT LISTENERS ---
+            calcButtonsContainer.addEventListener('click', handleCalcButton);
+            mainGraphCanvas.addEventListener('click', handlePlotClick);
+            plotControls.addEventListener('click', handlePlotActions);
+            nextProblemBtn.addEventListener('click', loadNewProblem);
+            startPlottingBtn.addEventListener('click', () => {
+                initAudio();
+                playSound('click');
+                if (appState.step === 5) {
+                    updateStepUI(6);
+                }
+            });
+            
+            // Resize handler for main graph
+            window.addEventListener('resize', () => {
+                // Only re-initialize/redraw if we are in the plotting phase or later
+                if (appState.step >= 6) {
+                    initMainGraph();
+                    redrawMainGraph();
+                }
+            });
+
+            // --- INITIALIZE APP ---
+            loadNewProblem();
+            
+        });
+    </script>
+</body>
+</html>
+

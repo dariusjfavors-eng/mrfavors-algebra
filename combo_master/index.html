@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Combo Builder — Distributive Property</title>
+
+  <style>
+    /* ============================================================
+       DESIGN SYSTEM — CSS CUSTOM PROPERTIES
+    ============================================================ */
+    :root {
+      /* Colors */
+      --bg:              #0d1526;
+      --bg-grid:         rgba(255,255,255,0.02);
+      --surface:         #152040;
+      --surface-raised:  #1c2d52;
+      --surface-card:    #192849;
+      --accent:          #f5a623;
+      --accent-dim:      rgba(245,166,35,0.15);
+      --accent-border:   rgba(245,166,35,0.4);
+      --text-1:          #e8eeff;
+      --text-2:          #7a95c0;
+      --text-3:          #4a618a;
+      --success:         #26c987;
+      --success-bg:      rgba(38,201,135,0.1);
+      --success-border:  rgba(38,201,135,0.5);
+      --error:           #e5626a;
+      --error-bg:        rgba(229,98,106,0.1);
+      --error-border:    rgba(229,98,106,0.5);
+      --hint:            #6ab0e0;
+      --hint-bg:         rgba(106,176,224,0.1);
+      --hint-border:     rgba(106,176,224,0.5);
+      --border:          rgba(255,255,255,0.07);
+      --border-hover:    rgba(255,255,255,0.14);
+
+      /* Spacing */
+      --space-xs:  4px;
+      --space-sm:  8px;
+      --space-md:  16px;
+      --space-lg:  24px;
+      --space-xl:  36px;
+      --space-2xl: 52px;
+
+      /* Radius */
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 18px;
+      --r-xl: 28px;
+
+      /* Shadows */
+      --shadow-sm: 0 2px 12px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 24px rgba(0,0,0,0.45);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+
+      /* Typography */
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Consolas', 'Courier New', monospace;
+
+      /* Transitions */
+      --t: 0.18s ease;
+      --t-slow: 0.35s ease;
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      font-family: var(--font);
+      font-size: 16px;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      /* Subtle grid texture */
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-md) var(--space-md) 48px;
+    }
+
+    /* ============================================================
+       APP CONTAINER
+    ============================================================ */
+    #app {
+      width: 100%;
+      max-width: 780px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      animation: fadeSlideUp 0.4s ease both;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       PROGRESS BAR
+    ============================================================ */
+    .progress-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .progress-track {
+      display: flex;
+      gap: 6px;
+    }
+
+    .progress-seg {
+      flex: 1;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--border-hover);
+      transition: background 0.5s ease;
+    }
+
+    .progress-seg.complete { background: var(--success); }
+    .progress-seg.active   { background: var(--accent); }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .progress-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-3);
+      transition: color 0.3s;
+    }
+
+    .progress-label.active   { color: var(--accent); }
+    .progress-label.complete { color: var(--success); }
+
+    /* ============================================================
+       CARD
+    ============================================================ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--space-lg) var(--space-xl);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      animation: fadeSlideUp 0.3s ease both;
+    }
+
+    @media (max-width: 560px) {
+      .card { padding: var(--space-md); }
+    }
+
+    .card-inner {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: var(--space-md) var(--space-lg);
+    }
+
+    /* ============================================================
+       TYPOGRAPHY
+    ============================================================ */
+    .game-title {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: -1px;
+      line-height: 1.05;
+    }
+
+    .phase-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+
+    .section-title {
+      font-size: clamp(1.25rem, 3vw, 1.7rem);
+      font-weight: 800;
+      color: var(--text-1);
+      line-height: 1.2;
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-1);
+      line-height: 1.6;
+    }
+
+    .body-text {
+      font-size: 0.93rem;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    .caption {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-3);
+    }
+
+    /* ============================================================
+       DIVIDER
+    ============================================================ */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: 13px 26px;
+      border-radius: var(--r-md);
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 0.97rem;
+      font-weight: 700;
+      transition: all var(--t);
+      min-height: 50px;
+      min-width: 50px;
+      text-decoration: none;
+      position: relative;
+    }
+
+    .btn:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+    }
+
+    /* Primary */
+    .btn-primary {
+      background: var(--accent);
+      color: #1a0d00;
+      box-shadow: 0 3px 16px rgba(245,166,35,0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #ffb83a;
+      box-shadow: 0 4px 24px rgba(245,166,35,0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    /* Ghost */
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border-hover);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--surface-raised);
+      color: var(--text-1);
+      border-color: var(--border-hover);
+    }
+
+    /* Hint */
+    .btn-hint {
+      background: transparent;
+      color: var(--hint);
+      border: 1px solid var(--hint-border);
+      padding: 9px 18px;
+      font-size: 0.85rem;
+      min-height: 40px;
+    }
+
+    .btn-hint:hover:not(:disabled) {
+      background: var(--hint-bg);
+    }
+
+    /* Choice buttons */
+    .choices-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .choices-grid { grid-template-columns: 1fr; }
+    }
+
+    .btn-choice {
+      background: var(--surface-raised);
+      color: var(--text-1);
+      border: 2px solid var(--border-hover);
+      border-radius: var(--r-md);
+      padding: 14px 18px;
+      text-align: left;
+      font-size: 0.97rem;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      min-height: 54px;
+      transition: all var(--t);
+      width: 100%;
+    }
+
+    .btn-choice:hover:not(:disabled) {
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
+      transform: translateX(4px);
+    }
+
+    .btn-choice:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn-choice.is-correct {
+      border-color: var(--success-border);
+      background: var(--success-bg);
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .btn-choice.is-wrong {
+      border-color: var(--error-border);
+      background: var(--error-bg);
+      color: var(--error);
+    }
+
+    .btn-choice:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .btn-choice.is-correct:disabled,
+    .btn-choice.is-wrong:disabled {
+      opacity: 1;
+    }
+
+    /* Symbolic choices (monospace) */
+    .btn-choice.symbolic {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* ============================================================
+       COMBO CARDS
+    ============================================================ */
+    .combo-card {
+      background: var(--surface-card);
+      border: 2px solid var(--accent-border);
+      border-radius: var(--r-lg);
+      padding: 14px 18px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 110px;
+      box-shadow: 0 0 20px rgba(245,166,35,0.08);
+    }
+
+    .combo-card-label {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+    }
+
+    .combo-items-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .combo-item-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .combo-item-emoji {
+      font-size: 1.7rem;
+      line-height: 1;
+    }
+
+    .combo-item-qty {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--text-2);
+    }
+
+    .combo-sep {
+      font-size: 0.85rem;
+      color: var(--text-3);
+      padding-bottom: 6px;
+    }
+
+    /* ============================================================
+       EXPAND ZONE (LEARN PHASE)
+    ============================================================ */
+    .expand-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .expand-source-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .times-badge {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--r-md);
+      background: var(--accent-dim);
+      border: 2px solid var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .expand-arrow {
+      font-size: 1.2rem;
+      color: var(--text-3);
+    }
+
+    .expanded-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 16px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      width: 100%;
+    }
+
+    .expanded-card {
+      animation: popIn 0.35s ease both;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.65) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Count prompt after expansion */
+    .count-prompt {
+      background: var(--surface-raised);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--r-md);
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      color: var(--text-2);
+      text-align: center;
+      width: 100%;
+    }
+
+    .count-prompt strong {
+      color: var(--accent);
+    }
+
+    /* ============================================================
+       FEEDBACK BOXES
+    ============================================================ */
+    .feedback {
+      padding: 14px 18px;
+      border-radius: var(--r-md);
+      border: 1px solid;
+      font-size: 0.93rem;
+      line-height: 1.55;
+      animation: fadeSlideUp 0.25s ease both;
+    }
+
+    .feedback.correct {
+      background: var(--success-bg);
+      border-color: var(--success-border);
+      color: var(--success);
+    }
+
+    .feedback.wrong {
+      background: var(--error-bg);
+      border-color: var(--error-border);
+      color: var(--error);
+    }
+
+    .feedback.hint {
+      background: var(--hint-bg);
+      border-color: var(--hint-border);
+      color: var(--hint);
+    }
+
+    .feedback .explanation {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-2);
+      font-size: 0.88rem;
+    }
+
+    /* ============================================================
+       INFO BOXES (OBJECTIVE / BRIDGE NOTE / INSIGHT)
+    ============================================================ */
+    .info-box {
+      background: var(--surface-raised);
+      border-radius: var(--r-md);
+      padding: 13px 17px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .info-box.accent-border { border-left: 3px solid var(--accent); }
+    .info-box.success-border { border-left: 3px solid var(--success); }
+    .info-box.hint-border { border-left: 3px solid var(--hint); }
+
+    .info-box-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+
+    .info-box p {
+      font-size: 0.88rem;
+      color: var(--text-2);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    /* ============================================================
+       SYMBOLIC EXPRESSION DISPLAY
+    ============================================================ */
+    .expr-display {
+      text-align: center;
+      padding: 20px;
+      background: var(--surface-raised);
+      border: 2px solid var(--accent-border);
+      border-radius: var(--r-lg);
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+
+    /* Bridge visual row */
+    .bridge-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+    }
+
+    .bridge-arrow {
+      font-size: 0.85rem;
+      color: var(--text-3);
+      font-style: italic;
+    }
+
+    .expr-pill {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-1);
+      background: var(--surface-card);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--r-sm);
+      padding: 7px 15px;
+    }
+
+    /* ============================================================
+       TITLE SCREEN
+    ============================================================ */
+    .title-hero {
+      text-align: center;
+      padding: var(--space-xl) var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .title-icon {
+      font-size: 3.5rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 20px rgba(245,166,35,0.3));
+    }
+
+    .title-tagline {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--text-3);
+    }
+
+    .title-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    @media (max-width: 400px) {
+      .title-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .title-stat {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .title-stat-val {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--accent);
+      display: block;
+    }
+
+    .title-stat-key {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-3);
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ============================================================
+       PHASE INTRO
+    ============================================================ */
+    .phase-intro {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .phase-icon-large {
+      font-size: 3rem;
+      filter: drop-shadow(0 0 16px rgba(245,166,35,0.3));
+    }
+
+    /* ============================================================
+       PHASE COMPLETE
+    ============================================================ */
+    .phase-complete {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .phase-complete-icon { font-size: 3rem; }
+
+    .phase-complete h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--success);
+    }
+
+    /* ============================================================
+       STREAK DOTS
+    ============================================================ */
+    .streak-row {
+      display: flex;
+      gap: 7px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .streak-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--border-hover);
+      transition: background 0.3s;
+    }
+
+    .streak-dot.hit    { background: var(--success); }
+    .streak-dot.miss   { background: var(--error); }
+
+    /* ============================================================
+       SUMMARY SCREEN
+    ============================================================ */
+    .summary-screen {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-lg);
+    }
+
+    .summary-score {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .summary-phases {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      width: 100%;
+    }
+
+    @media (max-width: 460px) {
+      .summary-phases { grid-template-columns: 1fr 1fr; }
+    }
+
+    .summary-phase-chip {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: var(--text-3);
+      transition: all 0.3s;
+    }
+
+    .summary-phase-chip.done {
+      border-color: var(--success-border);
+      color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .summary-phase-chip .chip-icon {
+      font-size: 1.4rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* ============================================================
+       TASK HEADER (phase label + counter)
+    ============================================================ */
+    .task-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .task-counter {
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: var(--text-3);
+    }
+
+    /* ============================================================
+       WORKED EXAMPLE
+    ============================================================ */
+    .worked-example {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 13px 17px;
+    }
+
+    .worked-example .we-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-3);
+      margin-bottom: 6px;
+    }
+
+    .worked-example p {
+      font-size: 0.88rem;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+
+    /* ============================================================
+       TEACHER NOTES PANEL
+    ============================================================ */
+    #teacher-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    #teacher-toggle {
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 15px 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      color: var(--text-3);
+      font-family: var(--font);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: left;
+      transition: color var(--t);
+    }
+
+    #teacher-toggle:hover { color: var(--accent); }
+    #teacher-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+    #teacher-toggle .t-arrow {
+      margin-left: auto;
+      font-size: 0.75rem;
+      transition: transform 0.25s;
+    }
+
+    #teacher-toggle[aria-expanded="true"] .t-arrow { transform: rotate(180deg); }
+
+    #teacher-body {
+      display: none;
+      padding: 0 22px 22px;
+      border-top: 1px solid var(--border);
+    }
+
+    #teacher-body.open { display: block; }
+
+    #teacher-body h4 {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--accent);
+      margin: 18px 0 7px;
+    }
+
+    #teacher-body p, #teacher-body li {
+      font-size: 0.86rem;
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 5px;
+    }
+
+    #teacher-body ul { padding-left: 20px; }
+
+    .standards-callout {
+      background: var(--surface-raised);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      padding: 11px 15px;
+      margin-top: 8px;
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+
+    /* ============================================================
+       UTILITY
+    ============================================================ */
+    .row    { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
+    .col    { display: flex; flex-direction: column; gap: var(--space-md); }
+    .center { justify-content: center; text-align: center; }
+    .mt-sm  { margin-top: var(--space-sm); }
+    .mt-md  { margin-top: var(--space-md); }
+    .mt-lg  { margin-top: var(--space-lg); }
+    .w-full { width: 100%; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- APP ROOT: all screens render here via JavaScript -->
+<main id="app" aria-live="polite" aria-atomic="false"></main>
+
+<script>
+/* ================================================================
+   COMBO BUILDER: FROM MEAL BUNDLES TO DISTRIBUTIVE PROPERTY
+   ─────────────────────────────────────────────────────────────
+   Single-file educational game, Vanilla JS, no dependencies.
+   Target: ICT / Mixed-readiness Algebra I students (Gr 9–10)
+
+   FILE SECTIONS:
+   ─────────────────────────────────────────────────────────────
+   1.  CONSTANTS & DATA (food items, phases, all task content)
+   2.  STATE              (single mutable state object + reset)
+   3.  UTILITY            (small helper functions)
+   4.  COMPONENT BUILDERS (combo cards, progress bar, feedback…)
+   5.  SCREEN RENDERERS   (title, phase-intro, task dispatch…)
+   6.  PHASE RENDERERS    (learn, practice, challenge, bridge, regents)
+   7.  ANSWERED STATES    (post-answer UI for each phase type)
+   8.  ANSWER HANDLERS    (handleAnswer, handleIndexAnswer…)
+   9.  PROGRESSION LOGIC  (startGame, advanceTask, nextPhase…)
+   10. SUMMARY SCREEN
+   11. TEACHER NOTES      (collapsible panel)
+   12. ACCESSIBILITY
+   13. INIT
+================================================================ */
+
+
+/* ================================================================
+   SECTION 1 — CONSTANTS & DATA
+================================================================ */
+
+/* Food item registry */
+const FOOD = {
+  burger:   { name: 'Burger',   emoji: '🍔' },
+  fries:    { name: 'Fries',    emoji: '🍟' },
+  taco:     { name: 'Taco',     emoji: '🌮' },
+  drink:    { name: 'Drink',    emoji: '🥤' },
+  sandwich: { name: 'Sandwich', emoji: '🥪' },
+  chips:    { name: 'Chips',    emoji: '🍿' },
+  salad:    { name: 'Salad',    emoji: '🥗' },
+  nuggets:  { name: 'Nuggets',  emoji: '🍗' },
+};
+
+/* ── Phase metadata ─────────────────────────────────────── */
+const PHASES = [
+  {
+    id: 'learn',
+    label: 'Phase 1',
+    name: 'Learn the Pattern',
+    icon: '🍔',
+    intro: {
+      heading: 'Learn the Pattern',
+      body: 'Every combo meal contains the same items. When you order a combo multiple times, everything inside repeats. Let\'s see how — no algebra yet, just ordering food.',
+      objective: 'Discover: when you order a combo N times, every item inside the combo repeats exactly N times.',
+    },
+    complete: 'You discovered the core idea: the outside number repeats every item inside the group. That\'s the heart of distributive property — and you built it yourself.'
+  },
+  {
+    id: 'practice',
+    label: 'Phase 2',
+    name: 'Practice',
+    icon: '🏪',
+    intro: {
+      heading: 'Practice',
+      body: 'Now apply the idea to different combos and different order sizes. You\'ll build up a clear picture of what the outside number always does to the group inside.',
+      objective: 'Solidify the pattern: the multiplier outside always applies to every item inside the group.',
+    },
+    complete: 'You nailed it across many different combos. The pattern holds every time — the outside number multiplies every item inside, no exceptions.'
+  },
+  {
+    id: 'challenge',
+    label: 'Phase 3',
+    name: 'Challenge',
+    icon: '⚡',
+    intro: {
+      heading: 'Challenge',
+      body: 'The kitchen is busy — combos are more complex now. Three items, larger orders, and less hand-holding. You\'ve got the pattern; let\'s prove it.',
+      objective: 'Apply the grouping idea to complex multi-item combos and work backwards from totals.',
+    },
+    complete: 'You handled harder combos with confidence. The grouping rule is solid in your head — the outside number always reaches every item inside.'
+  },
+  {
+    id: 'bridge',
+    label: 'Phase 4',
+    name: 'Bridge to Math',
+    icon: '🔢',
+    intro: {
+      heading: 'Bridge to Math',
+      body: 'Here\'s the big reveal: what you\'ve been doing with combo orders is exactly what mathematicians call the Distributive Property. Let\'s translate your food model into math notation — one careful step at a time.',
+      objective: 'Connect your combo-order logic to formal mathematical expressions using parentheses and variables.',
+    },
+    complete: 'You made the leap from food to algebra. The connection is real — the same thinking that handled combo orders handles 5(x + y). That\'s the distributive property.'
+  },
+  {
+    id: 'regents',
+    label: 'Phase 5',
+    name: 'Regents Transfer',
+    icon: '📐',
+    intro: {
+      heading: 'Regents Transfer',
+      body: 'You built the idea from scratch — now apply it to the kind of symbolic algebra that appears on Algebra I assessments. The thinking is exactly the same.',
+      objective: 'Expand algebraic expressions using the distributive property in Regents-style format.',
+    },
+    complete: 'You completed the full journey: from ordering a burger combo to solving Regents-level algebraic expressions. That\'s real mathematical thinking.'
+  }
+];
+
+/* ── LEARN tasks (5) ────────────────────────────────────── */
+const LEARN_TASKS = [
+  {
+    id: 'L1',
+    combo: { burger: 1, fries: 1 },
+    multiplier: 2,
+    question: 'You ordered this combo 2 times. Build your order — then count how many burgers you have in total.',
+    countItem: 'burger',
+    correctAnswer: 2,
+    choices: [1, 2, 3, 4],
+    workedExample: 'One combo → 1 burger. Two combos → 2 × 1 = 2 burgers.',
+    hint: 'Look at how many burgers are in one combo card. Now you have 2 of those cards.',
+    explanation: '2 combos × 1 burger each = 2 burgers total. The 2 outside the combo applied to the burger inside.',
+    insight: 'The number of orders acts on every item inside the combo.',
+  },
+  {
+    id: 'L2',
+    combo: { burger: 1, fries: 1 },
+    multiplier: 3,
+    question: 'You ordered this combo 3 times. Build your order — how many orders of fries do you have in total?',
+    countItem: 'fries',
+    correctAnswer: 3,
+    choices: [1, 2, 3, 6],
+    workedExample: 'One combo → 1 fries. Three combos → 3 × 1 = 3 fries.',
+    hint: 'Count the fries in one combo, then think: I have 3 of these combos.',
+    explanation: '3 combos × 1 fries each = 3 fries. The outside 3 applied to the fries inside!',
+    insight: 'Every item inside the group gets multiplied by the outside number.',
+  },
+  {
+    id: 'L3',
+    combo: { taco: 1, drink: 1 },
+    multiplier: 4,
+    question: 'Different combo — same idea. You ordered the Taco + Drink combo 4 times. How many drinks total?',
+    countItem: 'drink',
+    correctAnswer: 4,
+    choices: [1, 2, 4, 8],
+    workedExample: 'One combo → 1 drink. Four combos → 4 × 1 = 4 drinks.',
+    hint: 'There is 1 drink in each combo. You built 4 combo cards.',
+    explanation: '4 combos × 1 drink each = 4 drinks. The 4 outside multiplied the item inside.',
+    insight: 'It doesn\'t matter what\'s in the combo — the outside number always applies to every item.',
+  },
+  {
+    id: 'L4',
+    combo: { burger: 2, fries: 1 },
+    multiplier: 3,
+    question: 'This combo has 2 burgers and 1 fries. You ordered it 3 times. How many burgers total?',
+    countItem: 'burger',
+    correctAnswer: 6,
+    choices: [3, 5, 6, 9],
+    workedExample: 'One combo → 2 burgers. Three combos → 3 × 2 = 6 burgers.',
+    hint: 'Each combo has 2 burgers. You have 3 of those combos. How many groups of 2 is that?',
+    explanation: '3 combos × 2 burgers per combo = 6 burgers. The outside 3 applied to the 2 burgers inside.',
+    insight: 'When items inside the combo are more than 1, the multiplication still applies to each item\'s quantity.',
+  },
+  {
+    id: 'L5',
+    combo: { sandwich: 1, chips: 2 },
+    multiplier: 5,
+    question: 'This combo has 1 sandwich and 2 chips. You ordered it 5 times. How many chips total?',
+    countItem: 'chips',
+    correctAnswer: 10,
+    choices: [5, 7, 10, 15],
+    workedExample: 'One combo → 2 chips. Five combos → 5 × 2 = 10 chips.',
+    hint: 'Each combo has 2 chips. You have 5 combos. What is 5 groups of 2?',
+    explanation: '5 combos × 2 chips per combo = 10 chips. The 5 outside applied to the 2 chips inside.',
+    insight: 'The outside multiplier is like a "for each combo" rule. It reaches every quantity inside.',
+  },
+];
+
+/* ── PRACTICE tasks (8) ─────────────────────────────────── */
+const PRACTICE_TASKS = [
+  {
+    id: 'P1',
+    combo: { burger: 1, fries: 1 },
+    multiplier: 5,
+    question: 'Burger + Fries combo, ordered 5 times. How many fries in your complete order?',
+    correctAnswer: 5,
+    choices: [1, 3, 5, 10],
+    hint: 'The combo has 1 fries. You ordered 5 of these combos — so that\'s 5 × 1 = ?',
+    explanation: '5 × 1 fries = 5 fries. The outside 5 multiplied the 1 fries inside.'
+  },
+  {
+    id: 'P2',
+    combo: { taco: 2, drink: 1 },
+    multiplier: 3,
+    question: 'Taco + Drink combo has 2 tacos. Ordered 3 times. How many tacos?',
+    correctAnswer: 6,
+    choices: [2, 3, 5, 6],
+    hint: 'One combo has 2 tacos. You have 3 combos — that\'s 3 groups of 2.',
+    explanation: '3 × 2 tacos = 6 tacos. The outside 3 multiplied the 2 tacos inside.'
+  },
+  {
+    id: 'P3',
+    combo: { burger: 1, fries: 2 },
+    multiplier: 4,
+    question: 'This combo has 1 burger and 2 fries. Ordered 4 times. How many fries total?',
+    correctAnswer: 8,
+    choices: [4, 6, 8, 12],
+    hint: 'One combo → 2 fries. 4 combos → 4 groups of 2 fries.',
+    explanation: '4 × 2 fries = 8 fries. The outside 4 applied to the 2 fries inside.'
+  },
+  {
+    id: 'P4',
+    combo: { sandwich: 2, chips: 2 },
+    multiplier: 3,
+    question: 'A combo has 2 sandwiches and 2 chips. Ordered 3 times. How many chips total?',
+    correctAnswer: 6,
+    choices: [2, 4, 6, 9],
+    hint: 'Each combo has 2 chips. You have 3 combos: 3 × 2 = ?',
+    explanation: '3 × 2 chips = 6 chips. (And notice: the 3 also applied to the sandwiches — 3 × 2 = 6 sandwiches too!)'
+  },
+  {
+    id: 'P5',
+    combo: { nuggets: 3, drink: 1 },
+    multiplier: 2,
+    question: 'Combo has 3 nuggets and 1 drink. Ordered 2 times. How many nuggets?',
+    correctAnswer: 6,
+    choices: [3, 5, 6, 8],
+    hint: 'Look at the nuggets inside one combo first. Then multiply by how many combos.',
+    explanation: '2 × 3 nuggets = 6 nuggets. The outside 2 applied to the 3 nuggets inside.'
+  },
+  {
+    id: 'P6',
+    combo: { burger: 2, fries: 3 },
+    multiplier: 4,
+    question: 'Combo: 2 burgers + 3 fries. Ordered 4 times. What is the TOTAL count for all items combined?',
+    correctAnswer: 20,
+    choices: [14, 16, 20, 24],
+    hint: 'Find each total separately: 4 × 2 burgers = ?, and 4 × 3 fries = ? Then add.',
+    explanation: 'Burgers: 4 × 2 = 8. Fries: 4 × 3 = 12. Total: 8 + 12 = 20. The 4 applied to BOTH items inside.'
+  },
+  {
+    id: 'P7',
+    combo: { salad: 1, drink: 1 },
+    multiplier: 6,
+    question: 'Salad + Drink combo, ordered 6 times. How many salads?',
+    correctAnswer: 6,
+    choices: [1, 2, 6, 7],
+    hint: 'One salad per combo. Six combos means 6 × 1 = ?',
+    explanation: '6 × 1 salad = 6 salads. Even when the quantity inside is 1, the outside number still applies.'
+  },
+  {
+    id: 'P8',
+    combo: { taco: 2, chips: 2 },
+    multiplier: 5,
+    question: 'Combo has 2 tacos and 2 chips. Ordered 5 times. Which statement is correct?',
+    correctAnswer: '10 tacos and 10 chips',
+    choices: ['5 tacos and 5 chips', '10 tacos and 10 chips', '10 tacos and 5 chips', '2 tacos and 10 chips'],
+    hint: 'Calculate each separately: 5 × 2 tacos = ?, and 5 × 2 chips = ?',
+    explanation: '5 × 2 = 10 tacos, and 5 × 2 = 10 chips. The 5 applied to EVERY item inside the group.'
+  },
+];
+
+/* ── CHALLENGE tasks (5) ────────────────────────────────── */
+const CHALLENGE_TASKS = [
+  {
+    id: 'C1',
+    combo: { burger: 2, fries: 1, drink: 1 },
+    multiplier: 4,
+    question: 'A 3-item combo: 2 burgers + 1 fries + 1 drink. Ordered 4 times. Total count of ALL items?',
+    correctAnswer: 16,
+    choices: [12, 14, 16, 20],
+    hint: 'Add items in one combo (2+1+1=4). Now multiply by 4 combos.',
+    explanation: 'One combo has 4 items. 4 × 4 = 16 total items. Or: 4×2 burgers + 4×1 fries + 4×1 drinks = 8+4+4 = 16.'
+  },
+  {
+    id: 'C2',
+    combo: { taco: 3, drink: 2 },
+    multiplier: 5,
+    question: 'Combo: 3 tacos + 2 drinks. Ordered 5 times. How many drinks total?',
+    correctAnswer: 10,
+    choices: [5, 6, 10, 15],
+    hint: null,
+    explanation: '5 × 2 drinks = 10 drinks. The outside 5 applied to the 2 drinks inside.'
+  },
+  {
+    id: 'C3',
+    combo: { burger: 3, fries: 2 },
+    multiplier: 6,
+    question: '3 burgers + 2 fries combo. Ordered 6 times. Total burgers + total fries = ?',
+    correctAnswer: 30,
+    choices: [24, 28, 30, 36],
+    hint: 'Burgers total: 6 × 3 = ? Fries total: 6 × 2 = ? Then add both.',
+    explanation: 'Burgers: 6 × 3 = 18. Fries: 6 × 2 = 12. Total = 18 + 12 = 30.'
+  },
+  {
+    id: 'C4',
+    combo: { nuggets: 4, salad: 2, drink: 1 },
+    multiplier: 3,
+    question: 'Combo: 4 nuggets + 2 salads + 1 drink. Ordered 3 times. How many nuggets?',
+    correctAnswer: 12,
+    choices: [4, 7, 9, 12],
+    hint: null,
+    explanation: '3 × 4 nuggets = 12 nuggets.'
+  },
+  {
+    id: 'C5',
+    isReverse: true,
+    combo: { burger: 1, fries: 1 },
+    resultCombo: { burger: 7, fries: 7 },
+    multiplier: null,
+    question: 'A burger + fries combo was ordered multiple times, resulting in 7 burgers and 7 fries. How many times was it ordered?',
+    correctAnswer: 7,
+    choices: [4, 5, 6, 7],
+    hint: 'If you ended up with 7 burgers, and each combo has 1 burger, how many combos were ordered?',
+    explanation: '7 burgers ÷ 1 burger per combo = 7 combos ordered. Working backwards: finding the multiplier from the total.'
+  }
+];
+
+/* ── BRIDGE tasks (5) ───────────────────────────────────── */
+/*
+   Bridge tasks use 'correct' as an index into choices[].
+   type: 'bridge_match'  → select the correct notation
+   type: 'bridge_expand' → select the expanded form from a notation
+   type: 'bridge_sym'    → variables instead of food names
+*/
+const BRIDGE_TASKS = [
+  {
+    id: 'B1',
+    type: 'bridge_match',
+    visual: { combo: { burger: 1, fries: 1 }, multiplier: 5 },
+    expression: null,
+    question: 'You ordered 5 combos. Each has 1 burger and 1 fries. In math, we use parentheses to group the combo: (1 burger + 1 fries). Which expression means "5 times the whole combo"?',
+    choices: ['5 + (1 + 1)', '5 × burger + fries', '5(1 burger + 1 fries)', '(5 + 1) × 2'],
+    correct: 2,
+    hint: 'The 5 is outside the group. It means "5 times everything inside the parentheses."',
+    explanation: '5(1 burger + 1 fries) means 5 times the whole combo. The parentheses hold the group; the 5 outside multiplies every item inside.',
+    bridgeNote: 'In math: parentheses create a group. A factor outside multiplies every term inside.'
+  },
+  {
+    id: 'B2',
+    type: 'bridge_expand',
+    visual: { combo: { taco: 2, drink: 1 }, multiplier: 3 },
+    expression: '3(2 tacos + 1 drink)',
+    question: 'The expression 3(2 tacos + 1 drink) means "3 orders of this combo." What does this expand (distribute) to?',
+    choices: ['3 tacos + 1 drink', '6 tacos + 1 drink', '6 tacos + 3 drinks', '3 tacos + 3 drinks'],
+    correct: 2,
+    hint: 'Apply the 3 to EACH item: 3 × 2 tacos = ?, and 3 × 1 drink = ?',
+    explanation: '3(2 tacos + 1 drink) = (3 × 2) tacos + (3 × 1) drinks = 6 tacos + 3 drinks. The 3 distributed to every term inside!',
+    bridgeNote: 'Distributing means: multiply the outside factor by EVERY term inside the group.'
+  },
+  {
+    id: 'B3',
+    type: 'bridge_sym',
+    visual: { combo: { burger: 1, fries: 1 }, multiplier: 5 },
+    expression: '5(b + f)',
+    question: 'Using b for burger and f for fries: 5(b + f) means 5 of these combos. Which shows the correctly expanded form?',
+    choices: ['5b + f', '5b + 5f', '5 + b + f', 'b + 5f'],
+    correct: 1,
+    hint: 'Apply 5 to both b and f: 5 × b = 5b, and 5 × f = 5f.',
+    explanation: '5(b + f) = 5b + 5f. The 5 distributed to BOTH terms. This is the distributive property — the factor applies equally to every term in the group.',
+    bridgeNote: 'Letters (variables) represent quantities just like food names did — the rule works exactly the same way.'
+  },
+  {
+    id: 'B4',
+    type: 'bridge_sym',
+    visual: { combo: { burger: 2, fries: 1 }, multiplier: 4 },
+    expression: '4(2b + f)',
+    question: 'A combo with 2 burgers (2b) and 1 fries (f), ordered 4 times: 4(2b + f). Which is the expanded form?',
+    choices: ['8b + f', '4b + 4f', '8b + 4f', '2b + 4f'],
+    correct: 2,
+    hint: 'Apply 4 to 2b: 4 × 2b = 8b. Apply 4 to f: 4 × f = 4f.',
+    explanation: '4(2b + f) = 4·2b + 4·f = 8b + 4f. The 4 multiplied both — including the coefficient 2 on b (giving 8b).',
+    bridgeNote: 'When distributing, multiply the outside factor by the full term — including its coefficient.'
+  },
+  {
+    id: 'B5',
+    type: 'bridge_abstract',
+    visual: null,
+    expression: '5(x + y)',
+    question: 'Pure algebra — no food needed! x and y are just like burger and fries. Which correctly expands 5(x + y)?',
+    choices: ['5x + y', 'x + 5y', '5x + 5y', '5x + 5 + y'],
+    correct: 2,
+    hint: 'x and y are each a term inside the group. Apply 5 to both: 5 × x = ?, and 5 × y = ?',
+    explanation: '5(x + y) = 5x + 5y — just like 5 combos of 1 burger + 1 fries gave you 5 burgers + 5 fries. The pattern is identical.',
+    bridgeNote: 'You\'ve arrived at the formal distributive property. The same thinking you used for combos works perfectly here.'
+  },
+];
+
+/* ── REGENTS transfer tasks (5) ─────────────────────────── */
+const REGENTS_TASKS = [
+  {
+    id: 'R1',
+    expression: '3(x + 2)',
+    question: 'Which expression is equivalent to 3(x + 2)?',
+    choices: ['3x + 2', '3x + 6', 'x + 6', '3x + 5'],
+    correct: 1,
+    hint: 'Apply 3 to EACH term: 3 · x = 3x, and 3 · 2 = 6.',
+    explanation: '3(x + 2) = 3·x + 3·2 = 3x + 6. The factor 3 distributed to every term inside.',
+    regentsNote: 'The most common error here is only multiplying the first term. The factor outside always reaches every term.'
+  },
+  {
+    id: 'R2',
+    expression: '4(2x + 1)',
+    question: 'Which expression is equivalent to 4(2x + 1)?',
+    choices: ['8x + 1', '2x + 4', '8x + 4', '6x + 4'],
+    correct: 2,
+    hint: 'Apply 4 to 2x: 4 · 2x = 8x. Apply 4 to 1: 4 · 1 = 4.',
+    explanation: '4(2x + 1) = 4·2x + 4·1 = 8x + 4. Multiply 4 by the coefficient 2 (giving 8), then keep the x.',
+    regentsNote: 'Watch for the coefficient on x — 4 × 2x means multiply 4 × 2 = 8, then write 8x.'
+  },
+  {
+    id: 'R3',
+    expression: '2(x + 3y)',
+    question: 'Which expression is equivalent to 2(x + 3y)?',
+    choices: ['2x + 3y', '2x + 6y', 'x + 6y', '2x + 5y'],
+    correct: 1,
+    hint: 'Apply 2 to each term: 2 · x = 2x, and 2 · 3y = 6y.',
+    explanation: '2(x + 3y) = 2·x + 2·3y = 2x + 6y. Two different variable terms — but the rule applies identically to each.',
+    regentsNote: 'Two different variables (x and y) — distribute to both, multiplying the coefficient on each.'
+  },
+  {
+    id: 'R4',
+    expression: '3(2x + 4)',
+    question: 'Which expression is equivalent to 3(2x + 4)?',
+    choices: ['6x + 4', '6x + 7', '6x + 12', '5x + 12'],
+    correct: 2,
+    hint: '3 · 2x = 6x (multiply 3 × 2, keep x). Then 3 · 4 = 12.',
+    explanation: '3(2x + 4) = 3·2x + 3·4 = 6x + 12. Both terms inside got multiplied by 3.',
+    regentsNote: 'Common error: only multiplying the 2x and forgetting to multiply the constant 4. Always distribute to every term.'
+  },
+  {
+    id: 'R5',
+    expression: '5(2x + 3y)',
+    question: 'Which expression is equivalent to 5(2x + 3y)?',
+    choices: ['10x + 3y', '2x + 15y', '10x + 15y', '7x + 8y'],
+    correct: 2,
+    hint: '5 · 2x = 10x, and 5 · 3y = 15y.',
+    explanation: '5(2x + 3y) = 5·2x + 5·3y = 10x + 15y. Both terms fully distributed.',
+    regentsNote: 'You just solved a polynomial-level distributive property problem — the same type used throughout Algebra I.'
+  },
+];
+
+
+/* ================================================================
+   SECTION 2 — STATE
+================================================================ */
+
+const State = {
+  screen: 'title',          // title | phase-intro | task | phase-complete | summary
+  phaseIndex: 0,            // index into PHASES[]
+  taskIndex: 0,             // index within current phase tasks
+  expandBuilt: false,       // learn phase: visual expansion triggered
+  hintShown: false,         // hint revealed for current task
+  answered: false,          // current task answered (correctly)
+  correctOnFirst: false,    // answered correctly on first attempt
+  attempts: 0,              // wrong attempts on this task
+  phasesCompleted: [],      // completed phase IDs
+  sessionCorrect: 0,        // tasks correct on first attempt
+  sessionTotal: 0,          // total tasks completed
+  streakHits: [],           // boolean log: true=correct, false=wrong
+
+  resetTask() {
+    this.expandBuilt  = false;
+    this.hintShown    = false;
+    this.answered     = false;
+    this.correctOnFirst = false;
+    this.attempts     = 0;
+  },
+
+  reset() {
+    this.screen           = 'title';
+    this.phaseIndex       = 0;
+    this.taskIndex        = 0;
+    this.phasesCompleted  = [];
+    this.sessionCorrect   = 0;
+    this.sessionTotal     = 0;
+    this.streakHits       = [];
+    this.resetTask();
+  }
+};
+
+
+/* ================================================================
+   SECTION 3 — UTILITY
+================================================================ */
+
+/** Return the task list for the current phase */
+function currentTasks() {
+  const id = PHASES[State.phaseIndex].id;
+  return { learn: LEARN_TASKS, practice: PRACTICE_TASKS,
+           challenge: CHALLENGE_TASKS, bridge: BRIDGE_TASKS,
+           regents: REGENTS_TASKS }[id] || [];
+}
+
+/** Create an element with attributes and children.
+    @param {string} tag
+    @param {object} attrs  — { class, id, type, 'aria-*', 'data-*', html, style }
+    @param {...(Node|string)} children
+*/
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class')       e.className = v;
+    else if (k === 'html')   e.innerHTML = v;
+    else if (k === 'style')  e.style.cssText = v;
+    else                     e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c === null || c === undefined) continue;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+/** Append multiple children to an element */
+function append(parent, ...children) {
+  children.forEach(c => c && parent.appendChild(c));
+  return parent;
+}
+
+
+/* ================================================================
+   SECTION 4 — COMPONENT BUILDERS
+================================================================ */
+
+/** ── Combo Card ──────────────────────────────────────────── */
+function buildComboCard(combo, index = 0) {
+  const card = el('div', { class: 'combo-card', 'aria-label': comboDescription(combo) });
+  card.style.animationDelay = `${index * 75}ms`;
+
+  const lbl  = el('div', { class: 'combo-card-label' }, 'Combo');
+  const row  = el('div', { class: 'combo-items-row' });
+
+  let first = true;
+  for (const [key, qty] of Object.entries(combo)) {
+    const food = FOOD[key]; if (!food) continue;
+    if (!first) row.appendChild(el('span', { class: 'combo-sep', 'aria-hidden': 'true' }, '+'));
+    for (let i = 0; i < qty; i++) {
+      if (i > 0) row.appendChild(el('span', { class: 'combo-sep', 'aria-hidden': 'true' }, '+'));
+      const block = el('div', { class: 'combo-item-block' });
+      block.appendChild(el('span', { class: 'combo-item-emoji', 'aria-hidden': 'true' }, food.emoji));
+      block.appendChild(el('span', { class: 'combo-item-qty', 'aria-hidden': 'true' }, food.name));
+      row.appendChild(block);
+    }
+    first = false;
+  }
+
+  append(card, lbl, row);
+  return card;
+}
+
+/** Readable description of a combo for accessibility */
+function comboDescription(combo) {
+  return Object.entries(combo)
+    .map(([k, v]) => `${v} ${FOOD[k]?.name || k}`)
+    .join(', ');
+}
+
+/** ── Multiplied combo grid (N copies) ────────────────────── */
+function buildExpandedCombos(combo, multiplier) {
+  const grid = el('div', { class: 'expanded-grid',
+    'aria-label': `${multiplier} combo cards expanded` });
+  for (let i = 0; i < multiplier; i++) {
+    const wrap = el('div', { class: 'expanded-card' });
+    wrap.style.animationDelay = `${i * 75}ms`;
+    wrap.appendChild(buildComboCard(combo, i));
+    grid.appendChild(wrap);
+  }
+  return grid;
+}
+
+/** ── Progress bar ────────────────────────────────────────── */
+function buildProgressBar() {
+  const wrap  = el('div', { class: 'progress-wrap', 'aria-label': 'Game progress' });
+  const track = el('div', { class: 'progress-track', role: 'list' });
+  const meta  = el('div', { class: 'progress-meta', 'aria-hidden': 'true' });
+
+  PHASES.forEach((phase, idx) => {
+    const isDone   = State.phasesCompleted.includes(phase.id);
+    const isActive = idx === State.phaseIndex;
+    const seg = el('div', {
+      class: `progress-seg${isDone ? ' complete' : isActive ? ' active' : ''}`,
+      role: 'listitem',
+      'aria-label': `${phase.label} ${isDone ? 'completed' : isActive ? 'in progress' : 'upcoming'}`
+    });
+    track.appendChild(seg);
+
+    const lbl = el('span', {
+      class: `progress-label${isDone ? ' complete' : isActive ? ' active' : ''}`
+    }, phase.label);
+    meta.appendChild(lbl);
+  });
+
+  append(wrap, track, meta);
+  return wrap;
+}
+
+/** ── Task header row (eyebrow + counter) ────────────────── */
+function buildTaskHeader(phaseLabel, index, total) {
+  const row = el('div', { class: 'task-header' });
+  row.appendChild(el('span', { class: 'phase-eyebrow' }, phaseLabel));
+  row.appendChild(el('span', { class: 'task-counter', 'aria-label': `Task ${index + 1} of ${total}` },
+    `Task ${index + 1} / ${total}`));
+  return row;
+}
+
+/** ── Choice button grid ─────────────────────────────────── */
+function buildChoices(choices, onSelect, symbolic = false) {
+  const grid = el('div', { class: 'choices-grid', role: 'group', 'aria-label': 'Answer choices' });
+  choices.forEach((choice, idx) => {
+    const btn = el('button', {
+      class: `btn btn-choice${symbolic ? ' symbolic' : ''}`,
+      type: 'button',
+      'data-idx': String(idx),
+      'data-val': String(choice),
+      'aria-label': `Choice ${idx + 1}: ${choice}`
+    }, String(choice));
+    btn.addEventListener('click', () => onSelect(choice, idx, btn));
+    grid.appendChild(btn);
+  });
+  return grid;
+}
+
+/** ── Feedback box ───────────────────────────────────────── */
+function buildFeedback(type, message, explanation) {
+  const box = el('div', {
+    class: `feedback ${type}`,
+    role: type === 'hint' ? 'note' : 'alert',
+    'aria-live': 'polite'
+  }, message);
+  if (explanation) {
+    box.appendChild(el('div', { class: 'explanation' }, explanation));
+  }
+  return box;
+}
+
+/** ── Info box (objective / insight / bridge note) ───────── */
+function buildInfoBox(label, body, borderClass = 'accent-border') {
+  const box = el('div', { class: `info-box ${borderClass}` });
+  box.appendChild(el('div', { class: 'info-box-label' }, label));
+  box.appendChild(el('p', {}, body));
+  return box;
+}
+
+/** ── Streak dots ────────────────────────────────────────── */
+function buildStreakDots() {
+  const row  = el('div', { class: 'streak-row', 'aria-label': 'Recent task results' });
+  const last = State.streakHits.slice(-7);
+  for (let i = 0; i < 7; i++) {
+    const cls = i < last.length
+      ? `streak-dot ${last[i] ? 'hit' : 'miss'}`
+      : 'streak-dot';
+    row.appendChild(el('div', { class: cls }));
+  }
+  return row;
+}
+
+/** ── Times badge ────────────────────────────────────────── */
+function buildTimesBadge(n) {
+  return el('div', {
+    class: 'times-badge',
+    'aria-label': `Ordered ${n ?? '?'} times`
+  }, n != null ? `×${n}` : '×?');
+}
+
+
+/* ================================================================
+   SECTION 5 — SCREEN RENDERERS (top-level dispatch)
+================================================================ */
+
+function render(noScroll = false) {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  switch (State.screen) {
+    case 'title':          renderTitle(app);         break;
+    case 'phase-intro':    renderPhaseIntro(app);    break;
+    case 'task':           renderTask(app);           break;
+    case 'phase-complete': renderPhaseComplete(app); break;
+    case 'summary':        renderSummary(app);        break;
+  }
+
+  // Teacher notes panel — always present
+  app.appendChild(buildTeacherPanel());
+
+  if (!noScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+  focusFirstInteractive(app);
+}
+
+/* ── Title ─────────────────────────────────────────────── */
+function renderTitle(app) {
+  const card = el('div', { class: 'card' });
+
+  const hero = el('div', { class: 'title-hero' });
+
+  append(hero,
+    el('div', { class: 'title-icon', 'aria-hidden': 'true' }, '🍔🍟'),
+    el('p', { class: 'title-tagline' }, 'Algebra I Readiness Game'),
+    el('h1', { class: 'game-title' }, 'Combo Builder'),
+    el('p', { class: 'body-text', style: 'max-width:480px;text-align:center;' },
+      'Learn one of algebra\'s most powerful ideas — starting with food orders, not symbols.'),
+  );
+
+  const stats = el('div', { class: 'title-grid' });
+  [
+    { val: '5 Phases',    key: 'Structure' },
+    { val: 'No Timer',    key: 'Pacing' },
+    { val: 'Algebra I',   key: 'Target' },
+  ].forEach(({ val, key }) => {
+    const s = el('div', { class: 'title-stat' });
+    s.appendChild(el('span', { class: 'title-stat-val' }, val));
+    s.appendChild(el('span', { class: 'title-stat-key' }, key));
+    stats.appendChild(s);
+  });
+  hero.appendChild(stats);
+
+  const startBtn = el('button', {
+    class: 'btn btn-primary',
+    id: 'start-btn',
+    type: 'button',
+    'aria-label': 'Start the game'
+  }, '▶  Start Game');
+  startBtn.addEventListener('click', startGame);
+  hero.appendChild(startBtn);
+
+  card.appendChild(hero);
+  app.appendChild(card);
+}
+
+/* ── Phase Intro ───────────────────────────────────────── */
+function renderPhaseIntro(app) {
+  app.appendChild(buildProgressBar());
+
+  const phase = PHASES[State.phaseIndex];
+  const tasks = currentTasks();
+  const card  = el('div', { class: 'card' });
+
+  const body = el('div', { class: 'phase-intro' });
+  append(body,
+    el('div', { class: 'phase-icon-large', 'aria-hidden': 'true' }, phase.icon),
+    el('p', { class: 'phase-eyebrow' }, phase.label),
+    el('h2', { class: 'section-title' }, phase.intro.heading),
+    el('p', { class: 'body-text', style: 'max-width:520px;' }, phase.intro.body),
+    buildInfoBox('🎯 Your Goal', phase.intro.objective),
+    el('p', { class: 'caption' }, `${tasks.length} task${tasks.length !== 1 ? 's' : ''} — take your time, no rush`),
+  );
+
+  const continueBtn = el('button', {
+    class: 'btn btn-primary',
+    id: 'phase-continue-btn',
+    type: 'button'
+  }, `Begin ${phase.label}  →`);
+  continueBtn.addEventListener('click', beginPhase);
+  body.appendChild(continueBtn);
+
+  card.appendChild(body);
+  app.appendChild(card);
+}
+
+/* ── Phase Complete ────────────────────────────────────── */
+function renderPhaseComplete(app) {
+  app.appendChild(buildProgressBar());
+
+  const phase = PHASES[State.phaseIndex];
+  const card  = el('div', { class: 'card' });
+  const body  = el('div', { class: 'phase-complete' });
+
+  append(body,
+    el('div', { class: 'phase-complete-icon', 'aria-hidden': 'true' }, '✅'),
+    el('h3', {}, `${phase.name} Complete!`),
+    el('p', { class: 'body-text', style: 'max-width:500px;' }, phase.complete),
+  );
+
+  if (State.streakHits.length) {
+    append(body,
+      el('p', { class: 'caption mt-md' }, 'Your recent results:'),
+      buildStreakDots()
+    );
+  }
+
+  const isLast = State.phaseIndex === PHASES.length - 1;
+  const nextBtn = el('button', {
+    class: 'btn btn-primary',
+    id: 'next-phase-btn',
+    type: 'button'
+  }, isLast ? '🎓  See Final Results' : `Next: ${PHASES[State.phaseIndex + 1].name}  →`);
+  nextBtn.addEventListener('click', isLast ? goToSummary : goToNextPhase);
+  body.appendChild(nextBtn);
+
+  card.appendChild(body);
+  app.appendChild(card);
+}
+
+/* ── Task Dispatch ─────────────────────────────────────── */
+function renderTask(app) {
+  app.appendChild(buildProgressBar());
+  const phaseId = PHASES[State.phaseIndex].id;
+  const tasks   = currentTasks();
+  const task    = tasks[State.taskIndex];
+
+  const renderers = {
+    learn:     renderLearnTask,
+    practice:  renderPracticeTask,
+    challenge: renderChallengeTask,
+    bridge:    renderBridgeTask,
+    regents:   renderRegentsTask,
+  };
+
+  (renderers[phaseId] || (() => {}))(app, task, tasks.length);
+}
+
+
+/* ================================================================
+   SECTION 6 — PHASE-SPECIFIC TASK RENDERERS
+================================================================ */
+
+/* ── LEARN ──────────────────────────────────────────────── */
+function renderLearnTask(app, task, total) {
+  const card = el('div', { class: 'card col' });
+
+  append(card,
+    buildTaskHeader('Phase 1: Learn', State.taskIndex, total),
+    el('hr', { class: 'divider' }),
+    el('p', { class: 'question-text' }, task.question),
+  );
+
+  /* Expand zone */
+  const zone = el('div', { class: 'expand-zone mt-md' });
+
+  const sourceRow = el('div', { class: 'expand-source-row' });
+  append(sourceRow,
+    buildTimesBadge(task.multiplier),
+    el('span', { class: 'expand-arrow', 'aria-hidden': 'true' }, '→'),
+    buildComboCard(task.combo),
+  );
+  zone.appendChild(sourceRow);
+
+  if (!State.expandBuilt) {
+    zone.appendChild(el('p', { class: 'body-text', style: 'text-align:center;' },
+      `Tap the button to see your ${task.multiplier} combo orders laid out.`));
+
+    const buildBtn = el('button', {
+      class: 'btn btn-primary',
+      id: 'build-btn',
+      type: 'button',
+      'aria-label': `Build ${task.multiplier} copies of this combo`
+    }, `🏗  Build My Order  ×${task.multiplier}`);
+    buildBtn.addEventListener('click', onBuildExpand);
+    zone.appendChild(buildBtn);
+
+  } else {
+    zone.appendChild(el('div', { class: 'expand-arrow', 'aria-hidden': 'true', style: 'text-align:center;' }, '↓'));
+    zone.appendChild(buildExpandedCombos(task.combo, task.multiplier));
+
+    const countFood = FOOD[task.countItem];
+    zone.appendChild(el('div', { class: 'count-prompt' },
+      `Count the ${countFood.emoji} <strong>${countFood.name}s</strong> across all your combos — then pick the total below.`
+    ));
+    // (re-assign innerHTML for the count-prompt's bold safely)
+    const cp = zone.lastElementChild;
+    cp.innerHTML = `Count the ${countFood.emoji} <strong>${countFood.name}s</strong> across all your combos — then pick the total below.`;
+  }
+
+  card.appendChild(zone);
+
+  /* Choices — shown only after expand */
+  if (State.expandBuilt && !State.answered) {
+    card.appendChild(el('p', { class: 'caption mt-md' }, 'Select the correct total:'));
+    card.appendChild(buildChoices(task.choices, (val) => handleAnswer(val, task)));
+
+    if (!State.hintShown) {
+      const hBtn = el('button', { class: 'btn btn-hint mt-sm', type: 'button' }, '💡 Show Hint');
+      hBtn.addEventListener('click', onShowHint);
+      card.appendChild(hBtn);
+    }
+  }
+
+  /* Feedback area */
+  const fa = el('div', { id: 'feedback-area' });
+  card.appendChild(fa);
+  if (State.hintShown && !State.answered) {
+    fa.appendChild(buildFeedback('hint', `💡 Hint: ${task.hint}`));
+  }
+  if (State.answered) {
+    renderAnsweredFood(card, fa, task);
+  }
+
+  /* Worked example — always shown in Learn */
+  if (task.workedExample) {
+    const we = el('div', { class: 'worked-example mt-md' });
+    we.appendChild(el('div', { class: 'we-label' }, '📋 Worked Example'));
+    we.appendChild(el('p', {}, task.workedExample));
+    card.appendChild(we);
+  }
+
+  app.appendChild(card);
+}
+
+/* ── PRACTICE ───────────────────────────────────────────── */
+function renderPracticeTask(app, task, total) {
+  const card = el('div', { class: 'card col' });
+
+  append(card,
+    buildTaskHeader('Phase 2: Practice', State.taskIndex, total),
+    el('hr', { class: 'divider' }),
+    el('p', { class: 'question-text' }, task.question),
+  );
+
+  /* Visual: times badge + combo card */
+  const row = el('div', { class: 'row center mt-md' });
+  append(row, buildTimesBadge(task.multiplier), buildComboCard(task.combo));
+  card.appendChild(row);
+
+  if (!State.answered) {
+    card.appendChild(el('p', { class: 'caption mt-md' }, 'Select the correct answer:'));
+    card.appendChild(buildChoices(task.choices, (val) => handleAnswer(val, task)));
+
+    if (!State.hintShown) {
+      const hBtn = el('button', { class: 'btn btn-hint mt-sm', type: 'button' }, '💡 Show Hint');
+      hBtn.addEventListener('click', onShowHint);
+      card.appendChild(hBtn);
+    }
+  }
+
+  const fa = el('div', { id: 'feedback-area' });
+  card.appendChild(fa);
+  if (State.hintShown && !State.answered) fa.appendChild(buildFeedback('hint', `💡 ${task.hint}`));
+  if (State.answered) renderAnsweredFood(card, fa, task);
+
+  app.appendChild(card);
+}
+
+/* ── CHALLENGE ──────────────────────────────────────────── */
+function renderChallengeTask(app, task, total) {
+  const card = el('div', { class: 'card col' });
+
+  append(card,
+    buildTaskHeader('⚡ Phase 3: Challenge', State.taskIndex, total),
+    el('hr', { class: 'divider' }),
+    el('p', { class: 'question-text' }, task.question),
+  );
+
+  /* Visual — for reverse task, show result combo; otherwise normal */
+  const row = el('div', { class: 'row center mt-md' });
+  if (task.isReverse) {
+    append(row,
+      buildTimesBadge(null),
+      el('span', { class: 'expand-arrow' }, '→'),
+      buildComboCard(task.resultCombo),
+    );
+  } else {
+    append(row, buildTimesBadge(task.multiplier), buildComboCard(task.combo));
+  }
+  card.appendChild(row);
+
+  if (!State.answered) {
+    card.appendChild(buildChoices(task.choices, (val) => handleAnswer(val, task)));
+    if (task.hint && !State.hintShown) {
+      const hBtn = el('button', { class: 'btn btn-hint mt-sm', type: 'button' }, '💡 Need a Hint?');
+      hBtn.addEventListener('click', onShowHint);
+      card.appendChild(hBtn);
+    }
+  }
+
+  const fa = el('div', { id: 'feedback-area' });
+  card.appendChild(fa);
+  if (State.hintShown && !State.answered && task.hint) fa.appendChild(buildFeedback('hint', `💡 ${task.hint}`));
+  if (State.answered) renderAnsweredFood(card, fa, task);
+
+  app.appendChild(card);
+}
+
+/* ── BRIDGE ─────────────────────────────────────────────── */
+function renderBridgeTask(app, task, total) {
+  const card = el('div', { class: 'card col' });
+
+  append(card,
+    buildTaskHeader('🔢 Phase 4: Bridge to Math', State.taskIndex, total),
+    el('hr', { class: 'divider' }),
+    el('p', { class: 'question-text' }, task.question),
+  );
+
+  /* Bridge visual row: food card + arrow + expression */
+  const bRow = el('div', { class: 'bridge-row mt-md' });
+  if (task.visual) {
+    append(bRow,
+      buildComboCard(task.visual.combo),
+      buildTimesBadge(task.visual.multiplier),
+    );
+  }
+  if (task.expression) {
+    if (task.visual) bRow.appendChild(el('span', { class: 'bridge-arrow' }, '→ in math →'));
+    bRow.appendChild(el('div', {
+      class: 'expr-pill',
+      'aria-label': `Expression: ${task.expression}`
+    }, task.expression));
+  }
+  card.appendChild(bRow);
+
+  /* Bridge note (shown before answering) */
+  if (task.bridgeNote && !State.answered) {
+    card.appendChild(buildInfoBox('🔗 Math Connection', task.bridgeNote));
+  }
+
+  if (!State.answered) {
+    card.appendChild(el('p', { class: 'caption mt-md' }, 'Select the correct expression:'));
+    card.appendChild(buildChoices(task.choices, (_v, idx) => handleIndexAnswer(idx, task), true));
+
+    if (!State.hintShown) {
+      const hBtn = el('button', { class: 'btn btn-hint mt-sm', type: 'button' }, '💡 Show Hint');
+      hBtn.addEventListener('click', onShowHint);
+      card.appendChild(hBtn);
+    }
+  }
+
+  const fa = el('div', { id: 'feedback-area' });
+  card.appendChild(fa);
+  if (State.hintShown && !State.answered) fa.appendChild(buildFeedback('hint', `💡 ${task.hint}`));
+  if (State.answered) renderAnsweredBridge(card, fa, task);
+
+  app.appendChild(card);
+}
+
+/* ── REGENTS ────────────────────────────────────────────── */
+function renderRegentsTask(app, task, total) {
+  const card = el('div', { class: 'card col' });
+
+  append(card,
+    buildTaskHeader('📐 Phase 5: Regents Transfer', State.taskIndex, total),
+    el('hr', { class: 'divider' }),
+    el('p', { class: 'question-text' }, task.question),
+  );
+
+  /* Large expression display */
+  card.appendChild(el('div', {
+    class: 'expr-display mt-md',
+    'aria-label': `Expand the expression: ${task.expression}`
+  }, task.expression));
+
+  if (!State.answered) {
+    card.appendChild(el('p', { class: 'caption mt-md' }, 'Select the equivalent expression:'));
+    card.appendChild(buildChoices(task.choices, (_v, idx) => handleIndexAnswer(idx, task), true));
+
+    if (!State.hintShown) {
+      const hBtn = el('button', { class: 'btn btn-hint mt-sm', type: 'button' }, '💡 Show Hint');
+      hBtn.addEventListener('click', onShowHint);
+      card.appendChild(hBtn);
+    }
+  }
+
+  const fa = el('div', { id: 'feedback-area' });
+  card.appendChild(fa);
+  if (State.hintShown && !State.answered) fa.appendChild(buildFeedback('hint', `💡 ${task.hint}`));
+  if (State.answered) renderAnsweredRegents(card, fa, task);
+
+  app.appendChild(card);
+}
+
+
+/* ================================================================
+   SECTION 7 — ANSWERED STATE RENDERERS
+================================================================ */
+
+/** Food-based answered state (learn / practice / challenge) */
+function renderAnsweredFood(card, fa, task) {
+  fa.innerHTML = '';
+  fa.appendChild(buildFeedback(
+    State.correctOnFirst ? 'correct' : 'wrong',
+    State.correctOnFirst ? '✅  Correct!' : `❌  Not quite. The correct answer is: ${task.correctAnswer}`,
+    task.explanation
+  ));
+
+  if (task.insight) {
+    card.appendChild(buildInfoBox('💡 Key Insight', task.insight, 'hint-border'));
+  }
+
+  card.appendChild(buildNextBtn());
+}
+
+/** Bridge answered state */
+function renderAnsweredBridge(card, fa, task) {
+  fa.innerHTML = '';
+  fa.appendChild(buildFeedback(
+    State.correctOnFirst ? 'correct' : 'wrong',
+    State.correctOnFirst ? '✅  Correct!' : `❌  Not quite. The correct answer was: ${task.choices[task.correct]}`,
+    task.explanation
+  ));
+
+  card.appendChild(buildInfoBox('🔗 Math Connection', task.bridgeNote, 'hint-border'));
+  card.appendChild(buildNextBtn());
+}
+
+/** Regents answered state */
+function renderAnsweredRegents(card, fa, task) {
+  fa.innerHTML = '';
+  fa.appendChild(buildFeedback(
+    State.correctOnFirst ? 'correct' : 'wrong',
+    State.correctOnFirst ? '✅  Correct!' : `❌  Not quite. The correct answer was: ${task.choices[task.correct]}`,
+    task.explanation
+  ));
+
+  if (task.regentsNote) {
+    card.appendChild(buildInfoBox('📐 Regents Note', task.regentsNote, 'accent-border'));
+  }
+  card.appendChild(buildNextBtn());
+}
+
+/** Next task button — shows different label at phase end */
+function buildNextBtn() {
+  const tasks  = currentTasks();
+  const isLast = State.taskIndex >= tasks.length - 1;
+  const btn = el('button', {
+    class: 'btn btn-primary mt-md',
+    id: 'next-btn',
+    type: 'button'
+  }, isLast ? '✔  Finish Phase' : 'Next Task  →');
+  btn.addEventListener('click', advanceTask);
+  return btn;
+}
+
+
+/* ================================================================
+   SECTION 8 — ANSWER HANDLERS
+================================================================ */
+
+/**
+ * Handle food-based tasks (value match: string or number comparison).
+ * Wrong on first try → auto-show hint, re-render.
+ * Wrong on second try → mark answered, show explanation.
+ */
+function handleAnswer(value, task) {
+  if (State.answered) return;
+
+  const isCorrect = String(value) === String(task.correctAnswer);
+
+  if (isCorrect) {
+    State.correctOnFirst = (State.attempts === 0);
+    State.answered = true;
+    State.streakHits.push(State.correctOnFirst);
+    render(true);
+
+  } else {
+    State.attempts++;
+    State.streakHits.push(false);
+
+    if (!State.hintShown) {
+      /* First wrong: reveal hint, let them retry */
+      State.hintShown = true;
+      render(true);
+    } else {
+      /* Second wrong: mark answered, show explanation */
+      State.correctOnFirst = false;
+      State.answered = true;
+      render(true);
+    }
+  }
+}
+
+/**
+ * Handle index-based tasks (bridge / regents).
+ * Same retry logic as above.
+ */
+function handleIndexAnswer(selectedIndex, task) {
+  if (State.answered) return;
+
+  const isCorrect = selectedIndex === task.correct;
+
+  if (isCorrect) {
+    State.correctOnFirst = (State.attempts === 0);
+    State.answered = true;
+    State.streakHits.push(State.correctOnFirst);
+    render(true);
+
+  } else {
+    State.attempts++;
+    State.streakHits.push(false);
+
+    if (!State.hintShown) {
+      State.hintShown = true;
+      render(true);
+    } else {
+      State.correctOnFirst = false;
+      State.answered = true;
+      render(true);
+    }
+  }
+}
+
+function onShowHint() {
+  State.hintShown = true;
+  render(true);
+}
+
+function onBuildExpand() {
+  State.expandBuilt = true;
+  render(true); // don't scroll — user should see the expansion
+}
+
+
+/* ================================================================
+   SECTION 9 — PROGRESSION LOGIC
+================================================================ */
+
+function startGame() {
+  State.screen     = 'phase-intro';
+  State.phaseIndex = 0;
+  State.taskIndex  = 0;
+  State.resetTask();
+  render();
+}
+
+function beginPhase() {
+  State.screen    = 'task';
+  State.taskIndex = 0;
+  State.resetTask();
+  render();
+}
+
+function advanceTask() {
+  /* Track session stats */
+  if (State.correctOnFirst) State.sessionCorrect++;
+  State.sessionTotal++;
+
+  const tasks    = currentTasks();
+  const nextIdx  = State.taskIndex + 1;
+
+  if (nextIdx >= tasks.length) {
+    /* Phase finished */
+    State.phasesCompleted.push(PHASES[State.phaseIndex].id);
+    State.screen = 'phase-complete';
+  } else {
+    State.taskIndex = nextIdx;
+    State.resetTask();
+    State.screen = 'task';
+  }
+
+  render();
+}
+
+function goToNextPhase() {
+  State.phaseIndex++;
+  State.screen = 'phase-intro';
+  State.resetTask();
+  render();
+}
+
+function goToSummary() {
+  State.screen = 'summary';
+  render();
+}
+
+
+/* ================================================================
+   SECTION 10 — SUMMARY SCREEN
+================================================================ */
+
+function renderSummary(app) {
+  const card = el('div', { class: 'card' });
+  const body = el('div', { class: 'summary-screen' });
+
+  const pct = State.sessionTotal > 0
+    ? Math.round((State.sessionCorrect / State.sessionTotal) * 100)
+    : 0;
+
+  append(body,
+    el('div', { 'aria-hidden': 'true', style: 'font-size:3rem;' }, '🎓'),
+    el('h2', { class: 'game-title' }, 'You Did It!'),
+    el('p', { class: 'body-text', style: 'max-width:480px;' },
+      'You used a real-world grouping model to arrive at formal algebra.'),
+  );
+
+  /* Score */
+  const scoreBox = el('div', { class: 'card-inner', style: 'text-align:center;width:100%;' });
+  scoreBox.appendChild(el('div', { class: 'summary-score', 'aria-label': `${pct} percent` }, `${pct}%`));
+  scoreBox.appendChild(el('p', { class: 'body-text mt-sm' },
+    `${State.sessionCorrect} correct on first try out of ${State.sessionTotal} total tasks`));
+  body.appendChild(scoreBox);
+
+  /* Phase chips */
+  const grid = el('div', { class: 'summary-phases', 'aria-label': 'Phases completed' });
+  PHASES.forEach(ph => {
+    const done = State.phasesCompleted.includes(ph.id);
+    const chip = el('div', { class: `summary-phase-chip${done ? ' done' : ''}` });
+    chip.appendChild(el('span', { class: 'chip-icon', 'aria-hidden': 'true' }, ph.icon));
+    chip.appendChild(document.createTextNode(ph.label));
+    grid.appendChild(chip);
+  });
+  body.appendChild(grid);
+
+  /* Closing insight */
+  const insight = el('div', { class: 'card-inner', style: 'text-align:left;width:100%;' });
+  insight.appendChild(el('div', { class: 'phase-eyebrow' }, '🔗 What You Built'));
+  const p = document.createElement('p');
+  p.className = 'body-text mt-sm';
+  p.innerHTML = 'You started by ordering food combos and discovered that <strong style="color:var(--accent)">the outside number always applies to every item inside the group.</strong> In algebra, that\'s exactly what the distributive property says — and you just applied it to Regents-level expressions.';
+  insight.appendChild(p);
+  body.appendChild(insight);
+
+  /* Streak dots */
+  if (State.streakHits.length > 0) {
+    append(body,
+      el('p', { class: 'caption' }, 'Your answer history:'),
+      buildStreakDots(),
+    );
+  }
+
+  const restartBtn = el('button', {
+    class: 'btn btn-ghost',
+    type: 'button',
+    'aria-label': 'Play again from the beginning'
+  }, '↺  Play Again');
+  restartBtn.addEventListener('click', () => { State.reset(); render(); });
+  body.appendChild(restartBtn);
+
+  card.appendChild(body);
+  app.appendChild(card);
+}
+
+
+/* ================================================================
+   SECTION 11 — TEACHER NOTES PANEL
+================================================================ */
+
+function buildTeacherPanel() {
+  const panel = el('div', { id: 'teacher-panel', 'aria-label': 'Teacher and educator notes' });
+
+  const toggle = el('button', {
+    id: 'teacher-toggle',
+    type: 'button',
+    'aria-expanded': 'false',
+    'aria-controls': 'teacher-body'
+  });
+  toggle.innerHTML = `
+    <span aria-hidden="true">📋</span>
+    Teacher &amp; Educator Notes
+    <span class="t-arrow" aria-hidden="true">▾</span>
+  `;
+  toggle.addEventListener('click', () => {
+    const body   = document.getElementById('teacher-body');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    toggle.setAttribute('aria-expanded', String(!isOpen));
+  });
+  panel.appendChild(toggle);
+
+  const body = el('div', { id: 'teacher-body' });
+  body.innerHTML = `
+    <h4>What This Game Teaches</h4>
+    <p>Combo Builder develops the conceptual foundation of the distributive property by grounding it in a familiar real-world context before introducing symbolic notation. Students learn that an outside multiplier applies to every item inside a grouped quantity — building toward formal equivalent-expression work in Algebra I.</p>
+
+    <h4>Learning Progression (5 Phases)</h4>
+    <ul>
+      <li><strong>Phase 1 – Learn:</strong> Students physically "build" repeated combo orders using a visual expand interaction. They count totals from the laid-out cards. Zero symbolic notation at this stage.</li>
+      <li><strong>Phase 2 – Practice:</strong> Multiple-choice tasks with visual support. Varied combos and multipliers build fluency with the grouping pattern.</li>
+      <li><strong>Phase 3 – Challenge:</strong> Three-item combos, larger multipliers, and a reverse task (finding the multiplier from a given result). Reduced scaffolding.</li>
+      <li><strong>Phase 4 – Bridge to Math:</strong> Gradual symbol introduction — notation → labeled variables (b, f) → algebraic variables (x, y). Students match food models to formal expressions.</li>
+      <li><strong>Phase 5 – Regents Transfer:</strong> Standard Algebra I distributive property problems in Regents-style multiple-choice format.</li>
+    </ul>
+
+    <h4>Standards Alignment</h4>
+    <div class="standards-callout">
+      This game supports early conceptual understanding of generating equivalent expressions by applying a factor to each term in a grouped quantity — a foundational skill for distributive property work in Algebra I and Regents-style symbolic manipulation. Content is aligned to Algebra I equivalent expression and structure work, including interpreting the structure of expressions and producing equivalent forms. This aligns conceptually with the Seeing Structure in Expressions and Arithmetic with Polynomials and Rational Expressions domains found in Algebra I standards frameworks. No specific code numbers are claimed, as exact alignment may vary by district framework.
+    </div>
+
+    <h4>Instructional Design Framework</h4>
+    <ul>
+      <li>Follows a Concrete → Representational → Abstract (CRA) progression throughout all 5 phases</li>
+      <li>Wrong answers trigger a hint first, then explanation on second incorrect attempt — never a penalty without support</li>
+      <li>No timer, no score pressure; designed for calm mastery-oriented learning</li>
+      <li>Visual expand mechanic in Phase 1 can be projected and discussed as a whole-class activity before independent work</li>
+    </ul>
+
+    <h4>Suggested Classroom Use</h4>
+    <p>Assign Phases 1–3 as a warm-up or independent station before introducing formal distributive property. Use Phases 4–5 as a bridge activity between visual/manipulative work and worksheet-level symbolic practice. The Phase 4 bridge tasks are particularly useful as a discussion anchor: "What does the parentheses mean? What does the number outside do?"</p>
+
+    <h4>Accessibility Notes</h4>
+    <p>High-contrast dark theme; large click targets (min 50px); keyboard-navigable; ARIA labels on all interactive elements; no color-only meaning; no audio dependencies; tested for Chromebook performance.</p>
+  `;
+
+  panel.appendChild(body);
+  return panel;
+}
+
+
+/* ================================================================
+   SECTION 12 — ACCESSIBILITY HELPERS
+================================================================ */
+
+/** Move focus to first sensible interactive element after render */
+function focusFirstInteractive(app) {
+  requestAnimationFrame(() => {
+    const target = app.querySelector([
+      '#start-btn',
+      '#phase-continue-btn',
+      '#build-btn',
+      '.question-text',
+      '.btn-choice',
+      '#next-phase-btn',
+      '#next-btn',
+      'h1', 'h2',
+    ].join(', '));
+    if (target) {
+      if (target.tagName !== 'BUTTON') {
+        target.setAttribute('tabindex', '-1');
+      }
+      target.focus({ preventScroll: true });
+    }
+  });
+}
+
+
+/* ================================================================
+   SECTION 13 — INIT
+================================================================ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  render();
+});
+
+</script>
+</body>
+</html>
+
+

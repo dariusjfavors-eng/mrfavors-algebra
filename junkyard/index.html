@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Junkyard Algebra</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--surface:#161a24;--panel:#1e2435;--border:#2e364f;
+  --accent:#39ff14;--accent2:#ff6b35;--accent3:#7b6cf6;--warn:#ffd60a;--danger:#ff3b5c;
+  --text:#e8ecf5;--muted:#6b7694;--radius:12px;--font:'Courier New',monospace;
+}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);touch-action:none}
+
+/* ── SCREENS ── */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.screen.active{display:flex}
+
+/* ── MENU ── */
+#screen-menu{background:radial-gradient(ellipse at 60% 30%,#1a2a4a 0%,var(--bg) 70%)}
+.menu-gear{font-size:3rem;margin-bottom:1rem;animation:bob 3s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.menu-title{font-size:clamp(2rem,8vw,4rem);font-weight:900;letter-spacing:.08em;text-align:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent3),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
+.menu-sub{font-size:.72rem;color:var(--warn);border:1px solid rgba(255,214,10,.3);padding:.3rem 1rem;border-radius:999px;margin-bottom:2rem;text-align:center}
+.menu-btns{display:flex;flex-direction:column;gap:.8rem;width:min(90vw,340px)}
+.btn-p{background:linear-gradient(135deg,#1d6b30,var(--accent3));color:#fff;border:none;padding:.9rem 1.5rem;border-radius:var(--radius);font-size:1.1rem;font-family:var(--font);font-weight:700;letter-spacing:.08em;cursor:pointer;transition:transform .1s,box-shadow .2s;box-shadow:0 0 18px rgba(57,255,20,.2)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 0 28px rgba(57,255,20,.4)}
+.btn-s{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:.8rem 1.5rem;border-radius:var(--radius);font-size:.95rem;font-family:var(--font);font-weight:700;cursor:pointer;transition:background .2s}
+.btn-s:hover{background:var(--border)}
+
+/* ── MODE SELECT ── */
+#screen-mode{background:var(--bg);overflow-y:auto;padding:1.5rem}
+.mode-header{text-align:center;margin-bottom:1.5rem}
+.mode-header h2{font-size:1.6rem;color:var(--accent);letter-spacing:.1em}
+.mode-header p{color:var(--muted);font-size:.8rem;margin-top:.3rem}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:min(90vw,640px);margin-bottom:1.2rem}
+.mode-card{background:var(--panel);border:2px solid var(--border);border-radius:var(--radius);padding:1.1rem;cursor:pointer;transition:border-color .2s,transform .1s}
+.mode-card:hover{border-color:var(--accent3);transform:translateY(-2px)}
+.mode-card .icon{font-size:1.8rem;margin-bottom:.4rem}
+.mode-card .name{font-size:.95rem;font-weight:700}
+.mode-card .desc{font-size:.68rem;color:var(--muted);margin-top:.3rem;line-height:1.4}
+.badge{display:inline-block;font-size:.58rem;padding:.15rem .5rem;border-radius:999px;margin-top:.4rem;font-weight:700}
+.bl{background:rgba(57,255,20,.15);color:var(--accent);border:1px solid var(--accent)}
+.bp{background:rgba(123,108,246,.15);color:var(--accent3);border:1px solid var(--accent3)}
+.bc{background:rgba(255,107,53,.15);color:var(--accent2);border:1px solid var(--accent2)}
+
+/* ── GAME SCREEN — critical layout ── */
+#screen-game{
+  align-items:stretch !important;
+  justify-content:flex-start !important;
+  background:var(--bg);
+}
+
+/* ── HUD ── */
+#hud{display:flex;align-items:center;justify-content:space-between;padding:.5rem .8rem;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+#hud-left{display:flex;align-items:center;gap:.6rem}
+#hud-badge{font-size:.65rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:rgba(57,255,20,.12);color:var(--accent);border:1px solid var(--accent)}
+#hud-title{font-size:.9rem;font-weight:700}
+#hud-right{display:flex;align-items:center;gap:.6rem}
+#hud-score{font-size:.85rem;color:var(--warn);font-weight:700}
+#hud-timer{font-size:.95rem;font-weight:700;color:var(--accent);min-width:3rem;text-align:right}
+#hud-timer.warn{color:var(--danger);animation:pulse .5s infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:.4}}
+.hbtn{background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:.85rem;padding:.25rem .55rem;border-radius:6px;cursor:pointer;font-family:var(--font);transition:color .2s}
+.hbtn:hover{color:var(--text)}
+
+/* ── INSTRUCTION BAR ── */
+#instr{width:100%;background:var(--panel);border-bottom:1px solid var(--border);padding:.4rem .8rem;font-size:.78rem;color:var(--muted);text-align:center;flex-shrink:0}
+#instr .hi{color:var(--accent);font-weight:700}
+
+/* ── PLAY AREA ── */
+#play-area{
+  position:relative;
+  flex:1;
+  width:100%;
+  min-height:300px;
+  background-image:linear-gradient(rgba(46,54,79,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(46,54,79,.3) 1px,transparent 1px);
+  background-size:40px 40px;
+  overflow:hidden;
+}
+
+/* ── WHY PANEL ── */
+#why-panel{display:none;position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-top:2px solid var(--border);padding:.6rem .8rem;font-size:.76rem;z-index:20;flex-direction:column;gap:.2rem}
+#why-panel.on{display:flex}
+#why-rule{color:var(--accent);font-weight:700;font-size:.72rem}
+#why-desc{color:var(--text);line-height:1.4}
+#why-dismiss{align-self:flex-end;background:none;border:1px solid var(--border);color:var(--muted);font-size:.68rem;padding:.15rem .5rem;border-radius:6px;cursor:pointer;font-family:var(--font);margin-top:.2rem}
+
+/* ── JOURNAL ── */
+#journal{
+  display:flex;flex-direction:column;gap:.4rem;font-size:.7rem;
+  position:absolute;top:0;right:0;
+  width:min(200px,38vw);height:100%;
+  background:var(--surface);border-left:1px solid var(--border);
+  padding:.7rem;z-index:8;overflow-y:auto;
+  transform:translateX(100%);
+  transition:transform .25s ease;
+}
+#journal.on{transform:translateX(0)}
+#journal h3{color:var(--accent3);font-size:.72rem;letter-spacing:.06em}
+.jrow{background:var(--panel);border-radius:6px;padding:.35rem .5rem;border-left:3px solid var(--border)}
+.jrow.orig{border-color:var(--muted);color:var(--muted)}
+.jrow.grp{border-color:var(--accent3);color:var(--accent3)}
+.jrow.simp{border-color:var(--accent);color:var(--accent);font-weight:700}
+.jlbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.05em;opacity:.7;margin-bottom:.1rem}
+
+/* ── TERM CARDS ── */
+.tc{
+  position:absolute;
+  width:86px;height:86px;
+  transform:translate(-50%,-50%);
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+  z-index:5;
+}
+.tc:active{cursor:grabbing}
+.tc-shape{
+  position:absolute;inset:0;
+  border:2.5px solid;
+  border-radius:var(--radius);
+}
+.tc-lbl{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.35rem;font-weight:900;line-height:1;
+  text-align:center;pointer-events:none;z-index:2;
+  text-shadow:0 1px 6px rgba(0,0,0,1),0 0 10px rgba(0,0,0,.9);
+}
+.vt-c  .tc-shape{background:#1a5c2a;border-color:#2aff6e;border-radius:50%}
+.vt-x  .tc-shape{background:#1a3a5c;border-color:#3b9af0;border-radius:0;clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)}
+.vt-y  .tc-shape{background:#3a1a5c;border-color:#b06cf0;border-radius:50%}
+.vt-x2 .tc-shape{background:#5c3a1a;border-color:#f08030;border-radius:var(--radius)}
+.vt-y2 .tc-shape{background:#5c1a3a;border-color:#f04080;border-radius:50%;border-style:dashed}
+.vt-xy .tc-shape{background:#1a4a4a;border-color:#30d0d0;border-radius:var(--radius) 0 var(--radius) 0}
+.vt-bundle .tc-shape{background:#2a2a3a;border-color:#ffb060;border-style:dashed;border-radius:16px;}
+.tc.foil-next .tc-shape{box-shadow:0 0 0 3px rgba(255,182,96,.45);}
+.tc.foil-done .tc-shape{box-shadow:0 0 0 3px rgba(57,255,20,.35);}
+.foil-tracker{display:inline-flex;align-items:center;gap:.3rem;margin-left:.8rem;font-size:.8rem;color:var(--muted);}
+.foil-step{width:1.2rem;height:1.2rem;border:1px solid var(--muted);border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.foil-step-active{border-color:var(--accent);background:rgba(57,255,20,.15);color:var(--accent);}
+.foil-text{font-size:.75rem;color:var(--muted);}
+.vt-c  .tc-lbl{color:#2aff6e}
+.vt-x  .tc-lbl{color:#7dc8ff}
+.vt-y  .tc-lbl{color:#d4a0ff}
+.vt-x2 .tc-lbl{color:#ffb060}
+.vt-y2 .tc-lbl{color:#ff80b0}
+.vt-xy .tc-lbl{color:#60e8e8}
+.vt-bundle .tc-lbl{color:#ffb060;font-size:1.05rem;letter-spacing:-.03em}
+
+.tc.sel .tc-shape{filter:drop-shadow(0 0 12px var(--accent));transform:scale(1.08)}
+.tc.sel .tc-lbl{filter:brightness(1.4)}
+.tc.drag{z-index:50}
+.tc.drag .tc-shape{filter:drop-shadow(0 0 14px var(--warn))}
+
+@keyframes cflash{0%{filter:brightness(1)}50%{filter:brightness(2.5)}100%{filter:brightness(1)}}
+.tc.flash .tc-shape{animation:cflash .45s ease}
+@keyframes wshake{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(calc(-50% - 7px),-50%)}75%{transform:translate(calc(-50% + 7px),-50%)}}
+.tc.shake{animation:wshake .35s ease}
+
+@keyframes smokeOut{0%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-120%) scale(3);opacity:0;filter:blur(10px) grayscale(1)}}
+.tc.smoke{animation:smokeOut 1.3s ease-out forwards;pointer-events:none}
+
+/* ── MODAL ── */
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;align-items:flex-end;justify-content:center}
+#modal-bg.on{display:flex}
+@media(min-width:600px){#modal-bg{align-items:center}}
+.mbox{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;width:min(100vw,480px);max-height:90vh;overflow-y:auto;display:flex;flex-direction:column}
+@media(min-width:600px){.mbox{border-radius:var(--radius)}}
+.mhdr{padding:.8rem 1rem .6rem;border-bottom:1px solid var(--border);font-size:.75rem;letter-spacing:.08em;font-weight:700;color:var(--muted);text-transform:uppercase}
+.mbody{padding:1rem;flex:1}
+.mftr{padding:.7rem 1rem 1rem;border-top:1px solid var(--border)}
+
+/* calculator */
+.merge-disp{display:flex;align-items:center;justify-content:center;gap:.7rem;font-size:1.8rem;font-weight:900;background:var(--panel);border-radius:var(--radius);padding:.7rem;border:1px solid var(--border);margin-bottom:.8rem}
+.merge-input{width:100%;background:#0a1a0a;border:3px solid var(--border);border-radius:var(--radius);color:var(--accent);font-size:1.8rem;font-family:var(--font);font-weight:700;text-align:right;padding:.5rem .8rem;outline:none;cursor:default;margin-bottom:.7rem}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+.cbtn{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:.95rem;font-weight:700;padding:.7rem .3rem;border-radius:8px;cursor:pointer;border-bottom:3px solid #111;transition:transform .1s}
+.cbtn:active{transform:translateY(2px);border-bottom-width:1px}
+.cbtn.dk{background:#1a1e2a;color:var(--muted)}
+.cbtn.ent{grid-column:span 4;background:#1a3a8a;color:#fff;font-size:1rem;letter-spacing:.08em;border-color:#2a5ad0;border-bottom:3px solid #0a1a5a;margin-top:.3rem}
+
+/* feedback */
+.fb-terms{display:flex;align-items:center;gap:.5rem;font-size:1.4rem;font-weight:900;background:var(--panel);border-radius:8px;padding:.5rem .8rem;margin-bottom:.7rem;border:1px solid var(--border)}
+.fb-rule{background:rgba(255,214,10,.08);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:.5rem .7rem;font-size:.8rem;color:var(--text);line-height:1.5;margin-bottom:.7rem}
+.fb-rule strong{color:var(--warn)}
+.step{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;font-size:.82rem}
+.snum{background:var(--accent3);color:#fff;border-radius:50%;width:1.3rem;height:1.3rem;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0;margin-top:.1rem}
+.scont{color:var(--text);line-height:1.5}
+.scont .math{color:var(--accent);font-size:1.05rem;font-weight:700}
+
+.btn-dismiss{width:100%;background:var(--warn);color:#000;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.95rem;font-weight:700;padding:.8rem;cursor:pointer;letter-spacing:.06em}
+.btn-dismiss:hover{background:#ffe040}
+.btn-dismiss.ok{background:var(--accent)}
+.btn-dismiss.danger{background:var(--danger);color:#fff}
+
+/* classify */
+.cls-expr{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2rem;background:var(--panel);border-radius:var(--radius);padding:.8rem;border:1px solid var(--border);font-size:clamp(1.3rem,5vw,1.9rem);font-weight:900;margin-bottom:.8rem;min-height:3.5rem}
+.cls-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.cls-btn{background:var(--panel);border:2px solid var(--border);color:var(--text);font-family:var(--font);font-size:.9rem;font-weight:700;padding:.8rem;border-radius:var(--radius);cursor:pointer;transition:border-color .15s,background .15s}
+.cls-btn:hover{border-color:var(--accent3);background:rgba(123,108,246,.1)}
+
+/* regents */
+#screen-transfer{background:var(--bg);overflow-y:auto;padding:1.5rem}
+.reg-hdr{text-align:center;margin-bottom:1.2rem}
+.reg-hdr h2{font-size:1.4rem;color:var(--warn);letter-spacing:.08em}
+.reg-hdr p{color:var(--muted);font-size:.78rem;margin-top:.3rem}
+.reg-box{background:#fff;color:#111;font-family:'Times New Roman',serif;border-radius:var(--radius);padding:1.3rem;max-width:540px;width:100%;margin:0 auto 1.2rem;box-shadow:0 4px 30px rgba(0,0,0,.5)}
+.reg-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-bottom:.4rem}
+.reg-q{font-size:1rem;margin-bottom:.9rem;line-height:1.6}
+.reg-choices{display:flex;flex-direction:column;gap:.4rem}
+.reg-ch{background:#f5f5f5;border:2px solid #ddd;border-radius:6px;padding:.55rem .9rem;font-size:.92rem;cursor:pointer;transition:border-color .15s,background .15s;font-family:'Times New Roman',serif;text-align:left}
+.reg-ch:hover{border-color:#2563eb;background:#eff6ff}
+.reg-ch.correct{border-color:#16a34a;background:#f0fdf4;color:#15803d;font-weight:bold}
+.reg-ch.wrong{border-color:#dc2626;background:#fef2f2;color:#dc2626}
+.reg-fb{margin-top:.8rem;padding:.7rem;border-radius:8px;font-size:.88rem;display:none}
+.reg-fb.show{display:block}
+.reg-fb.correct{background:#f0fdf4;color:#15803d;border:1px solid #16a34a}
+.reg-fb.wrong{background:#fef2f2;color:#dc2626;border:1px solid #dc2626}
+
+/* win */
+#screen-win{background:radial-gradient(ellipse at center,#0d2010 0%,var(--bg) 70%);text-align:center;padding:2rem}
+.win-icon{font-size:4.5rem;margin-bottom:.8rem;animation:bob 2s infinite}
+.win-title{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;color:var(--accent);margin-bottom:.4rem}
+.win-sub{color:var(--muted);margin-bottom:1.5rem;font-size:.85rem}
+.win-stats{display:flex;gap:.8rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap}
+.wstat{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem 1.2rem;text-align:center}
+.wstat .val{font-size:1.8rem;font-weight:900;color:var(--warn)}
+.wstat .lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.win-btns{display:flex;flex-direction:column;gap:.7rem;width:min(90vw,300px);margin:0 auto}
+
+/* toast */
+#toast{position:fixed;top:4.2rem;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);color:var(--accent);padding:.4rem 1rem;border-radius:999px;font-weight:700;font-size:.8rem;z-index:200;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1}
+#toast.err{border-color:var(--danger);color:var(--danger)}
+
+/* help btn */
+#help-btn{position:fixed;bottom:.8rem;left:.8rem;background:var(--panel);border:1px solid var(--border);color:var(--muted);width:2rem;height:2rem;border-radius:50%;font-size:.85rem;font-weight:700;cursor:pointer;z-index:50;display:none;align-items:center;justify-content:center}
+#help-btn.on{display:flex}
+#help-btn:hover{color:var(--text);border-color:var(--accent3)}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-gear">⚙️ 🤖 ⚙️</div>
+  <h1 class="menu-title">JUNKYARD<br>ALGEBRA</h1>
+  <div class="menu-sub">📐 NYS Algebra 1 · A-APR.1 · Combining Like Terms</div>
+  <div class="menu-btns">
+    <button class="btn-p" onclick="showScreen('screen-mode')">▶ START LEARNING</button>
+    <button class="btn-s" onclick="openHelp()">? What are like terms?</button>
+  </div>
+</div>
+
+<!-- MODE SELECT -->
+<div id="screen-mode" class="screen">
+  <div class="mode-header">
+    <h2>CHOOSE YOUR MODE</h2>
+    <p>Progress through modes to master like terms</p>
+  </div>
+  <div class="mode-grid">
+    <div class="mode-card" onclick="startMode('sort')">
+      <div class="icon">🗂️</div>
+      <div class="name">A · SORTING YARD</div>
+      <div class="desc">Identify which pieces can combine. Learn what makes terms "like."</div>
+      <div class="badge bl">LEARN</div>
+    </div>
+    <div class="mode-card" onclick="startMode('merge')">
+      <div class="icon">⚡</div>
+      <div class="name">B · MERGE BAY</div>
+      <div class="desc">Fuse like-term pairs. See coefficients combine, variables stay.</div>
+      <div class="badge bp">PRACTICE</div>
+    </div>
+    <div class="mode-card" onclick="startMode('expr')">
+      <div class="icon">🏗️</div>
+      <div class="name">C · EXPRESSION BUILDER</div>
+      <div class="desc">Fully simplify a multi-term expression. Track the journal.</div>
+      <div class="badge bc">CHALLENGE</div>
+    </div>
+    <div class="mode-card" onclick="startMode('challenge')">
+      <div class="icon">🔥</div>
+      <div class="name">D · CHALLENGE YARD</div>
+      <div class="desc">Distributive property, FOIL, timed pressure.</div>
+      <div class="badge bc">CHALLENGE+</div>
+    </div>
+  </div>
+  <button class="btn-s" onclick="showScreen('screen-menu')" style="width:min(90vw,320px)">← Back</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen">
+  <div id="hud">
+    <div id="hud-left">
+      <div id="hud-badge">MODE A</div>
+      <div id="hud-title">Sorting Yard</div>
+    </div>
+    <div id="hud-right">
+      <div id="hud-score">Score: 0</div>
+      <div id="hud-timer"></div>
+      <button id="journal-toggle-btn" class="hbtn" onclick="toggleJournal()" title="Toggle Journal" style="display:none">📓</button>
+      <button class="hbtn" onclick="openPause()">⏸</button>
+      <button class="hbtn" onclick="showScreen('screen-mode')">⌂</button>
+    </div>
+  </div>
+  <div id="instr">Select a mode to begin</div>
+  <div id="play-area">
+    <!-- term cards injected here -->
+    <div id="why-panel">
+      <div id="why-rule"></div>
+      <div id="why-desc"></div>
+      <button id="why-dismiss" onclick="hideWhy()">✕ Got it</button>
+    </div>
+    <div id="journal">
+      <h3>📓 JOURNAL</h3>
+      <div class="jrow orig"><div class="jlbl">Original</div><div id="j-orig">—</div></div>
+      <div class="jrow grp"><div class="jlbl">Grouped</div><div id="j-grp">—</div></div>
+      <div class="jrow simp"><div class="jlbl">Simplified</div><div id="j-simp">—</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- REGENTS TRANSFER -->
+<div id="screen-transfer" class="screen">
+  <div class="reg-hdr">
+    <h2>📋 REGENTS TRANSFER</h2>
+    <p>Solve it the way the Regents expects — no junkyard, just algebra.</p>
+  </div>
+  <div id="reg-box" class="reg-box"></div>
+  <div style="max-width:540px;width:100%">
+    <button id="btn-continue" class="btn-p" style="width:100%;display:none" onclick="showScreen('screen-mode')">Continue →</button>
+  </div>
+</div>
+
+<!-- WIN SCREEN -->
+<div id="screen-win" class="screen">
+  <div class="win-icon">🏆</div>
+  <div class="win-title" id="win-title">SIMPLIFIED!</div>
+  <div class="win-sub" id="win-sub">All like terms combined.</div>
+  <div class="win-stats" id="win-stats"></div>
+  <div class="win-btns">
+    <button class="btn-p" onclick="goTransfer()">📋 Regents Challenge</button>
+    <button class="btn-s" onclick="showScreen('screen-mode')">← Back to Modes</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-bg">
+  <div class="mbox" id="modal-box"></div>
+</div>
+
+<div id="toast"></div>
+<button id="help-btn" onclick="openHelp()">?</button>
+
+<script>
+/* ══════════════════════════════════════════
+   AUDIO
+══════════════════════════════════════════ */
+let _actx = null;
+function getACtx(){ if(!_actx) _actx=new(window.AudioContext||window.webkitAudioContext)(); return _actx; }
+function beep(type){
+  try{
+    const c=getACtx(), o=c.createOscillator(), g=c.createGain();
+    o.connect(g); g.connect(c.destination);
+    const t=c.currentTime;
+    if(type==='sel'){o.type='sine';o.frequency.setValueAtTime(440,t);o.frequency.linearRampToValueAtTime(660,t+.1);g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.01,t+.2);o.start();o.stop(t+.2);}
+    else if(type==='merge'){o.type='sine';o.frequency.setValueAtTime(600,t);o.frequency.exponentialRampToValueAtTime(950,t+.12);g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.01,t+.5);o.start();o.stop(t+.5);}
+    else if(type==='err'){o.type='square';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(80,t+.2);g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.01,t+.25);o.start();o.stop(t+.25);}
+    else if(type==='win'){[0,.1,.2,.35].forEach((d,i)=>{const o2=c.createOscillator(),g2=c.createGain();o2.connect(g2);g2.connect(c.destination);o2.type='sine';o2.frequency.setValueAtTime([523,659,784,1047][i],t+d);g2.gain.setValueAtTime(.25,t+d);g2.gain.exponentialRampToValueAtTime(.01,t+d+.4);o2.start(t+d);o2.stop(t+d+.4);});}
+    else if(type==='smoke'){o.type='sine';o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(40,t+1.3);g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+1.3);o.start();o.stop(t+1.3);}
+  }catch(e){}
+}
+
+/* ══════════════════════════════════════════
+   TERM MODEL
+══════════════════════════════════════════ */
+const VCSS = {c:'vt-c',x:'vt-x',y:'vt-y',x2:'vt-x2',y2:'vt-y2',xy:'vt-xy',bundle:'vt-bundle'};
+
+// ── TERM / ALGEBRA CORE ──
+// Provides a scalable internal representation for monomials and like-term rules.
+const TERM_VTYPE_MAP = {
+  c:   {vars:{}},
+  x:   {vars:{x:1}},
+  y:   {vars:{y:1}},
+  x2:  {vars:{x:2}},
+  y2:  {vars:{y:2}},
+  xy:  {vars:{x:1,y:1}},
+};
+
+function varsFromVtype(vtype){
+  return {...(TERM_VTYPE_MAP[vtype]?.vars||{})};
+}
+function vtypeFromVars(vars){
+  const keys = Object.keys(vars).filter(k=>vars[k]);
+  if(keys.length===0) return 'c';
+  if(keys.length===1){
+    const k=keys[0], exp=vars[k];
+    if(exp===1) return k;
+    if(exp===2) return k+'2';
+  }
+  if(keys.length===2 && vars.x===1 && vars.y===1) return 'xy';
+  return keys.sort().map(k=>k+(vars[k]===1?'':vars[k])).join('');
+}
+
+function termVarString(vars){
+  const keys = Object.keys(vars||{}).filter(k=>vars[k]).sort();
+  return keys.map(k=>k + (vars[k]===1?'':(vars[k]===2?'²':vars[k]))).join('');
+}
+
+function termVarLabel(term){
+  const v = termVarString(term.vars||varsFromVtype(term.vtype));
+  return v||'constant';
+}
+
+let _uid=0;
+function makeTerm(coef,vtype,x,y){
+  const vars = varsFromVtype(vtype);
+  return { id:'T'+(++_uid), coef, vtype:vtypeFromVars(vars), vars, x:x??rnd(12,88), y:y??rnd(12,88) };
+}
+function termLabel(t){
+  if(t.kind==='bundle') return bundleLabel(t);
+  const coef = t.coef;
+  const v = termVarString(t.vars||varsFromVtype(t.vtype));
+  if(v==='') return String(coef);
+  if(coef===1) return v;
+  if(coef===-1) return '-'+v;
+  return coef+v;
+}
+function rnd(a,b){return a+Math.random()*(b-a);}
+function randCoef(){let c;do{c=Math.floor(Math.random()*17)-8;}while(c===0);return c;}
+function termKey(term){
+  const v = termVarString(term.vars||varsFromVtype(term.vtype));
+  return v;
+}
+function canCombine(a,b){
+  return termKey(a) === termKey(b);
+}
+function combineTerms(a,b){
+  return {coef:a.coef+b.coef, vars:a.vars||varsFromVtype(a.vtype), vtype:vtypeFromVars(a.vars||varsFromVtype(a.vtype))};
+}
+
+function exprInner(terms){
+  return exprStr(terms).replace(/^\s*\+\s*/,'');
+}
+
+function bundleLabel(bundle){
+  if(bundle.bundleType==='foil'){
+    const left = exprInner(bundle.factors[0].map(t=>({...t, gone:false}))); 
+    const right = exprInner(bundle.factors[1].map(t=>({...t, gone:false}))); 
+    return `(${left})(${right})`;
+  }
+
+  const mult = bundle.coef;
+  const inner = exprInner((bundle.inside||[]).map(t=>({...t, gone:false})));
+  if(mult===1) return `(${inner})`;
+  if(mult===-1) return `-(${inner})`;
+  return `${mult}(${inner})`;
+}
+
+function foilSteps(bundle){
+  const steps=[];
+  if(bundle.bundleType!=='foil') return steps;
+
+  const [left, right] = bundle.factors;
+  left.forEach(a=>{
+    right.forEach(b=>{
+      const varsA = a.vars||varsFromVtype(a.vtype);
+      const varsB = b.vars||varsFromVtype(b.vtype);
+      const varsR = multiplyVars(varsA, varsB);
+      const coefR = a.coef * b.coef;
+      const termA = termLabel(a);
+      const termB = termLabel(b);
+      const result = termLabel({coef:coefR, vars:varsR});
+      steps.push({a:termA, b:termB, result});
+    });
+  });
+  return steps;
+}
+
+function makeBundle(coef, insideTerms, x,y){
+  const term = { id:'T'+(++_uid), kind:'bundle', bundleType:'distributive', coef, inside:insideTerms.map(t=>({coef:t.coef, vars:t.vars||varsFromVtype(t.vtype), vtype:vtypeFromVars(t.vars||varsFromVtype(t.vtype))})), x:x??rnd(12,88), y:y??rnd(12,88), vtype:'bundle', vars:{} };
+  return term;
+}
+
+function makeFoilBundle(factorA, factorB, x,y){
+  const term = { id:'T'+(++_uid), kind:'bundle', bundleType:'foil', factors:[
+    factorA.map(t=>({coef:t.coef, vars:t.vars||varsFromVtype(t.vtype), vtype:vtypeFromVars(t.vars||varsFromVtype(t.vtype))})),
+    factorB.map(t=>({coef:t.coef, vars:t.vars||varsFromVtype(t.vtype), vtype:vtypeFromVars(t.vars||varsFromVtype(t.vtype))}))
+  ], x:x??rnd(12,88), y:y??rnd(12,88), vtype:'bundle', vars:{} };
+  return term;
+}
+
+function multiplyVars(a,b){
+  const out={...a};
+  Object.keys(b).forEach(k=>{ out[k] = (out[k]||0)+b[k]; if(out[k]===0) delete out[k]; });
+  return out;
+}
+
+function expandBundle(bundle){
+  bundle.gone = true;
+  const out = [];
+
+  if(bundle.bundleType==='foil'){
+    bundle.factors[0].forEach(tA=>{
+      bundle.factors[1].forEach(tB=>{
+        const varsA = tA.vars||varsFromVtype(tA.vtype);
+        const varsB = tB.vars||varsFromVtype(tB.vtype);
+        const newVars = multiplyVars(varsA, varsB);
+        const newCoef = tA.coef * tB.coef;
+        const expanded = makeTerm(newCoef, vtypeFromVars(newVars), bundle.x + (Math.random()*10-5), bundle.y + (Math.random()*10-5));
+        out.push(expanded);
+      });
+    });
+  } else {
+    bundle.inside.forEach(t=>{
+      const expandedCoef = bundle.coef * t.coef;
+      const expanded = makeTerm(expandedCoef, vtypeFromVars(t.vars||varsFromVtype(t.vtype)), bundle.x + (Math.random()*10-5), bundle.y + (Math.random()*10-5));
+      out.push(expanded);
+    });
+  }
+
+  G.terms.push(...out);
+  return out;
+}
+
+// Export a small math core API for future expansions (distributive, FOIL, etc.)
+const MathCore = {makeTerm, makeBundle, termLabel, bundleLabel, termKey, canCombine, combineTerms, termVarLabel, termVarString, varsFromVtype, vtypeFromVars};
+
+function exprStr(terms){
+  const a=terms.filter(t=>!t.gone);
+  if(!a.length) return '0';
+  return a.map((t,i)=>{
+    const lbl=termLabel(t);
+    if(i===0) return lbl;
+    if(t.coef<0){
+      const pos=lbl.replace(/^-/,'');
+      return ' − '+pos;
+    }
+    return ' + '+lbl;
+  }).join('');
+}
+function groupedStr(terms){
+  const order=['x2','y2','xy','x','y',''];
+  const grps={};
+  terms.filter(t=>!t.gone).forEach(t=>{const k=termKey(t);(grps[k]=grps[k]||[]).push(t);});
+  return order.filter(k=>grps[k]).map(k=>{
+    const str=grps[k].map((t,i)=>{
+      if(i===0) return termLabel(t);
+      const abs=Math.abs(t.coef);
+      const vpart=termVarString(t.vars||varsFromVtype(t.vtype));
+      const al=(abs===1&&vpart!=='')?vpart:(abs+vpart);
+      return (t.coef<0?' − ':' + ')+al;
+    }).join('');
+    return '('+str+')';
+  }).join(' + ');
+}
+
+/* ══════════════════════════════════════════
+   GAME STATE
+══════════════════════════════════════════ */
+let G={
+  mode:null, terms:[], selected:[], score:0,
+  timer:null, timeLeft:0, paused:false,
+  done:false, mergeCount:0, origExpr:'',
+  drag:null,
+  challengeTier:1, challengeRound:0,
+  foilGuide:{active:false, order:[], step:0, labels:[]},
+  autoFoilExample: false
+};
+
+try{ const stored=localStorage.getItem('autoFoilExample'); if(stored!==null) G.autoFoilExample=stored==='true'; }catch(e){}
+
+/* ══════════════════════════════════════════
+   SCREEN SWITCHING
+══════════════════════════════════════════ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ══════════════════════════════════════════
+   TERM CARD DOM
+══════════════════════════════════════════ */
+function makeCard(term){
+  const d=document.createElement('div');
+  d.className='tc '+VCSS[term.vtype];
+  d.id='card-'+term.id;
+  d.style.left=term.x+'%';
+  d.style.top=term.y+'%';
+
+  const shape=document.createElement('div');
+  shape.className='tc-shape';
+
+  const lbl=document.createElement('div');
+  lbl.className='tc-lbl';
+  lbl.textContent=termLabel(term);
+
+  d.appendChild(shape);
+  d.appendChild(lbl);
+
+  d.addEventListener('pointerdown',e=>onPD(e,term.id));
+  d.addEventListener('pointermove',e=>onPM(e,term.id));
+  d.addEventListener('pointerup',  e=>onPU(e,term.id));
+  d.addEventListener('pointercancel',e=>onPU(e,term.id));
+  return d;
+}
+
+function renderTerms(){
+  const pa=document.getElementById('play-area');
+  pa.querySelectorAll('.tc').forEach(el=>el.remove());
+  G.terms.forEach(t=>{
+    if(!t.gone) pa.appendChild(makeCard(t));
+  });
+  updateFoilGuideVisuals();
+}
+
+function foilStepTracker(step, total){
+  const labels=['F','O','I','L'];
+  const dots=labels.map((l,i)=>`<span class="foil-step${i===step?' foil-step-active':''}">${l}</span>`).join(' ');
+  return `<span class="foil-tracker">${dots}</span> <span class="foil-text">Step ${step+1}/${total}</span>`;
+}
+
+function updateFoilGuideVisuals(){
+  const guide=G.foilGuide;
+  if(!guide.active) return;
+  guide.order.forEach((id,i)=>{
+    const card=getCard(id);
+    if(!card) return;
+    card.classList.toggle('foil-next', i===guide.step);
+    card.classList.toggle('foil-done', i<guide.step);
+  });
+
+  const label = guide.labels[guide.step]||'';
+  const total = guide.order.length;
+  const tracker = foilStepTracker(guide.step,total);
+  setInstr(`<span class="hi">FOIL ${label}</span> — click the highlighted term. ${tracker}`);
+}
+
+function startFoilGuide(order, labels){
+  G.foilGuide.active=true;
+  G.foilGuide.order=order;
+  G.foilGuide.step=0;
+  G.foilGuide.labels=labels||[];
+  updateFoilGuideVisuals();
+}
+
+function stopFoilGuide(){
+  G.foilGuide.active=false;
+  G.foilGuide.order=[];
+  G.foilGuide.step=0;
+  G.foilGuide.labels=[];
+  document.querySelectorAll('.tc.foil-next,.tc.foil-done').forEach(el=>el.classList.remove('foil-next','foil-done'));
+}
+
+function getCard(id){ return document.getElementById('card-'+id); }
+
+function flashCard(id,cls,dur){
+  const c=getCard(id); if(!c) return;
+  c.classList.add(cls);
+  setTimeout(()=>c.classList.remove(cls),dur||450);
+}
+
+/* ══════════════════════════════════════════
+   POINTER EVENTS
+══════════════════════════════════════════ */
+function onPD(e,id){
+  if(G.done||G.paused) return;
+  e.currentTarget.setPointerCapture(e.pointerId);
+  G.drag={id, startX:e.clientX, startY:e.clientY, moved:false};
+}
+function onPM(e,id){
+  if(!G.drag||G.drag.id!==id) return;
+  const dx=e.clientX-G.drag.startX, dy=e.clientY-G.drag.startY;
+  if(!G.drag.moved && (Math.abs(dx)>6||Math.abs(dy)>6)) G.drag.moved=true;
+  if(G.drag.moved){
+    const pa=document.getElementById('play-area');
+    const r=pa.getBoundingClientRect();
+    const x=Math.max(5,Math.min(95,((e.clientX-r.left)/r.width)*100));
+    const y=Math.max(5,Math.min(95,((e.clientY-r.top)/r.height)*100));
+    const t=G.terms.find(t=>t.id===id);
+    if(t){t.x=x;t.y=y;}
+    const card=getCard(id);
+    if(card){card.style.left=x+'%';card.style.top=y+'%';}
+    getCard(id)?.classList.add('drag');
+  }
+}
+function onPU(e,id){
+  if(!G.drag||G.drag.id!==id) return;
+  e.currentTarget.releasePointerCapture(e.pointerId);
+  getCard(id)?.classList.remove('drag');
+  if(!G.drag.moved) handleTap(id);
+  G.drag=null;
+}
+
+/* ══════════════════════════════════════════
+   TAP LOGIC
+══════════════════════════════════════════ */
+function handleTap(id){
+  if(G.mode==='sort') tapSort(id);
+  else tapMerge(id);
+}
+
+/* ─── SORT ─── */
+function tapSort(id){
+  const idx=G.selected.indexOf(id);
+  if(idx>=0){
+    G.selected.splice(idx,1);
+    getCard(id)?.classList.remove('sel');
+    hideWhy(); return;
+  }
+  G.selected.push(id);
+  getCard(id)?.classList.add('sel');
+  beep('sel');
+  if(G.selected.length>=2){
+    const selT=G.selected.map(sid=>G.terms.find(t=>t.id===sid));
+    const allSame=selT.every(t=>t.vtype===selT[0].vtype);
+    if(!allSame){
+      const types=selT.map(t=>t.vtype);
+      showWhy(whyMixed(types));
+      setInstr('⚠ Mixed types selected. See the panel below.');
+    } else {
+      setInstr('✓ Good! All '+termVarLabel(selT[0])+' terms. Press <span class="hi">CHECK ✓</span> or keep selecting more.');
+    }
+  }
+}
+
+function sortCheck(){
+  if(G.selected.length<2){toast('Select at least 2 pieces first','err');return;}
+  const selT=G.selected.map(sid=>G.terms.find(t=>t.id===sid));
+  const allSame=selT.every(t=>t.vtype===selT[0].vtype);
+  if(allSame){
+    beep('merge'); addScore(selT.length*5);
+    toast('✓ Correct! All like terms!');
+    showWhy(whyLike(selT[0].vtype));
+    selT.forEach(t=>flashCard(t.id,'flash'));
+    clearSel();
+  } else {
+    beep('err');
+    const types=selT.map(t=>t.vtype);
+    showWhy(whyMixed(types));
+    selT.forEach(t=>flashCard(t.id,'shake',350));
+    clearSel();
+    toast('Mixed types — not all like terms','err');
+  }
+}
+
+/* ─── MERGE / EXPR / CHALLENGE ─── */
+function tapMerge(id){
+  const term=G.terms.find(t=>t.id===id);
+  if(!term||term.gone) return;
+
+  // Guided FOIL mode: require selecting products in order
+  if(G.foilGuide.active){
+    const expected=G.foilGuide.order[G.foilGuide.step];
+    if(id===expected){
+      flashCard(id,'flash');
+      G.foilGuide.step++;
+      updateFoilGuideVisuals();
+      if(G.foilGuide.step>=G.foilGuide.order.length){
+        stopFoilGuide();
+        toast('✅ FOIL steps complete! Now merge like terms.');
+        setInstr('Great! Now merge like terms to simplify.');
+      } else {
+        toast(`✅ Good! Step ${G.foilGuide.step+1} of ${G.foilGuide.order.length}`);
+      }
+    } else {
+      const nextCard=getCard(expected);
+      flashCard(id,'shake',350);
+      if(nextCard) flashCard(expected,'flash',350);
+      toast(`Select step ${G.foilGuide.step+1} of ${G.foilGuide.order.length}`,'err');
+    }
+    return;
+  }
+
+  // Bundles are expandable into term pieces (distributive / FOIL)
+  if(term.kind==='bundle'){
+    beep('sel');
+    const children = expandBundle(term);
+    renderTerms();
+    if(term.bundleType==='foil'){
+      const steps = foilSteps(term);
+      const html = `<div style="display:grid;gap:.25rem;font-size:.8rem">${steps.map(s=>`<div style="display:flex;align-items:center;gap:.4rem"><span style="font-weight:700">${s.a}</span><span style="color:var(--muted)">×</span><span style="font-weight:700">${s.b}</span><span style="color:var(--muted)">=</span><span style="color:var(--accent);font-weight:700">${s.result}</span></div>`).join('')}</div>`;
+      showWhyHtml({
+        rule:'⚙️ FOIL EXPANDED',
+        html:'You expanded '+termLabel(term)+' into its products:<br>'+html+'<br><br><strong>Now click the terms in this order:</strong> First ➜ Outer ➜ Inner ➜ Last.',
+        showExample:true
+      });
+      setInstr('FOIL expanded — click the highlighted term in order.');
+
+      // Start guided FOIL ordering
+      const order = children.map(t=>t.id);
+      const labels = ['First','Outer','Inner','Last'];
+      startFoilGuide(order, labels);
+    } else {
+      showWhy({rule:'⚙️ DISTRIBUTE: Expand the expression',desc:'You broke open '+termLabel(term)+' into its term parts. Now combine like terms.'});
+      setInstr('You expanded the bundle into pieces. Merge like terms to simplify.');
+    }
+    updateJournal();
+    return;
+  }
+
+  if(G.selected.includes(id)){
+    G.selected=G.selected.filter(s=>s!==id);
+    getCard(id)?.classList.remove('sel');
+    hideWhy(); return;
+  }
+
+  if(G.selected.length===0){
+    G.selected.push(id);
+    getCard(id)?.classList.add('sel');
+    beep('sel');
+    setInstr('<span class="hi">'+termLabel(term)+'</span> selected. Tap another like-term piece to fuse.');
+    return;
+  }
+
+  if(G.selected.length===1){
+    const first=G.terms.find(t=>t.id===G.selected[0]);
+    getCard(id)?.classList.add('sel');
+    G.selected.push(id);
+
+    if(!canCombine(first,term)){
+      beep('err');
+      showWhy(whyIncompat(first,term));
+      flashCard(first.id,'shake',350);
+      flashCard(term.id,'shake',350);
+      openFeedbackIncompat(first,term);
+      clearSel();
+      return;
+    }
+    // like terms — open calc
+    clearSel();
+    openCalc(first,term);
+  }
+}
+
+/* ══════════════════════════════════════════
+   MERGE CALC
+══════════════════════════════════════════ */
+let _calcT1=null,_calcT2=null,_calcInput='';
+
+function openCalc(t1,t2){
+  _calcT1=t1; _calcT2=t2; _calcInput='';
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--accent3)">⚡ FUSE COMPONENTS</div>
+    <div class="mbody">
+      <div class="merge-disp">
+        <span style="color:${t1.coef<0?'var(--danger)':'var(--text)'}">${termLabel(t1)}</span>
+        <span style="color:var(--muted)">+</span>
+        <span style="color:${t2.coef<0?'var(--danger)':'var(--text)'}">${termLabel(t2)}</span>
+        <span style="color:var(--muted)">=</span>
+        <span style="color:var(--accent)">?</span>
+      </div>
+      <input id="ci" class="merge-input" readonly placeholder="?">
+      <div class="calc-grid">
+        <button class="cbtn dk" onclick="ct('x')">x</button>
+        <button class="cbtn dk" onclick="ct('y')">y</button>
+        <button class="cbtn dk" onclick="ct('x²')">x²</button>
+        <button class="cbtn dk" onclick="ct('y²')">y²</button>
+        <button class="cbtn dk" onclick="ct('xy')">xy</button>
+        <button class="cbtn dk" onclick="ct('^')">^</button>
+        <button class="cbtn dk" onclick="ct('(-)')">(-)</button>
+        <button class="cbtn dk" onclick="ct('DEL')">DEL</button>
+        <button class="cbtn" onclick="ct('7')">7</button>
+        <button class="cbtn" onclick="ct('8')">8</button>
+        <button class="cbtn" onclick="ct('9')">9</button>
+        <button class="cbtn dk" onclick="ct('CLR')">CLR</button>
+        <button class="cbtn" onclick="ct('4')">4</button>
+        <button class="cbtn" onclick="ct('5')">5</button>
+        <button class="cbtn" onclick="ct('6')">6</button>
+        <button class="cbtn dk" onclick="ct('+')">+</button>
+        <button class="cbtn" onclick="ct('1')">1</button>
+        <button class="cbtn" onclick="ct('2')">2</button>
+        <button class="cbtn" onclick="ct('3')">3</button>
+        <button class="cbtn dk" onclick="ct('-')">−</button>
+        <button class="cbtn" style="grid-column:span 2" onclick="ct('0')">0</button>
+        <button class="cbtn dk" style="grid-column:span 2" onclick="ct('.')">.</button>
+        <button class="cbtn ent" onclick="submitCalc()">ENTER</button>
+      </div>
+    </div>`;
+  openModal();
+}
+
+function ct(v){
+  if(v==='DEL') _calcInput=_calcInput.slice(0,-1);
+  else if(v==='CLR') _calcInput='';
+  else if(v==='(-)') _calcInput=_calcInput.startsWith('-')?_calcInput.slice(1):'-'+_calcInput;
+  else _calcInput+=v;
+  document.getElementById('ci').value=_calcInput;
+}
+
+function submitCalc(){
+  const raw=_calcInput.trim();
+  if(!raw){toast('Enter your answer','err');return;}
+  const t1=_calcT1, t2=_calcT2;
+  const newCoef=t1.coef+t2.coef;
+  const expVar=termVarString(t1.vars||varsFromVtype(t1.vtype)); // e.g. 'x', 'x²', ''
+
+  let clean=raw.toLowerCase().replace(/\s+/g,'')
+    .replace(/\^2/g,'²').replace(/\*\*2/g,'²')
+    .replace(/([a-z])2/g,'$1²');   // catch y2 → y²
+
+  let uCoef=null, uVar='';
+  const m=clean.match(/^([-+]?\d*)(.*)/);
+  if(m){
+    const cs=m[1]; uVar=m[2];
+    if(cs===''||cs==='+') uCoef=1;
+    else if(cs==='-') uCoef=-1;
+    else uCoef=parseInt(cs,10);
+  }
+
+  const correct=(uCoef===newCoef && uVar===expVar) || (newCoef===0&&(clean==='0'||uCoef===0));
+
+  closeModal();
+
+  if(correct){
+    beep('merge');
+    addScore(10+Math.abs(newCoef));
+    G.mergeCount++;
+
+    // animate out both cards
+    const c1=getCard(t1.id), c2=getCard(t2.id);
+    if(c1){c1.classList.add('smoke');setTimeout(()=>c1.remove(),1300);}
+    if(c2){c2.classList.add('smoke');setTimeout(()=>c2.remove(),1300);}
+
+    // update model
+    t1.gone=true; t2.gone=true;
+
+    if(newCoef!==0){
+      const nr=makeTerm(newCoef,t1.vtype,(t1.x+t2.x)/2,(t1.y+t2.y)/2);
+      G.terms.push(nr);
+      beep('smoke');
+      setTimeout(()=>{
+        const pa=document.getElementById('play-area');
+        const nc=makeCard(nr);
+        nc.classList.add('flash');
+        pa.appendChild(nc);
+        showWhy(whySuccess(t1,t2,nr));
+        setInstr('<span class="hi">'+termLabel(t1)+' + '+termLabel(t2)+' = '+termLabel(nr)+'</span> — coefficients combined, variable unchanged.');
+        updateJournal();
+        checkWin();
+      },900);
+    } else {
+      beep('smoke');
+      showWhy({rule:'✓ ZERO PAIR: Terms cancel completely',desc:termLabel(t1)+' and '+termLabel(t2)+' sum to 0. They eliminate each other — this is a zero pair.'});
+      setInstr('<span class="hi">Zero pair!</span> '+termLabel(t1)+' + '+termLabel(t2)+' = 0. Both terms vanish.');
+      updateJournal();
+      setTimeout(checkWin,1400);
+    }
+  } else {
+    beep('err');
+    openMathError(t1,t2,newCoef,raw);
+  }
+}
+
+/* ══════════════════════════════════════════
+   WIN CHECK
+══════════════════════════════════════════ */
+function checkWin(){
+  const active=G.terms.filter(t=>!t.gone && t.kind!=='bundle');
+  const counts={};
+  active.forEach(t=>counts[termKey(t)]=(counts[termKey(t)]||0)+1);
+  const canMore=Object.values(counts).some(c=>c>1);
+  if(!canMore && !G.done){
+    G.done=true;
+    stopTimer();
+    beep('win');
+    if(G.mode==='merge'){
+      setTimeout(()=>openClassify(active),600);
+    } else if(G.mode==='challenge'){
+      G.challengeRound++;
+      if(G.challengeRound>=4){
+        setTimeout(showChallengeComplete,600);
+      } else {
+        setTimeout(()=>showRoundClear(G.challengeRound),600);
+      }
+    } else {
+      setTimeout(showWin,600);
+    }
+  }
+}
+
+/* between-round splash for challenge mode */
+function showRoundClear(roundDone){
+  const box=document.getElementById('modal-box');
+  const remaining=5-roundDone;
+  const dots=[1,2,3,4].map(i=>`<span style="display:inline-block;width:.9rem;height:.9rem;border-radius:50%;margin:0 .2rem;background:${i<=roundDone?'var(--accent)':'var(--border)'}"></span>`).join('');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--accent)">✓ ROUND ${roundDone} CLEARED!</div>
+    <div class="mbody" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:.6rem">⚙️</div>
+      <div style="margin-bottom:.8rem">${dots}</div>
+      <p style="color:var(--text);font-size:1rem;margin-bottom:.3rem"><strong>${remaining}</strong> round${remaining!==1?'s':''} remaining before Regents challenge</p>
+      <p style="color:var(--muted);font-size:.75rem;margin-bottom:1rem">Score so far: <strong style="color:var(--warn)">${G.score}</strong></p>
+    </div>
+    <div class="mftr"><button class="btn-dismiss ok" onclick="closeModal();nextChallengeRound()">NEXT ROUND →</button></div>`;
+  openModal();
+}
+
+function showChallengeComplete(){
+  const box=document.getElementById('modal-box');
+  const dots=[1,2,3,4].map(i=>`<span style="display:inline-block;width:.9rem;height:.9rem;border-radius:50%;margin:0 .2rem;background:var(--accent)"></span>`).join('');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--warn)">🏆 ALL 4 ROUNDS CLEARED!</div>
+    <div class="mbody" style="text-align:center">
+      <div style="font-size:3rem;margin-bottom:.6rem">🤖</div>
+      <div style="margin-bottom:.8rem">${dots}</div>
+      <p style="color:var(--text);font-size:1rem;margin-bottom:.4rem">You've mastered the junkyard.</p>
+      <p style="color:var(--muted);font-size:.75rem;margin-bottom:1rem">Final score: <strong style="color:var(--warn)">${G.score}</strong><br>Now prove it on a real Regents question.</p>
+    </div>
+    <div class="mftr"><button class="btn-dismiss" style="background:var(--warn);color:#000" onclick="closeModal();goTransfer()">📋 ATTEMPT REGENTS QUESTION</button></div>`;
+  openModal();
+}
+
+function nextChallengeRound(){
+  /* reset board state but keep score, round count, tier */
+  G.terms=[]; G.selected=[]; G.done=false; G.drag=null; G.origExpr='';
+  document.querySelectorAll('#play-area .tc').forEach(el=>el.remove());
+  hideWhy(); clearSel();
+  /* re-populate terms for this tier */
+  populateChallengeTerms(G.challengeTier);
+  G.origExpr=exprStr(G.terms);
+  updateJournal();
+  renderTerms();
+  startTimer(G.challengeTier===1?90:G.challengeTier===2?120:150);
+  setInstr('Round <span class="hi">'+(G.challengeRound+1)+' of 4</span> — '+(G.challengeTier===3?'FOIL expanded — fuse the like terms!':G.challengeTier===2?'Tap bundles to expand (distributive property), then fuse like terms!':'simplify the expression!'));
+}
+
+/* ══════════════════════════════════════════
+   CLASSIFY
+══════════════════════════════════════════ */
+function openClassify(active){
+  const termEls=active.map((t,i)=>{
+    const isNeg=t.coef<0;
+    const abs=Math.abs(t.coef);
+    const vpart=termVarString(t.vars||varsFromVtype(t.vtype));
+    const al=(abs===1&&vpart!=='')?vpart:(abs+vpart);
+    const op=i===0?(isNeg?'<span style="color:var(--danger)">−</span>':''):(isNeg?'<span style="color:var(--muted)"> − </span>':'<span style="color:var(--muted)"> + </span>');
+    return op+'<span style="color:var(--accent);font-weight:900">'+al+'</span>';
+  }).join('');
+
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--warn)">📊 CLASSIFY THE RESULT</div>
+    <div class="mbody">
+      <p style="color:var(--muted);font-size:.76rem;margin-bottom:.6rem">You simplified to:</p>
+      <div class="cls-expr">${termEls||'<span style="color:var(--accent)">0</span>'}</div>
+      <p style="color:var(--muted);font-size:.72rem;margin-bottom:.7rem">How many terms does the final expression have?</p>
+      <div class="cls-grid">
+        <button class="cls-btn" onclick="submitClassify('monomial',${active.length})">Monomial<br><span style="font-size:.66rem;color:var(--muted);font-weight:400">1 term</span></button>
+        <button class="cls-btn" onclick="submitClassify('binomial',${active.length})">Binomial<br><span style="font-size:.66rem;color:var(--muted);font-weight:400">2 terms</span></button>
+        <button class="cls-btn" onclick="submitClassify('trinomial',${active.length})">Trinomial<br><span style="font-size:.66rem;color:var(--muted);font-weight:400">3 terms</span></button>
+        <button class="cls-btn" onclick="submitClassify('polynomial',${active.length})">Polynomial<br><span style="font-size:.66rem;color:var(--muted);font-weight:400">4+ terms</span></button>
+      </div>
+    </div>`;
+  openModal();
+}
+
+function submitClassify(chosen,count){
+  const correct=count<=1?'monomial':count===2?'binomial':count===3?'trinomial':'polynomial';
+  if(chosen===correct){
+    closeModal(); beep('win');
+    toast('✓ Correct!');
+    setTimeout(showWin,500);
+  } else {
+    const box=document.getElementById('modal-box');
+    box.innerHTML=`
+      <div class="mhdr" style="color:var(--danger)">✗ CLASSIFICATION FAILED</div>
+      <div class="mbody">
+        <div style="background:rgba(255,59,92,.1);border:1px solid var(--danger);border-radius:var(--radius);padding:.9rem;text-align:center;margin-bottom:.8rem">
+          <p style="margin-bottom:.4rem">You chose: <strong style="color:var(--warn)">${chosen.toUpperCase()}</strong></p>
+          <p>Correct: <strong style="color:var(--accent)">${correct.toUpperCase()}</strong></p>
+          <p style="color:var(--muted);font-size:.75rem;margin-top:.4rem">There are <strong>${count}</strong> term${count!==1?'s':''} in the result.</p>
+        </div>
+        <div class="fb-rule"><strong>Term counts:</strong> Monomial=1 · Binomial=2 · Trinomial=3 · Polynomial=4+</div>
+      </div>
+      <div class="mftr"><button class="btn-dismiss danger" onclick="closeModal();startMode(G.mode)">RESTART</button></div>`;
+    beep('err');
+  }
+}
+
+/* ══════════════════════════════════════════
+   FEEDBACK MODALS
+══════════════════════════════════════════ */
+function openFeedbackIncompat(t1,t2){
+  const va=termVarLabel(t1), vb=termVarLabel(t2);
+  const why=whyIncompat(t1,t2);
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--danger)">⚠ NOT LIKE TERMS</div>
+    <div class="mbody">
+      <div class="fb-terms"><span>${termLabel(t1)}</span><span style="color:var(--muted)">and</span><span>${termLabel(t2)}</span></div>
+      <div class="fb-rule"><strong>${why.rule}</strong><br>${why.desc}</div>
+      <div class="step"><div class="snum">1</div><div class="scont">Term 1 variable: <span class="math">${va||'(constant)'}</span></div></div>
+      <div class="step"><div class="snum">2</div><div class="scont">Term 2 variable: <span class="math">${vb||'(constant)'}</span></div></div>
+      <div class="step"><div class="snum">3</div><div class="scont">Different variable parts → <strong style="color:var(--danger)">cannot combine</strong>. They stay separate in the expression.</div></div>
+    </div>
+    <div class="mftr"><button class="btn-dismiss" onclick="closeModal()">I UNDERSTAND</button></div>`;
+  openModal();
+}
+
+function openMathError(t1,t2,correctCoef,userInput){
+  const vd=termVarString(t1.vars||varsFromVtype(t1.vtype));
+  const correctLabel=termLabel({coef:correctCoef, vars:t1.vars||varsFromVtype(t1.vtype)});
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--danger)">🔧 MATH ERROR</div>
+    <div class="mbody">
+      <div class="fb-terms"><span>${termLabel(t1)}</span><span style="color:var(--muted)">+</span><span>${termLabel(t2)}</span></div>
+      ${userInput?`<p style="color:var(--danger);font-size:.8rem;text-align:center;margin-bottom:.6rem">Your input: <strong style="text-decoration:line-through">${userInput}</strong></p>`:''}
+      <div class="fb-rule"><strong>RULE:</strong> Keep the variable — only add the coefficients.</div>
+      <div class="step"><div class="snum">1</div><div class="scont">Variable stays: <span class="math">${vd||'(constant — no variable)'}</span></div></div>
+      <div class="step"><div class="snum">2</div><div class="scont">Add coefficients: <span class="math">${t1.coef} + ${t2.coef} = ${correctCoef}</span></div></div>
+      <div class="step"><div class="snum">3</div><div class="scont">Answer: <span class="math" style="font-size:1.2rem;background:var(--panel);padding:.15rem .5rem;border-radius:6px">${correctLabel||'0'}</span></div></div>
+    </div>
+    <div class="mftr"><button class="btn-dismiss" onclick="closeModal();openCalc(_calcT1,_calcT2)">← TRY AGAIN</button></div>`;
+  openModal();
+}
+
+/* ══════════════════════════════════════════
+   WHY RULES
+══════════════════════════════════════════ */
+function whyLike(vtype){
+  const vd=termVarString(varsFromVtype(vtype))||'constant';
+  return {rule:'✓ LIKE TERMS: Same variable, same exponent',desc:'All selected pieces share the variable "'+vd+'". Like terms can always be combined by adding their coefficients.'};
+}
+function whyMixed(types){
+  const names=[...new Set(types)].map(v=>termVarString(varsFromVtype(v))||'constant');
+  return {rule:'✗ MIXED TYPES: Not all like terms',desc:'Your selection contains: '+names.join(', ')+'. Like terms must ALL share the exact same variable and exponent. Group only identical variable types together.'};
+}
+function whyIncompat(a,b){
+  const va=termVarLabel(a), vb=termVarLabel(b);
+  if(a.vtype==='x'&&b.vtype==='x2') return {rule:'✗ RELATED BUT NOT LIKE: Exponents differ',desc:'x and x² look similar but the exponent changes the term type entirely. x¹ ≠ x². Different powers = different term types — cannot combine.'};
+  if((a.vtype==='x'&&b.vtype==='y')||(a.vtype==='y'&&b.vtype==='x')) return {rule:'✗ NOT LIKE: Different variables',desc:'x and y represent different unknowns. Like different materials in a junkyard — you cannot weld them together. They must stay separate.'};
+  return {rule:'✗ NOT LIKE TERMS: Variable parts differ',desc:'"'+va+'" and "'+vb+'" are different variable types. To combine, letters AND exponents must be exactly identical.'};
+}
+function whySuccess(t1,t2,result){
+  const vd=termVarLabel(t1);
+  return {rule:'✓ LIKE TERMS FUSED',desc:'Both had variable "'+vd+'". Coefficients: '+t1.coef+' + '+t2.coef+' = '+result.coef+'. The variable part stays exactly the same.'};
+}
+
+function showWhy(obj){
+  document.getElementById('why-rule').textContent=obj.rule;
+  document.getElementById('why-desc').textContent=obj.desc;
+  document.getElementById('why-panel').classList.add('on');
+}
+function showWhyHtml(obj){
+  document.getElementById('why-rule').textContent=obj.rule;
+  document.getElementById('why-desc').innerHTML=obj.html||obj.desc;
+  const panel=document.getElementById('why-panel');
+  if(obj.showExample){
+    const btn=document.createElement('button');
+    btn.className='btn-s';
+    btn.style.marginTop='0.5rem';
+    btn.textContent='▶ Show FOIL example';
+    btn.onclick=showFoilExampleModal;
+    // Remove old button if present
+    const old=panel.querySelector('.foil-example-btn');
+    if(old) old.remove();
+    btn.classList.add('foil-example-btn');
+    panel.appendChild(btn);
+    if(G.autoFoilExample){
+      setTimeout(showFoilExampleModal, 200);
+    }
+  }
+  panel.classList.add('on');
+}
+
+function toggleAutoFoilExample(enabled){
+  G.autoFoilExample=enabled;
+  try{localStorage.setItem('autoFoilExample', String(enabled));}catch(e){}
+  toast(enabled? 'Auto FOIL example enabled':'Auto FOIL example disabled');
+}
+
+function showFoilExampleModal(){
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--accent)">🎬 FOIL EXAMPLE</div>
+    <div class="mbody" style="font-size:.85rem;line-height:1.4">
+      <p>This is an example of the FOIL order. It does <strong>not</strong> show the answer to your current expression.</p>
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:1rem;margin:0.5rem 0">
+        <div style="font-weight:700;">(x + a)(x + b)</div>
+        <ol style="margin:0.5rem 0 0 1.1rem;">
+          <li><strong>First:</strong> x × x = x²</li>
+          <li><strong>Outer:</strong> x × b = bx</li>
+          <li><strong>Inner:</strong> a × x = ax</li>
+          <li><strong>Last:</strong> a × b = ab</li>
+        </ol>
+      </div>
+      <p>Now click the highlighted term in your own expression in the same order.</p>
+    </div>
+    <div class="mftr"><button class="btn-dismiss ok" onclick="closeModal()">Got it</button></div>`;
+  openModal();
+}
+function hideWhy(){ document.getElementById('why-panel').classList.remove('on'); }
+
+/* ══════════════════════════════════════════
+   JOURNAL
+══════════════════════════════════════════ */
+function updateJournal(){
+  document.getElementById('j-orig').textContent=G.origExpr||'—';
+  document.getElementById('j-grp').textContent=G.terms.length?groupedStr(G.terms):'—';
+  const active=G.terms.filter(t=>!t.gone);
+  document.getElementById('j-simp').textContent=active.length?exprStr(active):'—';
+}
+
+/* ══════════════════════════════════════════
+   SCORE / TIMER
+══════════════════════════════════════════ */
+function addScore(n){
+  G.score+=n;
+  document.getElementById('hud-score').textContent='Score: '+G.score;
+}
+function startTimer(secs){
+  G.timeLeft=secs;
+  updateTimerEl();
+  clearInterval(G.timer);
+  G.timer=setInterval(()=>{
+    if(G.paused||G.done) return;
+    G.timeLeft--;
+    updateTimerEl();
+    if(G.timeLeft<=0){stopTimer();showWin();}
+  },1000);
+}
+function stopTimer(){ clearInterval(G.timer); }
+function updateTimerEl(){
+  const el=document.getElementById('hud-timer');
+  el.textContent=G.timeLeft>0?G.timeLeft+'s':'';
+  el.classList.toggle('warn',G.timeLeft>0&&G.timeLeft<=10);
+}
+function clearSel(){
+  G.selected=[];
+  document.querySelectorAll('.tc.sel').forEach(el=>el.classList.remove('sel'));
+}
+function setInstr(html){ document.getElementById('instr').innerHTML=html; }
+
+/* ══════════════════════════════════════════
+   MODE LAUNCHERS
+══════════════════════════════════════════ */
+function startMode(m){
+  // Remove any sort check button first
+  document.getElementById('sort-check-btn')?.remove();
+  hideWhy();
+  clearSel();
+  stopTimer();
+
+  G.mode=m; G.terms=[]; G.selected=[]; G.score=0; G.mergeCount=0;
+  G.done=false; G.paused=false; G.drag=null; G.origExpr='';
+  stopFoilGuide();
+  document.getElementById('hud-score').textContent='Score: 0';
+  document.getElementById('hud-timer').textContent='';
+  document.getElementById('journal').classList.remove('on');
+  const jtb=document.getElementById('journal-toggle-btn');
+  jtb.style.display='none';jtb.style.background='var(--panel)';jtb.style.color='var(--muted)';jtb.style.borderColor='var(--border)';
+
+  showScreen('screen-game');
+  document.getElementById('help-btn').classList.add('on');
+
+  if(m==='sort')       initSort();
+  else if(m==='merge') initMerge(1);
+  else if(m==='expr')  initExpr();
+  else if(m==='challenge') openTierSelect();
+  else if(m==='challenge_restart'){
+    const t=G.challengeTier||1;
+    G.challengeRound=0; G.score=0; G.mergeCount=0;
+    G.terms=[]; G.done=false; G.drag=null; G.origExpr='';
+    document.getElementById('hud-score').textContent='Score: 0';
+    showScreen('screen-game');
+    document.getElementById('journal').classList.remove('on');
+    const rjtb=document.getElementById('journal-toggle-btn');
+    rjtb.style.display='inline-flex';
+    rjtb.style.background='var(--panel)';rjtb.style.color='var(--muted)';rjtb.style.borderColor='var(--border)';
+    document.getElementById('hud-badge').textContent='MODE D · T'+t;
+    document.getElementById('hud-badge').style.cssText='font-size:.65rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:rgba(255,107,53,.12);color:var(--accent2);border:1px solid var(--accent2)';
+    document.getElementById('hud-title').textContent='Challenge Yard · Tier '+t;
+    populateChallengeTerms(t);
+    G.origExpr=exprStr(G.terms);
+    updateJournal();
+    renderTerms();
+    startTimer(t===1?90:t===2?120:150);
+    setInstr('Round <span class="hi">1 of 4</span> — '+(G.challengeTier===3?'FOIL expanded — fuse the like terms!':G.challengeTier===2?'Tap bundles to expand (distributive property), then fuse like terms!':'simplify the expression!'));
+  }
+}
+
+function initSort(){
+  document.getElementById('hud-badge').textContent='MODE A';
+  document.getElementById('hud-badge').style.cssText='font-size:.65rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:rgba(57,255,20,.12);color:var(--accent);border:1px solid var(--accent)';
+  document.getElementById('hud-title').textContent='Sorting Yard';
+
+  // 3 types, 2–3 cards each
+  ['x','y','c'].forEach(v=>{
+    const n=2+Math.floor(Math.random()*2);
+    for(let i=0;i<n;i++) G.terms.push(makeTerm(randCoef(),v));
+  });
+  G.terms.sort(()=>Math.random()-.5);
+
+  renderTerms();
+  setInstr('Click pieces that are <span class="hi">like terms</span> (same variable type). Select a group, then press <span class="hi">CHECK ✓</span>');
+
+  // Add check button
+  const btn=document.createElement('button');
+  btn.id='sort-check-btn'; btn.className='hbtn';
+  btn.style.cssText='background:var(--accent);color:#000;font-weight:700;border-color:var(--accent)';
+  btn.textContent='CHECK ✓';
+  btn.onclick=sortCheck;
+  document.getElementById('hud-right').prepend(btn);
+}
+
+function initMerge(diff){
+  document.getElementById('hud-badge').textContent='MODE B';
+  document.getElementById('hud-badge').style.cssText='font-size:.65rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:rgba(123,108,246,.12);color:var(--accent3);border:1px solid var(--accent3)';
+  document.getElementById('hud-title').textContent='Merge Bay';
+
+  const n=Math.min(1+(diff||1),4);
+  const pool=['x','y','c','x2','y2','xy'].slice(0,n);
+  pool.forEach(v=>{
+    const cnt=2+Math.floor(Math.random()*2);
+    for(let i=0;i<cnt;i++) G.terms.push(makeTerm(randCoef(),v));
+  });
+  G.terms.sort(()=>Math.random()-.5);
+  renderTerms();
+  setInstr('Click two <span class="hi">like-term pieces</span> to fuse them. Simplify until no more merges are possible.');
+}
+
+function initExpr(){
+  document.getElementById('hud-badge').textContent='MODE C';
+  document.getElementById('hud-badge').style.cssText='font-size:.65rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:rgba(255,107,53,.12);color:var(--accent2);border:1px solid var(--accent2)';
+  document.getElementById('hud-title').textContent='Expression Builder';
+  document.getElementById('journal').classList.remove('on');
+  const jtbE=document.getElementById('journal-toggle-btn');
+  jtbE.style.display='inline-flex';
+  jtbE.style.background='var(--panel)';jtbE.style.color='var(--muted)';jtbE.style.borderColor='var(--border)';
+
+  ['x','c','y','x2'].forEach(v=>{
+    const n=2+Math.floor(Math.random()*2);
+    for(let i=0;i<n;i++) G.terms.push(makeTerm(randCoef(),v));
+  });
+  G.terms.sort(()=>Math.random()-.5);
+  G.origExpr=exprStr(G.terms);
+  updateJournal();
+  renderTerms();
+  setInstr('Simplify: <span class="hi">'+G.origExpr+'</span>');
+}
+
+function populateChallengeTerms(tier){
+  if(tier===1){
+    ['x','y','c','x2','y2'].forEach(v=>{
+      const n=2+Math.floor(Math.random()*2);
+      for(let i=0;i<n;i++) G.terms.push(makeTerm(randCoef(),v));
+    });
+  } else if(tier===2){
+    // Distributive property: create bundle like a(x + b)
+    const a=2+Math.floor(Math.random()*3), b=1+Math.floor(Math.random()*5);
+    const bundle = makeBundle(a, [makeTerm(1,'x'), makeTerm(b,'c')]);
+    G.terms.push(bundle);
+    // Add extra terms to make merging meaningful
+    G.terms.push(makeTerm(randCoef(),'x'));
+    G.terms.push(makeTerm(randCoef(),'c'));
+    G.terms.push(makeTerm(randCoef(),'y'));
+  } else {
+    // FOIL challenge: (x + a)(x + b)
+    const a=1+Math.floor(Math.random()*5), b=1+Math.floor(Math.random()*5);
+    const foil = makeFoilBundle([makeTerm(1,'x'), makeTerm(a,'c')], [makeTerm(1,'x'), makeTerm(b,'c')]);
+    G.terms.push(foil);
+    // Add some extra random terms to increase sorting/merging demand
+    G.terms.push(makeTerm(randCoef(),'x'));
+    G.terms.push(makeTerm(randCoef(),'c'));
+  }
+  G.terms.sort(()=>Math.random()-.5);
+}
+
+function initChallenge(tier){
+  document.getElementById('hud-badge').textContent='MODE D · T'+tier;
+  document.getElementById('hud-badge').style.cssText='font-size:.65rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:rgba(255,107,53,.12);color:var(--accent2);border:1px solid var(--accent2)';
+  document.getElementById('hud-title').textContent='Challenge Yard · Tier '+tier;
+  document.getElementById('journal').classList.remove('on');
+  const jtbC=document.getElementById('journal-toggle-btn');
+  jtbC.style.display='inline-flex';
+  jtbC.style.background='var(--panel)';jtbC.style.color='var(--muted)';jtbC.style.borderColor='var(--border)';
+  G.challengeTier=tier;
+  G.challengeRound=0;
+
+  populateChallengeTerms(tier);
+  G.origExpr=exprStr(G.terms);
+  updateJournal();
+  renderTerms();
+  startTimer(tier===1?90:tier===2?120:150);
+  setInstr('Round <span class="hi">1 of 4</span> — '+(tier===3?'FOIL expanded — fuse the like terms!':tier===2?'Tap bundles to expand (distributive property), then fuse like terms!':'simplify the expression!'));
+}
+
+function openTierSelect(){
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--accent2)">🔥 CHALLENGE YARD — SELECT TIER</div>
+    <div class="mbody" style="display:flex;flex-direction:column;gap:.7rem">
+      <button class="cls-btn" onclick="closeModal();initChallenge(1)"><strong>TIER 1</strong><br><span style="font-size:.7rem;color:var(--muted);font-weight:400">Simplify polynomials · 90s timer</span></button>
+      <button class="cls-btn" onclick="closeModal();initChallenge(2)"><strong>TIER 2</strong><br><span style="font-size:.7rem;color:var(--muted);font-weight:400">Distributive property expanded · 2min timer</span></button>
+      <button class="cls-btn" onclick="closeModal();initChallenge(3)"><strong>TIER 3</strong><br><span style="font-size:.7rem;color:var(--muted);font-weight:400">FOIL — polynomial multiplication · 2.5min</span></button>
+      <button class="btn-s" onclick="closeModal();showScreen('screen-mode')" style="margin-top:.3rem">← Back</button>
+    </div>`;
+  openModal();
+}
+
+/* ══════════════════════════════════════════
+   WIN SCREEN
+══════════════════════════════════════════ */
+function showWin(){
+  stopTimer();
+  document.getElementById('win-title').textContent='EXPRESSION SIMPLIFIED!';
+  document.getElementById('win-sub').textContent='All like terms combined. Fully simplified.';
+  document.getElementById('win-stats').innerHTML=`
+    <div class="wstat"><div class="val">${G.score}</div><div class="lbl">Score</div></div>
+    <div class="wstat"><div class="val">${G.mergeCount}</div><div class="lbl">Merges</div></div>`;
+  showScreen('screen-win');
+}
+
+/* ══════════════════════════════════════════
+   REGENTS TRANSFER
+══════════════════════════════════════════ */
+const RBANK=[
+  {q:'Which expression is equivalent to 3x + 4 − 2x + 7?',choices:['x + 11','5x + 11','x + 3','5x + 3'],correct:0,exp:'3x − 2x = x and 4 + 7 = 11. Result: x + 11'},
+  {q:'Simplify: 5y² − 3y + 2y² + y − 6',choices:['7y² − 2y − 6','7y² + 2y − 6','3y² − 2y − 6','7y² − 2y + 6'],correct:0,exp:'5y²+2y²=7y², −3y+y=−2y, constant=−6'},
+  {q:'What is the simplified form of 4x² + 3x − x² − 5x + 2?',choices:['3x² − 2x + 2','3x² + 8x + 2','5x² − 2x + 2','3x² − 2x − 2'],correct:0,exp:'4x²−x²=3x², 3x−5x=−2x, +2 stays. Result: 3x²−2x+2'},
+  {q:'Simplify: 2(x + 3) + 4x',choices:['6x + 6','6x + 3','2x + 6','6x + 8'],correct:0,exp:'Distribute: 2x+6. Then 2x+4x=6x. Result: 6x+6'},
+  {q:'Which is equivalent to (x + 2)(x + 3)?',choices:['x² + 5x + 6','x² + 6x + 6','x² + 5x + 5','x² + 6'],correct:0,exp:'FOIL: x²+3x+2x+6 = x²+5x+6'},
+  {q:'Simplify: 6xy − 2x + 3xy + x',choices:['9xy − x','9xy + x','3xy − x','9xy − 3x'],correct:0,exp:'6xy+3xy=9xy, −2x+x=−x. Result: 9xy−x'},
+];
+
+function goTransfer(){
+  const q=RBANK[Math.floor(Math.random()*RBANK.length)];
+  document.getElementById('reg-box').innerHTML=`
+    <div class="reg-lbl">NYS ALGEBRA 1 REGENTS · A-APR.1</div>
+    <div class="reg-q">${q.q}</div>
+    <div class="reg-choices">${q.choices.map((c,i)=>`<button class="reg-ch" onclick="answerReg(${i},${q.correct},'${q.exp.replace(/'/g,"\\'").replace(/"/g,'\\"')}',this)">(${String.fromCharCode(65+i)}) ${c}</button>`).join('')}</div>
+    <div class="reg-fb" id="reg-fb"></div>`;
+  document.getElementById('btn-continue').style.display='none';
+  showScreen('screen-transfer');
+}
+function answerReg(chosen,correct,exp,btn){
+  document.querySelectorAll('.reg-ch').forEach(c=>c.style.pointerEvents='none');
+  const fb=document.getElementById('reg-fb');
+  const cont=document.getElementById('btn-continue');
+  if(chosen===correct){
+    btn.classList.add('correct');
+    fb.className='reg-fb show correct';
+    fb.innerHTML='✓ Correct! '+exp+'<br><br><strong style="color:#15803d;font-size:1.05rem">🎓 You are ready for the Regents version!</strong>';
+    beep('win');
+    toast('✓ Regents Ready!');
+    cont.textContent='← Back to Modes';
+    cont.onclick=()=>showScreen('screen-mode');
+    cont.style.display='block';
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.reg-ch')[correct].classList.add('correct');
+    fb.className='reg-fb show wrong';
+    fb.innerHTML='✗ '+exp+'<br><br><strong style="color:#dc2626">You must complete 5 more rounds before trying again.</strong>';
+    beep('err');
+    cont.textContent='🔄 Restart 5 Rounds';
+    cont.onclick=()=>{
+      /* full challenge reset */
+      startMode('challenge_restart');
+    };
+    cont.style.display='block';
+  }
+}
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+function openModal(){ document.getElementById('modal-bg').classList.add('on'); }
+function closeModal(){ document.getElementById('modal-bg').classList.remove('on'); G.paused=false; }
+
+function toggleJournal(){
+  const j=document.getElementById('journal');
+  const btn=document.getElementById('journal-toggle-btn');
+  const isOpen=j.classList.toggle('on');
+  btn.style.background=isOpen?'var(--accent3)':'var(--panel)';
+  btn.style.color=isOpen?'#fff':'var(--muted)';
+  btn.style.borderColor=isOpen?'var(--accent3)':'var(--border)';
+}
+
+function openPause(){
+  G.paused=true;
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr">⏸ PAUSED</div>
+    <div class="mbody" style="display:flex;flex-direction:column;gap:.7rem">
+      <button class="btn-p" onclick="closeModal()">▶ Resume</button>
+      <button class="btn-s" onclick="closeModal();startMode(G.mode)">🔄 Restart</button>
+      <button class="btn-s" onclick="closeModal();showScreen('screen-mode')">⌂ Mode Select</button>
+    </div>`;
+  openModal();
+}
+
+function openHelp(){
+  const box=document.getElementById('modal-box');
+  box.innerHTML=`
+    <div class="mhdr" style="color:var(--accent3)">? WHAT ARE LIKE TERMS?</div>
+    <div class="mbody">
+      <div class="fb-rule"><strong>Like terms</strong> share the <strong>exact same variable part</strong> — same letters, same exponents. Only the coefficient (the number) can differ.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.8rem">
+        <div style="background:rgba(57,255,20,.08);border:1px solid var(--accent);border-radius:8px;padding:.5rem;font-size:.75rem">
+          <div style="color:var(--accent);font-weight:700;margin-bottom:.25rem">✓ LIKE TERMS</div>
+          <div>3x and −2x</div><div>5y² and −y²</div><div>4 and −7</div><div>2xy and 9xy</div>
+        </div>
+        <div style="background:rgba(255,59,92,.08);border:1px solid var(--danger);border-radius:8px;padding:.5rem;font-size:.75rem">
+          <div style="color:var(--danger);font-weight:700;margin-bottom:.25rem">✗ NOT LIKE</div>
+          <div>x and x²</div><div>x and y</div><div>3x and 5</div><div>xy and x²y</div>
+        </div>
+      </div>
+      <div class="step"><div class="snum">1</div><div class="scont">Find the variable part of each term</div></div>
+      <div class="step"><div class="snum">2</div><div class="scont">Check: same letters? Same exponents?</div></div>
+      <div class="step"><div class="snum">3</div><div class="scont">If yes → add the coefficients, keep the variable</div></div>
+      <div style="margin-top:.8rem;padding:.6rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;font-size:.75rem">
+        <label style="display:flex;align-items:center;gap:.5rem;user-select:none">
+          <input id="auto-foil-example" type="checkbox" style="transform:scale(1.1);"/>
+          <span>Auto-show FOIL example when expanding</span>
+        </label>
+      </div>
+    </div>
+    <div class="mftr"><button class="btn-dismiss ok" onclick="closeModal()">GOT IT ✓</button></div>`;
+  const cb=document.getElementById('auto-foil-example');
+  if(cb){
+    cb.checked=G.autoFoilExample;
+    cb.onchange=e=>toggleAutoFoilExample(e.target.checked);
+  }
+  openModal();
+}
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function toast(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='on'+(type?' '+type:'');
+  setTimeout(()=>el.className='',2000);
+}
+
+/* ── Escape closes modal ── */
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+</script>
+</body>
+</html>
+

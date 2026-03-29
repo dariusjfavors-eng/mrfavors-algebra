@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mr. Favors' Wordle</title>
+    
+    <!-- Highly Legible Fonts: Inter for body, JetBrains Mono for grid/code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-paper: #F8F6F0; /* Slightly brighter for better contrast */
+            --ink-black: #111111;
+            --ink-light: #333333; /* Darkened for readability */
+            --border-thin: 1px solid var(--ink-black);
+            --border-thick: 3px solid var(--ink-black);
+            
+            /* High-Contrast Colors for Game States */
+            --correct-bg: #1B3B2E; /* Deep Forest Green */
+            --correct-fg: #F4F1EA;
+            --present-bg: #C59B27; /* Antique Gold */
+            --present-fg: #111111;
+            --absent-bg: #D1CEC7;  /* Warm Grey */
+            --absent-fg: #4A4A4A;
+            
+            /* Word Bank Red Highlight */
+            --highlight-red: #D32F2F; 
+            --highlight-red-bg: rgba(211, 47, 47, 0.12);
+
+            --font-main: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        /* --- BASE RESET & TEXTURE --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-paper);
+            color: var(--ink-black);
+            font-family: var(--font-main);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* CSS-Only Paper Grain Overlay */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.3;
+            background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3 { font-family: var(--font-main); font-weight: 800; }
+        .mono { font-family: var(--font-mono); text-transform: uppercase; }
+        
+        /* --- LAYOUT --- */
+        .layout-grid {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- GAME AREA --- */
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 1rem;
+            position: relative;
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Clue Box (The Hint) */
+        .clue-box {
+            background-color: var(--ink-black);
+            color: var(--bg-paper);
+            padding: 1.25rem 1.5rem;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 4px solid var(--ink-light);
+            border-radius: 8px; /* Slightly rounded for modern look */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.5s ease;
+        }
+        .clue-box.revealed {
+            border-bottom-color: var(--present-bg);
+            background-color: #1a1a1a;
+        }
+        
+        /* Hint Button & Header */
+        .clue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.75rem;
+        }
+        .clue-label {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: #A0A0A0;
+            margin: 0;
+        }
+        .btn-hint {
+            background: var(--present-bg);
+            color: var(--present-fg);
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 0px rgba(0,0,0,0.2);
+        }
+        .btn-hint:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        .btn-hint:disabled {
+            background: var(--ink-light);
+            color: #777777;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .clue-text {
+            font-size: 1.35rem; /* Increased size */
+            line-height: 1.5;
+            font-weight: 600;
+        }
+        .clue-blank {
+            font-family: var(--font-mono);
+            letter-spacing: 2px;
+            color: var(--present-bg);
+            font-weight: bold;
+        }
+        .clue-locked {
+            font-family: var(--font-main);
+            font-style: italic;
+            color: #AAAAAA;
+            font-size: 1.15rem;
+        }
+
+        /* Message Banner */
+        .message-banner {
+            position: absolute;
+            top: 9rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--ink-black);
+            color: var(--bg-paper);
+            font-family: var(--font-main);
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border-radius: 6px;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .message-banner.active {
+            opacity: 1;
+            transform: translate(-50%, 15px);
+        }
+
+        /* The Grid */
+        .matrix-container {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            gap: 6px; 
+            margin-bottom: 2rem;
+        }
+
+        .matrix-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+        }
+
+        .matrix-cell {
+            width: clamp(45px, 12vw, 60px);
+            height: clamp(45px, 12vw, 60px);
+            border: 2px solid var(--ink-light);
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            background-color: #FFFFFF;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .matrix-cell.filled {
+            animation: inkStamp 0.15s ease-out forwards;
+            border-color: var(--ink-black);
+        }
+
+        @keyframes inkStamp {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .matrix-cell.reveal {
+            animation: paperFlip 0.6s cubic-bezier(0.455, 0.030, 0.515, 0.955) forwards;
+        }
+
+        @keyframes paperFlip {
+            0% { transform: rotateY(0); }
+            50% { transform: rotateY(90deg); border-color: transparent; }
+            100% { transform: rotateY(0); }
+        }
+
+        /* Validation Colors */
+        .matrix-cell.status-correct {
+            background-color: var(--correct-bg);
+            color: var(--correct-fg);
+            border-color: var(--correct-bg);
+        }
+        
+        .matrix-cell.status-present {
+            background-color: var(--present-bg);
+            color: var(--present-fg);
+            border-color: var(--present-bg);
+        }
+
+        .matrix-cell.status-absent {
+            background-color: var(--absent-bg);
+            color: var(--absent-fg);
+            border-color: var(--absent-bg);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+        }
+
+        /* --- KEYBOARD --- */
+        .keyboard {
+            width: 100%;
+            max-width: 550px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 5px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .key {
+            font-family: var(--font-mono);
+            font-size: 1.3rem; /* Bigger keys */
+            font-weight: 700;
+            background: #E5E2DA; /* Slightly darker default key bg */
+            border: 2px solid transparent;
+            border-radius: 6px;
+            color: var(--ink-black);
+            height: 60px; /* Taller keys */
+            flex: 1;
+            max-width: 48px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            user-select: none;
+        }
+        
+        /* Touch feedback for mobile */
+        .key:active {
+            background: var(--ink-light);
+            color: var(--bg-paper);
+        }
+
+        .key.large {
+            flex: 1.5;
+            max-width: none;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .key.status-correct { background: var(--correct-bg); color: var(--correct-fg); }
+        .key.status-present { background: var(--present-bg); color: var(--present-fg); }
+        .key.status-absent  { background: var(--absent-bg); color: var(--absent-fg); opacity: 0.7; }
+
+        /* --- SLIDES / OVERLAYS --- */
+        .slide-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bg-paper);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+            overflow-y: auto;
+        }
+
+        .slide-overlay.hidden-up { transform: translateY(-100%); }
+        .slide-overlay.hidden-down { transform: translateY(100%); }
+
+        .content-box {
+            border: var(--border-thick);
+            border-radius: 8px;
+            padding: 2.5rem 2rem;
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            background: #FFFFFF; /* Pure white inside box for contrast */
+            box-shadow: 6px 6px 0px var(--ink-light); /* Hard shadow */
+        }
+
+        .kicker {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+            display: block;
+            color: var(--ink-light);
+        }
+
+        .title {
+            font-size: 3rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .desc-text {
+            font-family: var(--font-main);
+            font-size: 1.25rem; /* Increased size */
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+            color: var(--ink-light);
+        }
+
+        .btn-primary {
+            font-family: var(--font-main);
+            background: var(--ink-black);
+            color: var(--bg-paper);
+            border: none;
+            border-radius: 6px;
+            padding: 1.2rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1rem;
+            transition: background 0.3s, transform 0.1s;
+        }
+        .btn-primary:active { background: #333; transform: translateY(2px); }
+
+        .btn-secondary {
+            font-family: var(--font-main);
+            background: transparent;
+            color: var(--ink-black);
+            border: 3px solid var(--ink-black);
+            border-radius: 6px;
+            padding: 1.2rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s, color 0.3s, transform 0.1s;
+        }
+        .btn-secondary:active { background: var(--ink-black); color: var(--bg-paper); transform: translateY(2px); }
+
+        /* Word Bank List Styles */
+        .word-bank-list {
+            text-align: left;
+            max-height: 55vh;
+            overflow-y: auto;
+            margin-bottom: 2rem;
+            padding-right: 1rem;
+            border-top: 2px solid var(--ink-light);
+            padding-top: 1.5rem;
+        }
+        .word-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        .word-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        
+        .word-def {
+            font-size: 1.25rem; /* Increased size */
+            color: var(--ink-black);
+            line-height: 1.5;
+        }
+        .word-highlight {
+            font-family: var(--font-mono);
+            font-weight: 800; /* Extra bold */
+            color: var(--highlight-red); /* Bright Red */
+            background: var(--highlight-red-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Explainer Styles */
+        .rule-row {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+        }
+        .demo-cell {
+            min-width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 1.8rem;
+            font-weight: 700;
+            border: 2px solid var(--ink-black);
+            border-radius: 4px;
+        }
+        .rule-text {
+            font-family: var(--font-main);
+            font-size: 1.15rem; /* Increased size */
+            line-height: 1.4;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="noise-overlay"></div>
+
+    <!-- 1. INTRO SLIDE -->
+    <div id="slide-intro" class="slide-overlay">
+        <div class="content-box">
+            <span class="kicker">UNIT 7: FACTORING</span>
+            <h1 class="title">Mr. Favors' Wordle</h1>
+            <p class="desc-text">
+                Can you guess the secret 6-letter math word?<br><br>
+                You have 6 tries to find the answer. The word is related to our unit on Factoring!
+            </p>
+            <button id="btn-to-bank" class="btn-primary">Review Vocab Words</button>
+            <button id="btn-to-rules" class="btn-secondary">How to Play</button>
+        </div>
+    </div>
+
+    <!-- 2. HOW TO PLAY SLIDE -->
+    <div id="slide-rules" class="slide-overlay hidden-down">
+        <div class="content-box">
+            <h2 class="title" style="font-size: 2.5rem;">How to Play</h2>
+            <p class="desc-text" style="font-size: 1.15rem; margin-bottom: 2rem;">Type a 6-letter math word and press ENTER. The colors will change to show how close you are.</p>
+            
+            <div class="rule-row">
+                <div class="demo-cell status-correct" style="color:var(--bg-paper); border-color:var(--correct-bg);">F</div>
+                <div class="rule-text"><strong>Green:</strong> The letter is in the word and in the correct spot.</div>
+            </div>
+            <div class="rule-row">
+                <div class="demo-cell status-present" style="border-color:var(--present-bg);">A</div>
+                <div class="rule-text"><strong>Gold:</strong> The letter is in the word, but in the wrong spot.</div>
+            </div>
+            <div class="rule-row">
+                <div class="demo-cell status-absent" style="color:var(--bg-paper); border-color:var(--absent-bg);">X</div>
+                <div class="rule-text"><strong>Gray:</strong> The letter is not in the word at all.</div>
+            </div>
+
+            <button id="btn-rules-back" class="btn-primary" style="margin-top: 2rem;">Got It!</button>
+        </div>
+    </div>
+
+    <!-- 3. WORD BANK SLIDE -->
+    <div id="slide-bank" class="slide-overlay hidden-up">
+        <div class="content-box" style="padding: 2rem 1.5rem;">
+            <span class="kicker">REFRESHER</span>
+            <h2 class="title" style="font-size: 2.2rem; margin-bottom: 0.5rem;">Word Bank</h2>
+            <p class="desc-text" style="font-size: 1.1rem; margin-bottom: 1.5rem;">Study these sentences! The secret word is guaranteed to be one of these terms.</p>
+            
+            <div id="word-bank-list" class="word-bank-list">
+                <!-- Filled by JS -->
+            </div>
+
+            <button id="btn-start-game" class="btn-primary" style="margin-bottom: 0;">Start Game</button>
+        </div>
+    </div>
+
+    <!-- 4. MAIN GAME AREA -->
+    <main class="layout-grid">
+        <div class="game-area">
+            
+            <!-- The Hint / Clue Box -->
+            <div id="clue-container" class="clue-box">
+                <div class="clue-header">
+                    <span class="clue-label">YOUR CLUE:</span>
+                    <button id="btn-hint" class="btn-hint" disabled>Peek at Hint (3s)</button>
+                </div>
+                <div id="game-clue" class="clue-text">
+                    <span class="clue-locked">Take an initial guess to unlock a peek!</span>
+                </div>
+            </div>
+
+            <div id="message-banner" class="message-banner"></div>
+            
+            <div id="matrix" class="matrix-container">
+                <!-- Grid generated by JS -->
+            </div>
+
+            <div id="keyboard" class="keyboard">
+                <!-- Keyboard generated by JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 5. END GAME SLIDE -->
+    <div id="slide-outro" class="slide-overlay hidden-down">
+        <div class="content-box">
+            <span class="kicker" id="outro-kicker">GAME OVER</span>
+            <h1 class="title" id="outro-title" style="font-size: 2.8rem;">Problem Solved!</h1>
+            
+            <div style="margin: 2.5rem 0; text-align: left; padding: 1.5rem; background: #F0EDE5; border: 2px solid var(--ink-light); border-radius: 8px;">
+                <div class="mono" style="font-size:1rem; color: var(--ink-light); margin-bottom: 0.5rem; font-weight: bold;">THE WORD WAS:</div>
+                <div id="outro-word" style="font-family: var(--font-mono); font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; color: var(--highlight-red);">FACTOR</div>
+                <div id="outro-def" style="font-family: var(--font-main); font-size: 1.2rem; line-height: 1.5; font-weight: 500;">Definition goes here.</div>
+            </div>
+
+            <button id="btn-play-again" class="btn-primary">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. FILL-IN-THE-BLANK DICTIONARY ---
+        const dictionary = {
+            "FACTOR": "To _______ an expression means finding what multiplies together to get it. (Example: x times x is x²).",
+            "VERTEX": "The turning point or tip (maximum/minimum) of a parabola is called the _______.",
+            "MONOMI": "An algebraic expression consisting of exactly one term is called a _______(-al).",
+            "COEFFI": "A number multiplied by a variable in an algebraic expression is a _______(-cient). (Example: In the term 5x, the _______(-cient) is 5).",
+            "SQUARE": "DOPS stands for Difference of Perfect _______s. (Like the 16 in x² - 16).",
+            "METHOD": "We use the X-_______ or Diamond-_______ to organize our factoring work.",
+            "COMMON": "GCF stands for Greatest _______ Factor. It is the biggest number that goes into all terms.",
+            "DIVIDE": "To pull a GCF out of an expression, you must _______ each term by it.",
+            "DEGREE": "The _______ of a polynomial is its highest exponent.",
+            "MIDDLE": "In the X-method, the two numbers must add to the _______ term.",
+            "NUMBER": "A constant is just a plain _______ with no variables attached to it.",
+            "VALUES": "To check your work, plug these _______ in for x.",
+            "GRAPHS": "Parabolas are the U-shaped _______ of quadratic equations.",
+            "TRINOM": "An expression with exactly three terms is called a _______(-ial).",
+            "BINOMS": "Short for binomials, math expressions with two terms are called _______.",
+            "EQUALS": "To find the final answer, set the factors to zero using an _______ sign."
+        };
+
+        const words = Object.keys(dictionary);
+        let targetWord = words[Math.floor(Math.random() * words.length)];
+        const wordLength = 6;
+        const maxAttempts = 6;
+
+        // --- 2. GAME STATE ---
+        let currentRow = 0;
+        let currentCol = 0;
+        let isProcessing = false;
+        let isGameOver = false;
+        let hintTimeoutId = null;
+
+        // --- 3. DOM SETUP & NAVIGATION ---
+        const gridState = Array(maxAttempts).fill().map(() => Array(wordLength).fill(''));
+
+        function setupNavigation() {
+            // Intro -> Word Bank
+            document.getElementById('btn-to-bank').addEventListener('click', () => {
+                document.getElementById('slide-intro').classList.add('hidden-up');
+                document.getElementById('slide-bank').classList.remove('hidden-up');
+            });
+
+            // Intro -> Rules
+            document.getElementById('btn-to-rules').addEventListener('click', () => {
+                document.getElementById('slide-rules').classList.remove('hidden-down');
+            });
+
+            // Rules -> Back to Intro
+            document.getElementById('btn-rules-back').addEventListener('click', () => {
+                document.getElementById('slide-rules').classList.add('hidden-down');
+            });
+
+            // Word Bank -> Start Game
+            document.getElementById('btn-start-game').addEventListener('click', () => {
+                document.getElementById('slide-bank').classList.add('hidden-up');
+                document.getElementById('slide-intro').style.display = 'none'; // hide entirely
+                
+                // Ensure clue starts locked
+                lockClue();
+            });
+
+            // Play Again Button Fix
+            document.getElementById('btn-play-again').addEventListener('click', resetGame);
+
+            // Hint Peek Button
+            document.getElementById('btn-hint').addEventListener('click', () => {
+                const btn = document.getElementById('btn-hint');
+                if (btn.disabled || isGameOver) return;
+                
+                // Disable it for this attempt
+                btn.disabled = true;
+                btn.textContent = "Revealing...";
+                
+                const clueBox = document.getElementById('clue-container');
+                const clueText = document.getElementById('game-clue');
+                
+                clueBox.classList.add('revealed');
+                const clueHtml = dictionary[targetWord].replace(/_______/g, '<span class="clue-blank">_______</span>');
+                clueText.innerHTML = clueHtml;
+                
+                // Set the 3 second timer to lock it back up
+                hintTimeoutId = setTimeout(() => {
+                    // Only lock it back if the game isn't over and it's not the final attempt
+                    if (!isGameOver && currentRow < maxAttempts - 1) {
+                        clueBox.classList.remove('revealed');
+                        clueText.innerHTML = '<span class="clue-locked">Hint locked! Make another guess to earn another peek.</span>';
+                        btn.textContent = "Peek Used";
+                    }
+                }, 3000);
+            });
+        }
+
+        function initWordBank() {
+            const container = document.getElementById('word-bank-list');
+            const sortedWords = [...words].sort();
+            
+            sortedWords.forEach(word => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'word-item';
+                
+                const fullSentence = dictionary[word].replace(/_______/g, `<span class="word-highlight">${word}</span>`);
+                
+                const defSpan = document.createElement('div');
+                defSpan.className = 'word-def';
+                defSpan.innerHTML = fullSentence;
+                
+                itemDiv.appendChild(defSpan);
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function initMatrix() {
+            const matrix = document.getElementById('matrix');
+            matrix.innerHTML = ''; // Clear existing
+            for (let r = 0; r < maxAttempts; r++) {
+                const row = document.createElement('div');
+                row.className = 'matrix-row';
+                row.id = `row-${r}`;
+                for (let c = 0; c < wordLength; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'matrix-cell';
+                    cell.id = `cell-${r}-${c}`;
+                    row.appendChild(cell);
+                }
+                matrix.appendChild(row);
+            }
+        }
+
+        function initKeyboard() {
+            const keyboard = document.getElementById('keyboard');
+            keyboard.innerHTML = ''; // Clear existing
+            const layout = [
+                ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+                ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'DEL']
+            ];
+
+            layout.forEach(row => {
+                const rowElem = document.createElement('div');
+                rowElem.className = 'keyboard-row';
+                row.forEach(key => {
+                    const btn = document.createElement('button');
+                    btn.className = 'key';
+                    if (key === 'ENTER' || key === 'DEL') {
+                        btn.classList.add('large');
+                    }
+                    btn.textContent = key;
+                    btn.id = `key-${key}`;
+                    
+                    const handleTap = (e) => {
+                        e.preventDefault();
+                        handleInput(key === 'DEL' ? 'BACKSPACE' : key);
+                    };
+                    btn.addEventListener('click', handleTap);
+                    
+                    rowElem.appendChild(btn);
+                });
+                keyboard.appendChild(rowElem);
+            });
+        }
+
+        // --- 4. GAME LOGIC ---
+
+        function handleInput(key) {
+            if (isProcessing || isGameOver) return;
+
+            if (key === 'BACKSPACE') {
+                if (currentCol > 0) {
+                    currentCol--;
+                    gridState[currentRow][currentCol] = '';
+                    updateCellUI(currentRow, currentCol, '');
+                }
+            } else if (key === 'ENTER') {
+                if (currentCol === wordLength) {
+                    executeValidationSequence();
+                } else {
+                    showBanner('Not enough letters.');
+                }
+            } else if (currentCol < wordLength && /^[A-Z]$/.test(key)) {
+                gridState[currentRow][currentCol] = key;
+                updateCellUI(currentRow, currentCol, key);
+                currentCol++;
+            }
+        }
+
+        function updateCellUI(r, c, letter) {
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            cell.textContent = letter;
+            if (letter) {
+                cell.classList.add('filled');
+            } else {
+                cell.classList.remove('filled');
+                void cell.offsetWidth; 
+            }
+        }
+
+        function showBanner(msg) {
+            const banner = document.getElementById('message-banner');
+            banner.textContent = msg;
+            banner.classList.add('active');
+            setTimeout(() => { banner.classList.remove('active'); }, 2000);
+        }
+
+        function lockClue() {
+            const clueBox = document.getElementById('clue-container');
+            const clueText = document.getElementById('game-clue');
+            const btnHint = document.getElementById('btn-hint');
+            
+            clueBox.classList.remove('revealed');
+            clueText.innerHTML = '<span class="clue-locked">Take an initial guess to unlock a peek!</span>';
+            
+            btnHint.disabled = true;
+            btnHint.textContent = "Peek at Hint (3s)";
+            btnHint.style.display = 'block'; // Ensure it's visible if it was hidden
+        }
+
+        function revealClue() {
+            // Clear any active temporary 3-second hiding timeout
+            if (hintTimeoutId) clearTimeout(hintTimeoutId);
+            
+            const clueBox = document.getElementById('clue-container');
+            const clueText = document.getElementById('game-clue');
+            const btnHint = document.getElementById('btn-hint');
+            
+            clueBox.classList.add('revealed');
+            const clueHtml = dictionary[targetWord].replace(/_______/g, '<span class="clue-blank">_______</span>');
+            clueText.innerHTML = clueHtml;
+            
+            // Brief visual shake/pulse to draw attention to the new hint
+            clueBox.style.transform = 'scale(1.02)';
+            setTimeout(() => clueBox.style.transform = 'scale(1)', 200);
+            
+            // Permanently hide the hint button since the hint is now exposed
+            btnHint.style.display = 'none';
+        }
+
+        function executeValidationSequence() {
+            const guessString = gridState[currentRow].join('');
+            
+            if (!words.includes(guessString)) {
+                showBanner('Not in word bank.');
+                const rowObj = document.getElementById(`row-${currentRow}`);
+                rowObj.style.transform = 'translateX(-4px)';
+                setTimeout(() => rowObj.style.transform = 'translateX(4px)', 100);
+                setTimeout(() => rowObj.style.transform = 'translateX(0)', 200);
+                return;
+            }
+
+            isProcessing = true;
+            const targetArray = targetWord.split('');
+            const guessArray = gridState[currentRow];
+            
+            const statusVector = Array(wordLength).fill(1); // 1 = absent
+            const letterPool = {};
+
+            targetArray.forEach(char => letterPool[char] = (letterPool[char] || 0) + 1);
+
+            // Check exact matches
+            for (let i = 0; i < wordLength; i++) {
+                if (guessArray[i] === targetArray[i]) {
+                    statusVector[i] = 3; 
+                    letterPool[guessArray[i]]--;
+                }
+            }
+
+            // Check partial matches
+            for (let i = 0; i < wordLength; i++) {
+                if (statusVector[i] !== 3 && letterPool[guessArray[i]] > 0) {
+                    statusVector[i] = 2; 
+                    letterPool[guessArray[i]]--;
+                }
+            }
+
+            animateRowValidation(statusVector);
+        }
+
+        function animateRowValidation(statusVector) {
+            let correctMatches = 0;
+            const delayBase = 300; 
+
+            statusVector.forEach((status, i) => {
+                setTimeout(() => {
+                    const cell = document.getElementById(`cell-${currentRow}-${i}`);
+                    const letter = gridState[currentRow][i];
+                    const keyBtn = document.getElementById(`key-${letter}`);
+
+                    cell.classList.add('reveal');
+                    
+                    setTimeout(() => {
+                        let statusClass = 'status-absent';
+                        if (status === 3) {
+                            statusClass = 'status-correct';
+                            correctMatches++;
+                            keyBtn.classList.remove('status-present', 'status-absent');
+                            keyBtn.classList.add('status-correct');
+                        } else if (status === 2) {
+                            statusClass = 'status-present';
+                            if (!keyBtn.classList.contains('status-correct')) {
+                                keyBtn.classList.remove('status-absent');
+                                keyBtn.classList.add('status-present');
+                            }
+                        } else {
+                            if (!keyBtn.classList.contains('status-correct') && !keyBtn.classList.contains('status-present')) {
+                                keyBtn.classList.add('status-absent');
+                            }
+                        }
+                        
+                        cell.classList.add(statusClass);
+
+                        // If last letter of the row
+                        if (i === wordLength - 1) {
+                            setTimeout(() => {
+                                if (correctMatches === wordLength) {
+                                    if (hintTimeoutId) clearTimeout(hintTimeoutId);
+                                    triggerEndGame(true);
+                                } else if (currentRow === maxAttempts - 1) {
+                                    if (hintTimeoutId) clearTimeout(hintTimeoutId);
+                                    triggerEndGame(false);
+                                } else {
+                                    currentRow++;
+                                    currentCol = 0;
+                                    isProcessing = false;
+                                    
+                                    // REVEAL CLUE permanently on the 6th attempt (index 5)
+                                    if (currentRow === maxAttempts - 1) {
+                                        revealClue();
+                                    } else {
+                                        // Enable the Hint Peek button for the next round
+                                        const btnHint = document.getElementById('btn-hint');
+                                        btnHint.disabled = false;
+                                        btnHint.textContent = "Peek at Hint (3s)";
+                                    }
+                                }
+                            }, 400); 
+                        }
+
+                    }, delayBase / 2);
+
+                }, i * delayBase);
+            });
+        }
+
+        function triggerEndGame(success) {
+            isGameOver = true;
+            const outro = document.getElementById('slide-outro');
+            
+            document.getElementById('outro-title').textContent = success ? 'Great Job!' : 'Nice Try!';
+            document.getElementById('outro-word').textContent = targetWord;
+            
+            const fullSentence = dictionary[targetWord].replace(/_______/g, targetWord);
+            document.getElementById('outro-def').textContent = fullSentence;
+
+            outro.classList.remove('hidden-down');
+        }
+
+        // --- 5. GAME RESET LOGIC ---
+        function resetGame() {
+            // Reset state variables
+            currentRow = 0;
+            currentCol = 0;
+            isProcessing = false;
+            isGameOver = false;
+            if (hintTimeoutId) clearTimeout(hintTimeoutId);
+            
+            for (let r = 0; r < maxAttempts; r++) {
+                gridState[r].fill('');
+            }
+            
+            // Pick a new random word
+            targetWord = words[Math.floor(Math.random() * words.length)];
+
+            // Reset UI components
+            initMatrix();
+            initKeyboard();
+            lockClue();
+
+            // Hide the Game Over slide
+            document.getElementById('slide-outro').classList.add('hidden-down');
+            
+            // Bring back the Intro slide
+            const introSlide = document.getElementById('slide-intro');
+            introSlide.style.display = 'flex';
+            introSlide.classList.remove('hidden-up');
+        }
+
+        // --- 6. STARTUP ---
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toUpperCase();
+            if (key === 'ENTER' || key === 'BACKSPACE') {
+                handleInput(key);
+            } else if (/^[A-Z]$/.test(key) && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                handleInput(key);
+            }
+        });
+
+        setupNavigation();
+        initWordBank();
+        initMatrix();
+        initKeyboard();
+        lockClue();
+
+    </script>
+</body>
+</html>
+
+
+
