@@ -81,6 +81,38 @@ Google Site — Algebra 1 Learning Suite (DOE Domain)
 
 ---
 
+### 🟢 Game 3: Mr. Favors' Connections: Exhaustive Regents Edition
+| Field         | Value                                                                          |
+|---------------|--------------------------------------------------------------------------------|
+| Status        | ✅ SHIPPED                                                                     |
+| Version       | 2.0                                                                            |
+| Author        | Darius J. Favors ☘️                                                           |
+| Standards     | NYS NGLS Algebra 1 — N-RN.3, N-Q.1/2, S-ID.1–9,                             |
+|               | A-CED.1–4, A-REI.1a/3/6a/7a, F-IF.1–9,                                       |
+|               | F-BF.1a/3a, F-LE.1–5, A-APR.1, A-SSE.2/3c                                    |
+| Mechanic      | NYT Connections-style: find 4 groups of 4 items                               |
+|               | sharing a math connection; 7 levels + boss                                     |
+| Architecture  | Single-file HTML, vanilla JS, no localStorage                                  |
+| Storage Key   | None                                                                           |
+| PII           | None — no data collection                                                      |
+| Google Site   | /connections (planned embed)                                                   |
+| URL           | https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/              |
+| Embed Code    | `<iframe src="https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/" width="100%" height="800px" frameborder="0"></iframe>` |
+| Context File  | connections/CONTEXT.md                                                         |
+| Design Brief  | connections/DESIGN_BRIEF.md                                                    |
+| Fonts         | Lexend Mega 700/900 + Lexend 400/600/800                                       |
+| Theme         | Neo-brutalist light — #FDFBF7 bg, #111111 borders                             |
+| Levels        | L1 Number & Qty → L2 Equations → L3 Linear →                                 |
+|               | L4 Systems → L5 Factoring → L6 Stats → L7 Boss                               |
+| Boss Level    | isCapstone:true — aggregates all 49 categories                                |
+| Replayability | Random draw of 4/N categories per play                                        |
+| Validation    | 4×16 truth matrix engine + collision guard                                    |
+| Debug Tool    | window.validateCategories() in browser console                                |
+| Known Issues  | See connections/CONTEXT.md section 8                                          |
+| Last Updated  | 2026-03-30                                                                    |
+
+---
+
 ## IN DEVELOPMENT
 
 *(None currently — update when a game enters active development)*
@@ -211,7 +243,8 @@ When adding a new game to the Google Site:
 
 | Game                        | Host            | URL                        | Updated    |
 |-----------------------------|-----------------|----------------------------|------------|
-| Junkyard Algebra            | [TBD]           | [TBD]                      | [date]     |
-| Alchemist's Apprentice      | [TBD]           | [TBD]                      | [date]     |
+| Junkyard Algebra            | [TBD]           | [TBD]                                                              | [date]     |
+| Alchemist's Apprentice      | [TBD]           | [TBD]                                                              | [date]     |
+| Mr. Favors' Connections     | GitHub Pages    | https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/ | 2026-03-30 |
 
 *(Fill in URLs when games are deployed)*

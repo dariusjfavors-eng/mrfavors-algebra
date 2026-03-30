@@ -5,6 +5,7 @@
 
 Junkyard Algebra        | A.APR.1                                    | SHIPPED  | junkyard_algebra.html      | junkyardProgress
 Alchemist Factor Fusion | A.APR.1                                    | SHIPPED  | alchemist_factor_fusion.html | alchemistSession
+Mr. Favors Connections  | N-RN.3, N-Q.1/2, S-ID.1–9, A-CED.1–4, A-REI.1a/3/6a/7a, F-IF.1–9, F-BF.1a/3a, F-LE.1–5, A-APR.1, A-SSE.2/3c | SHIPPED | connections/index.html | none
 Balance Breaker         | A.CED.1,A.CED.2,A.CED.3,A.CED.4,A.REI.1,A.REI.3,A.REI.6 | PLANNED | — | —
 Function Machine        | F.IF.1,F.IF.2,F.IF.4,F.IF.5,F.IF.6        | PLANNED  | —                          | —
 Zero Hunter             | A.REI.4,F.IF.8a                            | PLANNED  | —                          | —
@@ -15,5 +16,4 @@ Sequence Forge          | F.IF.3,F.BF.1,F.BF.1a                      | PLANNED  
 # To find all Wt=5 Pri=Y standards with no shipped game:
 # Cross-reference STANDARDS.md Wt=5 Pri=Y rows against SHIPPED entries above.
 # Any standard code not appearing in a SHIPPED row = uncovered high-priority gap.
-# Current Wt=5 Pri=Y uncovered: A.CED.1-4, A.REI.1,3,6, F.IF.1,2,4,5,6,
-#   F.IF.3, F.BF.1,1a, A.REI.4, S.ID.7,8,9
+# Current Wt=5 Pri=Y uncovered: A.REI.4

@@ -11,7 +11,7 @@
 # TABLE=TABLE_TO_EQUATION INVERSE=INVERSE_OPS         FUNC=FUNCTION_NOTATION
 
 
-## DASHBOARD: 50 total | 2 shipped | 5 planned | 43 open
+## DASHBOARD: 50 total | 34 shipped | 5 planned | 11 open
 
 
 ---
@@ -20,13 +20,13 @@
 
 | Code   |Wt|Pri| Errors       | Context                       |Coverage|
 |--------|--|---|--------------|-------------------------------|--------|
-|N.RN.3  | 2| N | CALC,MULTI   | Rational vs Irrational        | OPEN   |
-|N.Q.1   | 3| Y | UNITS,CALC   | Units and Measurement         | OPEN   |
-|N.Q.2   | 3| Y | UNITS,DOMAIN | Defining Modeling Variables   | OPEN   |
+|N.RN.3  | 2| N | CALC,MULTI   | Rational vs Irrational        | SHIPPED|
+|N.Q.1   | 3| Y | UNITS,CALC   | Units and Measurement         | SHIPPED|
+|N.Q.2   | 3| Y | UNITS,DOMAIN | Defining Modeling Variables   | SHIPPED|
 |N.Q.3   | 2| N | CALC,UNITS   | Precision and Rounding        | OPEN   |
-|S.ID.1  | 1| N | GRAPH,CALC   | Box Plots / Histograms        | OPEN   |
-|S.ID.2  | 1| N | CALC,MULTI   | Center and Spread Mean/SD/IQR | OPEN   |
-|S.ID.3  | 1| N | MULTI,UNITS  | Outliers and Shape            | OPEN   |
+|S.ID.1  | 1| N | GRAPH,CALC   | Box Plots / Histograms        | SHIPPED|
+|S.ID.2  | 1| N | CALC,MULTI   | Center and Spread Mean/SD/IQR | SHIPPED|
+|S.ID.3  | 1| N | MULTI,UNITS  | Outliers and Shape            | SHIPPED|
 
 
 ---
@@ -35,14 +35,14 @@
 
 | Code    |Wt|Pri| Errors        | Context                       |Coverage|
 |---------|--|---|---------------|-------------------------------|--------|
-|A.CED.1  | 5| Y | INEQ,CALC     | Creating Linear Equations     | OPEN   |
-|A.CED.2  | 5| Y | TABLE,CALC    | Graphing Linear Relationships | OPEN   |
-|A.CED.3  | 5| Y | DOMAIN,MULTI  | Systems/Inequality Constraints| OPEN   |
-|A.CED.4  | 5| Y | INVERSE,CALC  | Rearranging Formulas          | OPEN   |
-|A.REI.1  | 5| Y | MULTI,INVERSE | Properties of Equality        | OPEN   |
-|A.REI.3  | 5| Y | INEQ,INVERSE  | Solving Multi-Step Linear Eq  | OPEN   |
+|A.CED.1  | 5| Y | INEQ,CALC     | Creating Linear Equations     | SHIPPED|
+|A.CED.2  | 5| Y | TABLE,CALC    | Graphing Linear Relationships | SHIPPED|
+|A.CED.3  | 5| Y | DOMAIN,MULTI  | Systems/Inequality Constraints| SHIPPED|
+|A.CED.4  | 5| Y | INVERSE,CALC  | Rearranging Formulas          | SHIPPED|
+|A.REI.1  | 5| Y | MULTI,INVERSE | Properties of Equality        | SHIPPED|
+|A.REI.3  | 5| Y | INEQ,INVERSE  | Solving Multi-Step Linear Eq  | SHIPPED|
 |A.REI.5  | 2| N | CALC,INVERSE  | Systems by Elimination        | OPEN   |
-|A.REI.6  | 4| Y | CALC,MULTI    | Systems Substitution/Graphing | OPEN   |
+|A.REI.6  | 4| Y | CALC,MULTI    | Systems Substitution/Graphing | SHIPPED|
 |A.REI.12 | 3| N | GRAPH,INEQ    | Graphing Linear Inequalities  | OPEN   |
 
 
@@ -55,14 +55,14 @@ Critical error pattern: INEQ — sign flip when dividing by negative
 
 | Code    |Wt|Pri| Errors      | Context                       |Coverage|
 |---------|--|---|-------------|-------------------------------|--------|
-|S.ID.5   | 3| N | CALC,UNITS  | Two-Way Frequency Tables      | OPEN   |
-|S.ID.6   | 3| N | GRAPH,CALC  | Scatter Plot Trends           | OPEN   |
-|S.ID.6a  | 3| N | GRAPH,MULTI | Line of Best Fit Modeling     | OPEN   |
+|S.ID.5   | 3| N | CALC,UNITS  | Two-Way Frequency Tables      | SHIPPED|
+|S.ID.6   | 3| N | GRAPH,CALC  | Scatter Plot Trends           | SHIPPED|
+|S.ID.6a  | 3| N | GRAPH,MULTI | Line of Best Fit Modeling     | SHIPPED|
 |S.ID.6b  | 3| N | GRAPH,MULTI | Residual Analysis             | OPEN   |
-|S.ID.6c  | 3| N | CALC,UNITS  | Linear Regression Equations   | OPEN   |
-|S.ID.7   | 5| Y | UNITS,CALC  | Interpreting Slope/Intercept  | OPEN   |
-|S.ID.8   | 5| Y | CALC,MULTI  | Correlation Coefficient r     | OPEN   |
-|S.ID.9   | 5| Y | MULTI,UNITS | Correlation vs Causation      | OPEN   |
+|S.ID.6c  | 3| N | CALC,UNITS  | Linear Regression Equations   | SHIPPED|
+|S.ID.7   | 5| Y | UNITS,CALC  | Interpreting Slope/Intercept  | SHIPPED|
+|S.ID.8   | 5| Y | CALC,MULTI  | Correlation Coefficient r     | SHIPPED|
+|S.ID.9   | 5| Y | MULTI,UNITS | Correlation vs Causation      | SHIPPED|
 
 
 ---
@@ -73,11 +73,11 @@ Critical error pattern: INEQ — sign flip when dividing by negative
 |---------|--|---|--------------|--------------------------------|--------|
 |A.REI.10 | 3| N | GRAPH,CALC   | Solutions on Coordinate Plane  | OPEN   |
 |A.REI.11 | 3| N | GRAPH,CALC   | Intersection f(x)=g(x)         | OPEN   |
-|F.IF.1   | 5| Y | DOMAIN,MULTI | Definition of a Function       | OPEN   |
-|F.IF.2   | 5| Y | FUNC,CALC    | Evaluating Function Notation   | OPEN   |
-|F.IF.4   | 5| Y | UNITS,GRAPH  | Key Features of Graphs         | OPEN   |
-|F.IF.5   | 5| Y | DOMAIN,UNITS | Real-World Domain and Range    | OPEN   |
-|F.IF.6   | 5| Y | CALC,UNITS   | Average Rate of Change         | OPEN   |
+|F.IF.1   | 5| Y | DOMAIN,MULTI | Definition of a Function       | SHIPPED|
+|F.IF.2   | 5| Y | FUNC,CALC    | Evaluating Function Notation   | SHIPPED|
+|F.IF.4   | 5| Y | UNITS,GRAPH  | Key Features of Graphs         | SHIPPED|
+|F.IF.5   | 5| Y | DOMAIN,UNITS | Real-World Domain and Range    | SHIPPED|
+|F.IF.6   | 5| Y | CALC,UNITS   | Average Rate of Change         | SHIPPED|
 |F.IF.9   | 3| N | MULTI,CALC   | Comparing Multiple Functions   | OPEN   |
 
 
@@ -87,17 +87,17 @@ Critical error pattern: INEQ — sign flip when dividing by negative
 
 | Code    |Wt|Pri| Errors      | Context                        |Coverage|
 |---------|--|---|-------------|--------------------------------|--------|
-|F.IF.3   | 5| Y | MULTI,CALC  | Arithmetic/Geometric Sequences | OPEN   |
+|F.IF.3   | 5| Y | MULTI,CALC  | Arithmetic/Geometric Sequences | SHIPPED|
 |F.IF.7a  | 1| N | GRAPH,CALC  | Graphing Quadratic Functions   | OPEN   |
-|F.BF.1   | 5| Y | MULTI,CALC  | Building Function Rules        | OPEN   |
-|F.BF.1a  | 5| Y | TABLE,CALC  | Recursive and Explicit Formulas| OPEN   |
-|F.LE.1   | 3| N | MULTI,UNITS | Linear vs Exponential Growth   | OPEN   |
+|F.BF.1   | 5| Y | MULTI,CALC  | Building Function Rules        | SHIPPED|
+|F.BF.1a  | 5| Y | TABLE,CALC  | Recursive and Explicit Formulas| SHIPPED|
+|F.LE.1   | 3| N | MULTI,UNITS | Linear vs Exponential Growth   | SHIPPED|
 |F.LE.1a  | 3| N | MULTI,UNITS | Constant Differences vs Ratios | OPEN   |
 |F.LE.1b  | 3| N | TABLE,CALC  | Exponential Percent Growth     | OPEN   |
 |F.LE.1c  | 3| N | TABLE,CALC  | Exponential Decay Models       | OPEN   |
-|F.LE.2   | 3| Y | TABLE,CALC  | Constructing Exponential Funcs | OPEN   |
-|F.LE.3   | 3| N | MULTI,GRAPH | Exponential vs Polynomial      | OPEN   |
-|F.LE.5   | 3| N | UNITS,MULTI | Parameters in f(x)=a(b)^x     | OPEN   |
+|F.LE.2   | 3| Y | TABLE,CALC  | Constructing Exponential Funcs | SHIPPED|
+|F.LE.3   | 3| N | MULTI,GRAPH | Exponential vs Polynomial      | SHIPPED|
+|F.LE.5   | 3| N | UNITS,MULTI | Parameters in f(x)=a(b)^x     | SHIPPED|
 
 
 ---

@@ -1,6 +1,6 @@
 # DESIGN_BRIEF.md — Mr. Favors' Connections
 # Exhaustive Regents Edition
-# Created: 2026-03-30 | Status: V1 BUILT — V2 Bug Fixes In Progress
+# Created: 2026-03-30 | Status: ✅ V2 SHIPPED — 2026-03-30
 
 ---
 
@@ -167,3 +167,25 @@ V1: No audio. Web Audio API sounds are planned for V2 if appropriate for the gam
 - The matrix engine is the heart of the validator — understand it before touching it.
 - The isCapstone: true flag causes Boss to aggregate ALL categories from all levels.
   Any duplicate item added to any level will surface as a Bug 1 collision in Boss mode.
+
+---
+
+## V2 CHANGES FROM V1
+- Added Level 6: Statistics & Modeling (S-ID.1–9, 8 categories, 16 vocab terms)
+- Added Level 7: REGENTS BOSS (replaces V1 Level 6; now 8 boss-exclusive categories)
+- Command terms housed in Level 7 only (3 dedicated categories: SHOW WORK/WORDS REQUIRED/ONE-WORD OK)
+- selectSafeCategories() collision guard added
+- window.validateCategories() debug tool added (planned V3 — not yet implemented)
+- Tile overflow fix: clamp(0.55rem, 1.6vw, 0.95rem) + hyphens: auto + overflow-wrap
+- 3 data collisions fixed: CONSTANT→LIKE TERMS (L2), b→WHERE x=0 (L3), SUM→FIND TWO #s (L5)
+- Boss win screen: retry button always shown with updated "Run it back!" message for replayability
+- Author comment block added to top of HTML
+
+---
+
+## V3 PLANNED
+- Add anonymous Sheets data collection (use SHEETS_MODULE_TEMPLATE.md)
+- Add Web Audio API sounds
+- Add ARIA live regions to toast and solved-container
+- Fix vector hardcoded size in submitSelection() — compute dynamically
+- Consider removing aspect-ratio: 4/3 from .tile and replacing with min-height

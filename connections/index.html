@@ -673,8 +673,39 @@
                 ]
             },
             {
+                id: "unit6",
+                title: "Level 6: Statistics & Modeling",
+                desc: "Scatter Plots, Regression & Two-Way Tables (S-ID.5–9)",
+                isCapstone: false,
+                vocab: [
+                    // [S-ID.6] Scatter plot fundamentals
+                    { word: "Scatter Plot", def: "A graph that displays two quantitative variables as ordered pairs. Used to identify trends and make predictions." },
+                    { word: "Line of Best Fit", def: "A line drawn through a scatter plot that best represents the overall trend. Also called the regression line or LOBF." },
+                    { word: "Residual", def: "The vertical distance between an actual data point and the regression line. Formula: Residual = Actual y − Predicted y (ŷ)." },
+                    // [S-ID.8/9] Correlation
+                    { word: "Correlation Coefficient (r)", def: "A value from −1 to +1 measuring the strength AND direction of a linear relationship. Closer to ±1 = stronger." },
+                    { word: "Coefficient of Determination (r²)", def: "r squared — the percent of variation in y that is explained by the linear relationship with x." },
+                    { word: "Causation", def: "When a change in one variable DIRECTLY causes a change in another. Correlation alone never proves causation." },
+                    // [S-ID.6a] Regression interpretation
+                    { word: "Regression Line (ŷ = ax + b)", def: "The Regents writes the regression equation as ŷ = ax + b, where a = slope and b = y-intercept." },
+                    { word: "Slope of Regression Line", def: "The rate of change in the model. Means: 'For each 1-unit increase in x, y is predicted to change by a units.'" },
+                    { word: "y-Intercept of Regression Line", def: "The predicted value of y when x = 0. Must be interpreted in context of the real-world scenario." },
+                    // [S-ID.6b] Residuals
+                    { word: "Residual Plot", def: "A graph of residuals vs. x-values. Random scatter = the linear model is appropriate. Curved pattern = linear model is NOT appropriate." },
+                    // [S-ID.5] Two-way tables
+                    { word: "Two-Way Frequency Table", def: "A table showing counts for two categorical variables. Rows = one category, columns = another. Totals appear in margins." },
+                    { word: "Joint Frequency", def: "A count inside the body of a two-way table (not in a totals row or column). Represents BOTH conditions being true at once." },
+                    { word: "Marginal Frequency", def: "A total in the last row or last column of a two-way table. Represents the total for ONE category." },
+                    { word: "Conditional Frequency", def: "A ratio: divide a joint frequency by a row or column total. Answers 'given that __, what fraction __?'" },
+                    // [S-ID.6c] Prediction
+                    { word: "Interpolation", def: "Using a regression line to predict y for an x-value WITHIN the range of the data. Generally reliable." },
+                    { word: "Extrapolation", def: "Using a regression line to predict y for an x-value OUTSIDE the data range. Less reliable — model may not hold." }
+                ],
+                categories: [] // ← categories added in next step
+            },
+            {
                 id: "boss",
-                title: "Level 6: REGENTS BOSS",
+                title: "Level 7: REGENTS BOSS",
                 desc: "The Ultimate Algebra 1 Mix (Combines ALL prior levels)",
                 isCapstone: true, // This flag triggers the aggregation of all categories
                 vocab: [
@@ -772,8 +803,10 @@
                 title.innerText = "YOU DID IT!";
                 title.style.color = "var(--accent-green)";
                 endModal.style.boxShadow = "12px 12px 0px var(--accent-green)";
-                msg.innerText = LEVELS[currentLevelIndex].isCapstone ? "REGENTS READY! Amazing job!" : "Flawless mathematical logic!";
-                retryBtn.style.display = 'none'; 
+                msg.innerText = LEVELS[currentLevelIndex].isCapstone
+                    ? "REGENTS READY. You know ALL 7 levels. Run it back!"
+                    : "Flawless mathematical logic!";
+                retryBtn.style.display = 'block'; // Always show retry on boss — replayability is the point
             } else {
                 title.innerText = "GAME OVER";
                 title.style.color = "var(--accent-red)";
