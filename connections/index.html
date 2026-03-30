@@ -1,0 +1,1043 @@
+<!--
+  Mr. Favors' Connections — Exhaustive Regents Edition
+  Author: Darius J. Favors ☘️
+  Version: 2.0
+  Date: 2026-03-30
+  Standards: NYS Next Generation Learning Standards (NGLS) — Algebra 1
+  Repository: github.com/dariusjfavors-eng/mrfavors-algebra
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Favors' Connections | Exhaustive Regents Edition</title>
+    <style>
+        /* Educational/Dyslexia-friendly Typography engineered for readability */
+        @import url('https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@700;900&family=Lexend:wght@400;600;800&display=swap');
+
+        :root {
+            /* High-contrast Neo-Brutalist Palette */
+            --bg: #FDFBF7;
+            --text-main: #111111;
+            --border-dark: #111111;
+            
+            --accent-red: #FF3B30;
+            --accent-blue: #3E8ED0;
+            --accent-yellow: #FFD43B;
+            --accent-green: #34C759;
+            
+            /* UI Colors */
+            --tile-bg: #FFFFFF;
+            --tile-selected: #222222;
+            --tile-text-selected: #FFFFFF;
+            
+            /* Tactile Shadows */
+            --shadow-sm: 3px 3px 0px var(--border-dark);
+            --shadow-md: 5px 5px 0px var(--border-dark);
+            --shadow-lg: 8px 8px 0px var(--border-dark);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Lexend', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        h1, h2, h3, .mega-text {
+            font-family: 'Lexend Mega', sans-serif;
+            text-transform: uppercase;
+        }
+
+        /* Brutalist Button Styles */
+        .brutal-btn {
+            background-color: var(--tile-bg);
+            border: 3px solid var(--border-dark);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            font-family: 'Lexend', sans-serif;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            text-align: center;
+        }
+
+        .brutal-btn:hover:not(:disabled) {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .brutal-btn:active:not(:disabled) {
+            transform: translate(3px, 3px);
+            box-shadow: 2px 2px 0px var(--border-dark);
+        }
+
+        .brutal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: translate(5px, 5px);
+        }
+
+        .btn-primary { background-color: var(--accent-blue); color: white; }
+        .btn-success { background-color: var(--accent-green); color: var(--text-main); }
+        .btn-danger { background-color: var(--accent-red); color: white; }
+
+        /* Screen Management */
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem 1rem;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .screen.active { display: flex; }
+
+        /* Title Screen */
+        .title-container {
+            text-align: center;
+            margin-top: 5vh;
+            margin-bottom: 3rem;
+        }
+        .main-title {
+            font-size: clamp(2rem, 6vw, 4rem);
+            line-height: 1.1;
+            text-shadow: var(--shadow-lg);
+            color: var(--tile-bg);
+            -webkit-text-stroke: 3px var(--border-dark);
+            margin-bottom: 1rem;
+            transform: rotate(-2deg);
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: var(--accent-yellow);
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border: 3px solid var(--border-dark);
+            box-shadow: var(--shadow-sm);
+            transform: rotate(1deg);
+        }
+
+        /* Level Select Screen */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .level-card {
+            background: var(--tile-bg);
+            border: 4px solid var(--border-dark);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .level-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .level-card:active {
+            transform: translateY(2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .level-card.boss {
+            background: var(--text-main);
+            color: var(--accent-yellow);
+            border-color: var(--accent-red);
+            box-shadow: 6px 6px 0px var(--accent-red);
+        }
+
+        .level-title { font-family: 'Lexend Mega', sans-serif; font-size: 1.4rem; }
+        .level-boss-title { color: var(--accent-red); }
+        .level-desc { font-size: 1rem; font-weight: 600; opacity: 0.8; }
+        .level-exhaust-badge {
+            background: var(--accent-yellow);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 2px solid var(--border-dark);
+            align-self: flex-start;
+            margin-top: 0.5rem;
+        }
+
+        /* Vocab Screen */
+        .vocab-container {
+            width: 100%;
+            background: var(--tile-bg);
+            border: 4px solid var(--border-dark);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+
+        .vocab-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        /* Custom Scrollbar */
+        .vocab-list::-webkit-scrollbar { width: 10px; }
+        .vocab-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 5px; border: 2px solid var(--border-dark); }
+        .vocab-list::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 5px; }
+        
+        .vocab-card {
+            border-bottom: 3px dashed #ccc;
+            padding: 1rem 0;
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+        .vocab-card:last-child { border-bottom: none; }
+
+        .keyword-highlight {
+            color: var(--accent-red);
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            background: #FFEBEA;
+            padding: 0.2rem 0.4rem;
+            border: 2px solid var(--accent-red);
+            border-radius: 6px;
+            display: inline-block;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .vocab-header { font-size: 2rem; margin-bottom: 0.5rem; text-align: center; }
+        .vocab-subheader { font-size: 1.1rem; margin-bottom: 1.5rem; text-align: center; color: var(--text-main); font-weight: 800; }
+
+        /* Game Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .tile {
+            background-color: var(--tile-bg);
+            border: 3px solid var(--border-dark);
+            border-radius: 8px;
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 800;
+            font-size: clamp(0.55rem, 1.6vw, 0.95rem); /* tighter for longer terms */
+            hyphens: auto;
+            overflow-wrap: break-word;
+            line-height: 1.2;
+            padding: 0.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            word-break: break-word;
+            text-transform: uppercase;
+        }
+
+        .tile:active { transform: scale(0.95); }
+
+        .tile.selected {
+            background-color: var(--tile-selected);
+            color: var(--tile-text-selected);
+            box-shadow: 0px 0px 0px var(--border-dark);
+            transform: translate(3px, 3px);
+        }
+
+        /* Solved Categories */
+        .solved-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .solved-row {
+            border: 3px solid var(--border-dark);
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            animation: stampIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .solved-title { font-family: 'Lexend Mega', sans-serif; font-size: 1.1rem; margin-bottom: 0.4rem; }
+        .solved-items { font-size: 1rem; font-weight: 600; }
+
+        /* Mistakes Tracker */
+        .mistakes-panel {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            background: var(--tile-bg);
+            padding: 0.75rem 1.5rem;
+            border: 3px solid var(--border-dark);
+            border-radius: 50px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .mistake-dots { display: flex; gap: 0.5rem; }
+
+        .dot {
+            width: 20px;
+            height: 20px;
+            background-color: var(--border-dark);
+            border-radius: 50%;
+            transition: opacity 0.3s;
+        }
+        .dot.lost { opacity: 0.2; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .header-controls {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Modals & Overlays */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(17, 17, 17, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1rem;
+        }
+        .overlay.active { display: flex; }
+
+        .modal {
+            background: var(--bg);
+            border: 4px solid var(--border-dark);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 12px 12px 0px var(--accent-yellow);
+            position: relative;
+            text-align: center;
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal h2 { font-size: 2rem; margin-bottom: 1.5rem; color: var(--text-main); }
+
+        .modal-rules {
+            text-align: left;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            list-style-type: none;
+        }
+        .modal-rules li {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 1rem;
+        }
+        .modal-rules li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            font-weight: 900;
+            color: var(--accent-red);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--border-dark);
+            color: white;
+            font-family: 'Lexend Mega', sans-serif;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes stampIn {
+            0% { opacity: 0; transform: scale(1.1) rotate(-2deg); }
+            50% { transform: scale(0.98) rotate(1deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .anim-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .anim-jump { animation: jump 0.4s ease-out; }
+        @keyframes jump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px) scale(1.05); }
+        }
+
+        @media (max-width: 600px) {
+            .brutal-btn { padding: 0.75rem 1rem; font-size: 0.95rem; }
+            .grid-container { gap: 0.5rem; }
+            .tile { padding: 0.25rem; font-size: 0.75rem; }
+            .modal { padding: 1.5rem; }
+            .vocab-header { font-size: 1.5rem; }
+            .controls { gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container">
+        <div id="toast" class="toast">Message</div>
+    </div>
+
+    <div id="modal-overlay" class="overlay">
+        <div id="rules-modal" class="modal" style="display: none;">
+            <h2>How to Play</h2>
+            <ul class="modal-rules">
+                <li>Find <strong>4 groups</strong> of 4 items that share a math connection.</li>
+                <li>Tap 4 squares to select them.</li>
+                <li>Tap <strong>Submit</strong> to check your work.</li>
+                <li>Watch out! You only get <strong>4 mistakes</strong> before game over.</li>
+                <li><strong>Replayability:</strong> Levels generate a new mix of categories every time you play!</li>
+            </ul>
+            <button class="brutal-btn btn-primary" style="width: 100%" onclick="closeModals()">Let's Rock!</button>
+        </div>
+
+        <div id="end-modal" class="modal" style="display: none;">
+            <h2 id="end-title" style="font-size: 2.2rem; margin-bottom: 0.5rem;"></h2>
+            <p id="end-message" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem;"></p>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button id="end-btn-retry" class="brutal-btn" onclick="initGame(true)">Retry This Board</button>
+                <button id="end-btn-new" class="brutal-btn btn-success" onclick="initGame(false)">Play New Board</button>
+                <button class="brutal-btn btn-primary" onclick="navTo('screen-levels'); closeModals();">Back to Levels</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-intro" class="screen active">
+        <div class="title-container">
+            <h1 class="main-title">Mr. Favors'<br>Connections</h1>
+            <div class="subtitle">Exhaustive Regents Edition</div>
+        </div>
+        <button class="brutal-btn btn-primary" style="font-size: 1.5rem; padding: 1.5rem 3rem;" onclick="navTo('screen-levels')">SELECT LEVEL</button>
+    </div>
+
+    <div id="screen-levels" class="screen">
+        <h2 class="vocab-header" style="margin-bottom: 1rem;">Select Curriculum Level</h2>
+        <p style="text-align: center; font-weight: 600; margin-bottom: 2rem;">Every level has a deep pool of categories. Play multiple times!</p>
+        <div class="level-grid" id="level-grid">
+            </div>
+        <button class="brutal-btn" style="margin-top: 1rem;" onclick="navTo('screen-intro')">Back</button>
+    </div>
+
+    <div id="screen-vocab" class="screen">
+        <h2 class="vocab-header">Word Bank Refresher</h2>
+        <div class="vocab-subheader" id="vocab-subtitle">Level Topic Here</div>
+        
+        <div class="vocab-container">
+            <div class="vocab-list" id="vocab-list">
+                </div>
+        </div>
+
+        <div class="controls" style="margin-top: auto;">
+            <button class="brutal-btn" onclick="navTo('screen-levels')">Back</button>
+            <button class="brutal-btn btn-primary" onclick="initGame(false)">Generate Board & Play</button>
+        </div>
+    </div>
+
+    <div id="screen-game" class="screen">
+        <div class="header-controls">
+            <button class="brutal-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="navTo('screen-levels')">Exit</button>
+            <button class="brutal-btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="openRules()">Help</button>
+        </div>
+
+        <div class="mistakes-panel">
+            Mistakes Remaining:
+            <div class="mistake-dots" id="mistake-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+
+        <div id="solved-container" class="solved-container"></div>
+        <div id="grid-container" class="grid-container"></div>
+
+        <div class="controls">
+            <button class="brutal-btn" onclick="shuffleGrid()">Shuffle</button>
+            <button class="brutal-btn" onclick="deselectAll()">Deselect</button>
+            <button class="brutal-btn" id="submit-btn" disabled onclick="submitSelection()">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Educational Curriculum Data Structure (EXHAUSTIVE) ---
+        // Each level now has 6-8 categories. 
+        const LEVELS = [
+            {
+                id: "unit1",
+                title: "Level 1: Number & Quantity",
+                desc: "Number Properties, Data Displays & Statistics (N-RN, N-Q, S-ID.1–3)",
+                isCapstone: false,
+                vocab: [
+                    { word: "Rational", def: "Expressible as a fraction p/q. Includes terminating & repeating decimals and perfect-square roots like √9." },
+                    { word: "Irrational", def: "Cannot be written as a fraction — non-terminating, non-repeating decimals like π and √2." },
+                    { word: "Measures of Center", def: "Mean (average), Median (middle), Mode (most frequent), Midrange ((max+min)÷2)." },
+                    { word: "Box Plot", def: "Graph of the 5-number summary: Min, Q1, Median (Q2), Q3, Max." },
+                    { word: "Correlation (r-value)", def: "r > 0 = positive, r < 0 = negative, r = 0 = none, r = ±1 = perfect linear relationship." },
+                    { word: "Measures of Spread", def: "IQR (Q3−Q1), Standard Deviation, Variance, and MAD all describe how spread out data is." }
+                ],
+                categories: [
+                    // [N.RN.3] rational vs irrational — use numerical examples as items
+                    { title: "RATIONAL NUMBERS", items: ["1/3", "0.75", "√9", "-4"] },
+                    { title: "IRRATIONAL NUMBERS", items: ["√2", "√5", "π", "0.101001..."] },
+                    // [S.ID.1] data display types — SCATTER PLOT reserved for Level 6
+                    { title: "DATA DISPLAY TYPES", items: ["BOX PLOT", "HISTOGRAM", "DOT PLOT", "STEM-AND-LEAF"] },
+                    // [S.ID.2] measures of center
+                    { title: "MEASURES OF CENTER", items: ["MEAN", "MEDIAN", "MODE", "MIDRANGE"] },
+                    // [S.ID.1] 5-number summary — MIN/MAX abbrevs avoid collision with Boss QUADRATIC FEATURES
+                    { title: "BOX PLOT PARTS", items: ["MIN", "Q1", "Q3", "MAX"] },
+                    // [S.ID.8/9] r-value notation avoids collision with Level 3 TYPES OF SLOPES (POSITIVE/NEGATIVE)
+                    { title: "TYPES OF CORRELATION", items: ["r > 0", "r < 0", "r = 0", "r = ±1"] },
+                    // [S.ID.2] measures of spread — RANGE reserved for Level 3 FUNCTION VOCAB
+                    { title: "MEASURES OF SPREAD", items: ["IQR", "STD DEV", "VARIANCE", "MAD"] }
+                ]
+            },
+            {
+                id: "unit2",
+                title: "Level 2: Equations",
+                desc: "Variables, Terms, and Inverse Ops",
+                isCapstone: false,
+                vocab: [
+                    { word: "Coefficient", def: "The number attached to (multiplying) a variable." },
+                    { word: "Term", def: "Pieces of an expression separated by + or - signs." },
+                    { word: "Inverse", def: "The opposite operation used to balance an equation." },
+                    { word: "Constant", def: "A number in an equation that does not have a variable attached." },
+                    { word: "Inequality", def: "A mathematical sentence showing things are not strictly equal (<, >, ≤, ≥)." }
+                ],
+                categories: [
+                    { title: "INEQUALITY SYMBOLS", items: ["<", ">", "≤", "≥"] },
+                    { title: "PROPERTIES OF EQUALITY", items: ["ADDITION", "SUBTRACTION", "MULTIPLICATION", "DIVISION"] },
+                    { title: "PARTS OF AN EQUATION", items: ["VARIABLE", "COEFFICIENT", "CONSTANT", "TERM"] },
+                    { title: "WORDS MEANING EQUAL", items: ["IS", "TOTALS", "YIELDS", "RESULTS IN"] },
+                    { title: "WORDS MEANING ADD", items: ["SUM", "PLUS", "INCREASED BY", "MORE THAN"] },
+                    { title: "WORDS MEANING SUBTRACT", items: ["DIFFERENCE", "MINUS", "DECREASED BY", "LESS THAN"] }
+                ]
+            },
+            {
+                id: "unit3",
+                title: "Level 3: Linear Functions",
+                desc: "Slopes, Intercepts, & Sequences",
+                isCapstone: false,
+                vocab: [
+                    { word: "Rate of Change", def: "Another word for slope (Rise over Run)." },
+                    { word: "Domain", def: "All possible x-values (inputs) of a function." },
+                    { word: "Range", def: "All possible y-values (outputs) of a function." },
+                    { word: "Y-Intercept", def: "The starting point of a graph where x = 0." },
+                    { word: "Sequence", def: "An ordered list of numbers following a pattern." }
+                ],
+                categories: [
+                    { title: "SLOPE SYNONYMS", items: ["RATE OF CHANGE", "RISE / RUN", "STEEPNESS", "m"] },
+                    { title: "TYPES OF SLOPES", items: ["POSITIVE", "NEGATIVE", "ZERO", "UNDEFINED"] },
+                    { title: "FUNCTION VOCAB", items: ["DOMAIN", "RANGE", "INPUT", "OUTPUT"] },
+                    { title: "ARITHMETIC SEQUENCE", items: ["COMMON DIFF", "a₁", "aₙ", "n"] },
+                    { title: "FORMS OF LINEAR EQUATIONS", items: ["SLOPE-INTERCEPT", "POINT-SLOPE", "STANDARD", "y=mx+b"] },
+                    { title: "Y-INTERCEPT SYNONYMS", items: ["STARTING VALUE", "INITIAL AMOUNT", "b", "f(0)"] }
+                ]
+            },
+            {
+                id: "unit5",
+                title: "Level 4: Systems & Exponents",
+                desc: "Intersections and Growth",
+                isCapstone: false,
+                vocab: [
+                    { word: "System", def: "Two or more equations solved at the same time." },
+                    { word: "Intersection", def: "The point where two lines meet (the solution to a system)." },
+                    { word: "Base", def: "The big number being multiplied by an exponent." },
+                    { word: "Exponent", def: "The small number indicating how many times to multiply the base." },
+                    { word: "Monomial", def: "A polynomial with exactly one term." }
+                ],
+                categories: [
+                    { title: "SYSTEM SOLVING METHODS", items: ["GRAPHING", "SUBSTITUTION", "ELIMINATION", "TABLES"] },
+                    { title: "SYSTEM SOLUTIONS", items: ["ONE SOLUTION", "NO SOLUTION", "INFINITE", "INTERSECTION"] },
+                    { title: "EXPONENTIAL VOCAB", items: ["BASE", "EXPONENT", "GROWTH", "DECAY"] },
+                    { title: "LAWS OF EXPONENTS", items: ["PRODUCT RULE", "QUOTIENT RULE", "POWER RULE", "ZERO EXPONENT"] },
+                    { title: "POLYNOMIALS BY TERMS", items: ["MONOMIAL", "BINOMIAL", "TRINOMIAL", "POLYNOMIAL"] },
+                    { title: "POLYNOMIALS BY DEGREE", items: ["LINEAR", "QUADRATIC", "CUBIC", "CONSTANT"] }
+                ]
+            },
+            {
+                id: "unit7",
+                title: "Level 5: Factoring Review",
+                desc: "X-Method, DOPS, & GCFs",
+                isCapstone: false,
+                vocab: [
+                    { word: "GCF", def: "Greatest Common Factor: The biggest piece you can divide out of an expression." },
+                    { word: "DOPS", def: "Difference of Perfect Squares: Factoring two perfect squares separated by a minus sign." },
+                    { word: "Trinomial", def: "A math expression that has exactly 3 terms (often factored using the X-Method)." },
+                    { word: "X-Method", def: "A graphic organizer used to find two numbers that multiply to a*c and add to b." },
+                    { word: "Factor Completely", def: "Checking for a GCF first, then continuing to factor the leftover polynomial." }
+                ],
+                categories: [
+                    { title: "MATH IN THE X-METHOD", items: ["PRODUCT", "SUM", "MULTIPLY", "ADD"] },
+                    { title: "FACTORING STRATEGIES", items: ["GCF", "DOPS", "X-METHOD", "BOX METHOD"] },
+                    { title: "PERFECT SQUARES", items: ["9", "36", "64", "121"] },
+                    { title: "FACTORING COMPLETELY STEPS", items: ["CHECK GCF", "COUNT TERMS", "FACTOR LEFT-OVERS", "PRODUCT OF FACTORS"] },
+                    { title: "PARTS OF A QUADRATIC", items: ["a", "b", "c", "x²"] },
+                    { title: "TI-84 GCD BUTTONS", items: ["MATH", "NUM", "GCD", "("] },
+                    { title: "DOPS EXAMPLES", items: ["x² - 9", "m² - 16", "y² - 25", "x² - 100"] },
+                    { title: "GCF EXAMPLES", items: ["5x", "2x²", "10", "3ab"] }
+                ]
+            },
+            {
+                id: "boss",
+                title: "Level 6: REGENTS BOSS",
+                desc: "The Ultimate Algebra 1 Mix (Combines ALL prior levels)",
+                isCapstone: true, // This flag triggers the aggregation of all categories
+                vocab: [
+                    { word: "Zeros", def: "The x-intercepts or roots of a function." },
+                    { word: "Vertex", def: "The turning point (minimum or maximum) of a parabola." },
+                    { word: "Translation", def: "Sliding a graph horizontally or vertically." },
+                    { word: "Justify", def: "To prove your answer using mathematical steps or reasoning." },
+                    { word: "Interquartile Range", def: "The difference between Q3 and Q1 in a box plot (Q3 - Q1)." },
+                    { word: "Capstone Alert", def: "This level can pull concepts from ANY previous unit. Be prepared for anything!" }
+                ],
+                // We add some unique Boss categories, but the JS will combine these with EVERYTHING else
+                categories: [
+                    { title: "ALGEBRA 1 MUST-KNOWS", items: ["ZEROS", "ROOTS", "X-INTERCEPTS", "SOLUTIONS"] },
+                    { title: "TI-84 CALCULATOR MENUS", items: ["STAT EDIT", "CALC INTERSECT", "MATH FRAC", "Y="] },
+                    { title: "QUADRATIC FEATURES", items: ["VERTEX", "AXIS OF SYM", "MINIMUM", "MAXIMUM"] },
+                    { title: "TRANSFORMATIONS", items: ["TRANSLATION", "REFLECTION", "DILATION", "STRETCH"] },
+                    { title: "REGENTS ACTION WORDS", items: ["JUSTIFY", "EXPLAIN", "STATE", "IDENTIFY"] }
+                ]
+            }
+        ];
+
+        // Standard colors to assign to the 4 chosen categories
+        const GAME_COLORS = ["#FFE066", "#8CE99A", "#74C0FC", "#B197FC"];
+
+        // --- State Management ---
+        let currentLevelIndex = 0;
+        let mistakes = 4;
+        let selectedIndices = [];
+        let solvedIds = [];
+        
+        let activePoolCategories = []; // The 4 randomly chosen ones for THIS run
+        let currentActiveItems = [];
+        let solutionMatrix = [];
+
+        // --- Initialization ---
+        function initApp() {
+            const grid = document.getElementById('level-grid');
+            LEVELS.forEach((level, index) => {
+                const card = document.createElement('div');
+                card.className = `level-card ${level.isCapstone ? 'boss' : ''}`;
+                card.style.animation = `fadeIn 0.5s ease-out ${index * 0.1}s both`;
+                card.onclick = () => selectLevel(index);
+                
+                // Calculate total categories available for the badge
+                let totalCats = level.categories.length;
+                if (level.isCapstone) {
+                    // Boss level has its own + all others combined
+                    totalCats = LEVELS.reduce((sum, l) => sum + l.categories.length, 0);
+                }
+
+                card.innerHTML = `
+                    <div class="level-title ${level.isCapstone ? 'level-boss-title' : ''}">${level.title}</div>
+                    <div class="level-desc">${level.desc}</div>
+                    <div class="level-exhaust-badge">${totalCats} Possible Categories</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- Navigation & Modals ---
+        function navTo(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function openRules() {
+            document.getElementById('modal-overlay').classList.add('active');
+            document.getElementById('rules-modal').style.display = 'block';
+            document.getElementById('end-modal').style.display = 'none';
+        }
+
+        function closeModals() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+
+        function triggerToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function showEndGame(won) {
+            document.getElementById('modal-overlay').classList.add('active');
+            document.getElementById('rules-modal').style.display = 'none';
+            const endModal = document.getElementById('end-modal');
+            endModal.style.display = 'block';
+            
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-message');
+            const retryBtn = document.getElementById('end-btn-retry');
+            
+            if (won) {
+                title.innerText = "YOU DID IT!";
+                title.style.color = "var(--accent-green)";
+                endModal.style.boxShadow = "12px 12px 0px var(--accent-green)";
+                msg.innerText = LEVELS[currentLevelIndex].isCapstone ? "REGENTS READY! Amazing job!" : "Flawless mathematical logic!";
+                retryBtn.style.display = 'none'; 
+            } else {
+                title.innerText = "GAME OVER";
+                title.style.color = "var(--accent-red)";
+                endModal.style.boxShadow = "12px 12px 0px var(--accent-red)";
+                msg.innerText = "Keep reviewing those terms!";
+                retryBtn.style.display = 'block'; 
+            }
+        }
+
+        // --- Level Setup ---
+        function selectLevel(index) {
+            currentLevelIndex = index;
+            const level = LEVELS[index];
+            
+            // Populate Vocab Screen
+            document.getElementById('vocab-subtitle').innerText = level.desc;
+            const vocabContainer = document.getElementById('vocab-list');
+            vocabContainer.innerHTML = '';
+            
+            // Determine which vocab to show
+            let vocabToShow = level.vocab;
+            
+            // If Capstone, combine all vocabularies
+            if (level.isCapstone) {
+                vocabToShow = LEVELS.flatMap(l => l.vocab);
+                // Remove duplicates if any (based on word)
+                vocabToShow = vocabToShow.filter((v, i, a) => a.findIndex(t => (t.word === v.word)) === i);
+            }
+            
+            vocabToShow.forEach(v => {
+                const card = document.createElement('div');
+                card.className = 'vocab-card';
+                card.innerHTML = `<span class="keyword-highlight">${v.word}</span> ${v.def}`;
+                vocabContainer.appendChild(card);
+            });
+            
+            navTo('screen-vocab');
+        }
+
+        // --- Game Logic ---
+        // [Bug 3 fix] Guard against selecting two categories that share items
+        function selectSafeCategories(pool) {
+            const shuffled = [...pool].sort(() => 0.5 - Math.random());
+            const chosen = [];
+            for (const cat of shuffled) {
+                const existingItems = chosen.flatMap(c => c.items);
+                const hasOverlap = cat.items.some(item => existingItems.includes(item));
+                if (!hasOverlap) chosen.push(cat);
+                if (chosen.length === 4) break;
+            }
+            // Fallback: if we can't find 4 clean categories, just take first 4
+            return chosen.length === 4 ? chosen : shuffled.slice(0, 4);
+        }
+
+        function initGame(isRetry = false) {
+            const level = LEVELS[currentLevelIndex];
+            
+            if (!isRetry) {
+                // GENERATE NEW BOARD
+                let poolToUse = [];
+                
+                if (level.isCapstone) {
+                    // BOSS LEVEL: Combine every category from every level
+                    poolToUse = LEVELS.flatMap(l => l.categories);
+                } else {
+                    // NORMAL LEVEL: Just use this level's categories
+                    poolToUse = [...level.categories];
+                }
+
+                // Shuffle the available pool and pick 4 collision-free categories
+                activePoolCategories = selectSafeCategories(poolToUse).map((cat, i) => {
+                    return { ...cat, color: GAME_COLORS[i] };
+                });
+            }
+
+            // Setup state based on the 4 active categories
+            let allItems = activePoolCategories.flatMap(cat => cat.items);
+            
+            // Build 4x16 Truth Matrix for validation
+            solutionMatrix = activePoolCategories.map(category => {
+                return allItems.map(item => category.items.includes(item) ? 1 : 0);
+            });
+
+            // Reset UI State
+            mistakes = 4;
+            selectedIndices = [];
+            solvedIds = [];
+            currentActiveItems = [...allItems];
+            
+            updateMistakesUI();
+            document.getElementById('solved-container').innerHTML = '';
+            
+            closeModals();
+            navTo('screen-game');
+            shuffleArray(currentActiveItems);
+            renderGrid();
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid-container');
+            grid.innerHTML = '';
+
+            currentActiveItems.forEach((item, idx) => {
+                const tile = document.createElement('div');
+                tile.className = `tile ${selectedIndices.includes(idx) ? 'selected' : ''}`;
+                tile.innerText = item;
+                tile.onclick = () => toggleSelect(idx);
+                grid.appendChild(tile);
+            });
+
+            updateSubmitBtn();
+        }
+
+        function toggleSelect(idx) {
+            const pos = selectedIndices.indexOf(idx);
+            if (pos > -1) {
+                selectedIndices.splice(pos, 1);
+            } else if (selectedIndices.length < 4) {
+                selectedIndices.push(idx);
+            }
+            renderGrid();
+        }
+
+        function deselectAll() {
+            selectedIndices = [];
+            renderGrid();
+        }
+
+        function shuffleGrid() {
+            selectedIndices = [];
+            shuffleArray(currentActiveItems);
+            renderGrid();
+        }
+
+        function updateSubmitBtn() {
+            const btn = document.getElementById('submit-btn');
+            if (selectedIndices.length === 4) {
+                btn.disabled = false;
+                btn.classList.add('btn-primary');
+            } else {
+                btn.disabled = true;
+                btn.classList.remove('btn-primary');
+            }
+        }
+
+        function updateMistakesUI() {
+            const dots = document.getElementById('mistake-dots').children;
+            for (let i = 0; i < 4; i++) {
+                if (i >= mistakes) {
+                    dots[i].classList.add('lost');
+                } else {
+                    dots[i].classList.remove('lost');
+                }
+            }
+        }
+
+        // --- Matrix Engine Validation ---
+        function multiplyMatrixAndVector(matrix, vector) {
+            return matrix.map(row => {
+                return row.reduce((sum, val, i) => sum + (val * vector[i]), 0);
+            });
+        }
+
+        function submitSelection() {
+            if (selectedIndices.length !== 4) return;
+
+            const allOriginalItems = activePoolCategories.flatMap(cat => cat.items);
+            
+            // 1. Build selection vector (16x1)
+            const vector = new Array(16).fill(0);
+            selectedIndices.forEach(idx => {
+                const word = currentActiveItems[idx];
+                const absIdx = allOriginalItems.indexOf(word);
+                vector[absIdx] = 1;
+            });
+
+            // 2. Matrix Multiplication for validation
+            const results = multiplyMatrixAndVector(solutionMatrix, vector);
+
+            // 3. Process outputs
+            const matchIdx = results.indexOf(4);
+            const isOneAway = results.includes(3);
+
+            const gridTiles = document.getElementById('grid-container').children;
+
+            if (matchIdx !== -1) {
+                // Correct Match!
+                solvedIds.push(matchIdx);
+                
+                // Success Animation
+                selectedIndices.forEach((idx, i) => {
+                    setTimeout(() => {
+                        gridTiles[idx].classList.add('anim-jump');
+                        gridTiles[idx].style.backgroundColor = activePoolCategories[matchIdx].color;
+                        gridTiles[idx].style.color = "var(--text-main)";
+                    }, i * 100);
+                });
+
+                setTimeout(() => {
+                    const cat = activePoolCategories[matchIdx];
+                    currentActiveItems = currentActiveItems.filter(item => !cat.items.includes(item));
+                    selectedIndices = [];
+                    renderSolved();
+                    renderGrid();
+                    
+                    if (solvedIds.length === 4) {
+                        setTimeout(() => showEndGame(true), 600);
+                    }
+                }, 800);
+
+            } else {
+                // Incorrect Match
+                mistakes--;
+                updateMistakesUI();
+                
+                selectedIndices.forEach(idx => {
+                    gridTiles[idx].classList.add('anim-shake');
+                });
+
+                if (isOneAway) triggerToast("One away...");
+                else triggerToast("Not quite!");
+
+                setTimeout(() => {
+                    selectedIndices.forEach(idx => {
+                        gridTiles[idx].classList.remove('anim-shake');
+                    });
+                    if (mistakes === 0) {
+                        document.getElementById('submit-btn').disabled = true;
+                        setTimeout(() => showEndGame(false), 500);
+                    }
+                }, 500);
+            }
+        }
+
+        function renderSolved() {
+            const container = document.getElementById('solved-container');
+            container.innerHTML = '';
+            
+            solvedIds.forEach(id => {
+                const cat = activePoolCategories[id];
+                const row = document.createElement('div');
+                row.className = 'solved-row';
+                row.style.backgroundColor = cat.color;
+                row.innerHTML = `
+                    <div class="solved-title">${cat.title}</div>
+                    <div class="solved-items">${cat.items.join(', ')}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Start App
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
+
+
+
