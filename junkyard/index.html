@@ -574,6 +574,68 @@ let G={
 try{ const stored=localStorage.getItem('autoFoilExample'); if(stored!==null) G.autoFoilExample=stored==='true'; }catch(e){}
 
 /* ══════════════════════════════════════════
+   ANALYTICS MODULE (V3)
+══════════════════════════════════════════ */
+const JY_PLAYER_KEY  = 'junkyard_player';
+const JY_COUNT_KEY   = 'junkyard_count';
+const JY_SESSION_KEY = 'junkyard_session';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxl3QLgQyGtMqrN3WJ6APom0MiItY4PauW1Ex5SHxDyA82GLWFZGFJEcfXHWbnA_JhS/exec';
+
+let _queue = [];
+let _currentSession = null;
+
+function _getOrCreatePlayerId(){
+  let id = localStorage.getItem(JY_PLAYER_KEY);
+  if(!id){ id = 'anon_' + Math.random().toString(36).slice(2,10); localStorage.setItem(JY_PLAYER_KEY, id); }
+  return id;
+}
+
+function initSession(mode, tier){
+  const playerId  = _getOrCreatePlayerId();
+  const playCount = (parseInt(localStorage.getItem(JY_COUNT_KEY)||'0',10)) + 1;
+  localStorage.setItem(JY_COUNT_KEY, String(playCount));
+  _currentSession = {
+    sessionId: 'anon_' + Date.now(), playerId, playCount,
+    timestamp: null, mode, challengeTier: tier ?? null,
+    outcome: null, score: 0, mergeCount: 0,
+    origExpr: G.origExpr || null, finalExpr: null,
+    regentsAttempted: false, regentsOutcome: null, regentsQuestion: null
+  };
+  localStorage.setItem(JY_SESSION_KEY, JSON.stringify(_currentSession));
+}
+
+function finalizeSession(outcome){
+  if(!_currentSession) return;
+  const active = G.terms.filter(t => !t.gone && t.kind !== 'bundle');
+  _currentSession.outcome    = outcome;
+  _currentSession.score      = G.score;
+  _currentSession.mergeCount = G.mergeCount;
+  _currentSession.origExpr   = G.origExpr || null;
+  _currentSession.finalExpr  = active.length ? exprStr(active) : null;
+  _currentSession.timestamp  = new Date().toISOString();
+  localStorage.setItem(JY_SESSION_KEY, JSON.stringify(_currentSession));
+}
+
+function recordRegents(correct, qText){
+  if(!_currentSession) return;
+  _currentSession.regentsAttempted = true;
+  _currentSession.regentsOutcome   = correct ? 'correct' : 'wrong';
+  _currentSession.regentsQuestion  = qText;
+  _currentSession.timestamp        = new Date().toISOString();
+  localStorage.setItem(JY_SESSION_KEY, JSON.stringify(_currentSession));
+  postToSheets(_currentSession);
+}
+
+function postToSheets(payload){
+  const send = (data) => {
+    fetch(SHEETS_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(data) })
+      .catch(()=>{ _queue.push(data); });
+  };
+  while(_queue.length){ send(_queue.shift()); }
+  send(payload);
+}
+
+/* ══════════════════════════════════════════
    SCREEN SWITCHING
 ══════════════════════════════════════════ */
 function showScreen(id){
@@ -1001,6 +1063,8 @@ function showRoundClear(roundDone){
 }
 
 function showChallengeComplete(){
+  finalizeSession('win');
+  postToSheets(_currentSession);
   const box=document.getElementById('modal-box');
   const dots=[1,2,3,4].map(i=>`<span style="display:inline-block;width:.9rem;height:.9rem;border-radius:50%;margin:0 .2rem;background:var(--accent)"></span>`).join('');
   box.innerHTML=`
@@ -1278,6 +1342,7 @@ function startMode(m){
     document.getElementById('hud-title').textContent='Challenge Yard · Tier '+t;
     populateChallengeTerms(t);
     G.origExpr=exprStr(G.terms);
+    initSession('challenge', t);
     updateJournal();
     renderTerms();
     startTimer(t===1?90:t===2?120:150);
@@ -1307,6 +1372,7 @@ function initSort(){
   btn.textContent='CHECK ✓';
   btn.onclick=sortCheck;
   document.getElementById('hud-right').prepend(btn);
+  initSession('sort', null);
 }
 
 function initMerge(diff){
@@ -1323,6 +1389,7 @@ function initMerge(diff){
   G.terms.sort(()=>Math.random()-.5);
   renderTerms();
   setInstr('Click two <span class="hi">like-term pieces</span> to fuse them. Simplify until no more merges are possible.');
+  initSession('merge', null);
 }
 
 function initExpr(){
@@ -1343,6 +1410,7 @@ function initExpr(){
   updateJournal();
   renderTerms();
   setInstr('Simplify: <span class="hi">'+G.origExpr+'</span>');
+  initSession('expr', null);
 }
 
 function populateChallengeTerms(tier){
@@ -1389,6 +1457,7 @@ function initChallenge(tier){
   renderTerms();
   startTimer(tier===1?90:tier===2?120:150);
   setInstr('Round <span class="hi">1 of 4</span> — '+(tier===3?'FOIL expanded — fuse the like terms!':tier===2?'Tap bundles to expand (distributive property), then fuse like terms!':'simplify the expression!'));
+  initSession('challenge', tier);
 }
 
 function openTierSelect(){
@@ -1409,6 +1478,8 @@ function openTierSelect(){
 ══════════════════════════════════════════ */
 function showWin(){
   stopTimer();
+  finalizeSession(G.mode === 'challenge' ? 'timeout' : 'win');
+  postToSheets(_currentSession);
   document.getElementById('win-title').textContent='EXPRESSION SIMPLIFIED!';
   document.getElementById('win-sub').textContent='All like terms combined. Fully simplified.';
   document.getElementById('win-stats').innerHTML=`
@@ -1440,6 +1511,8 @@ function goTransfer(){
   showScreen('screen-transfer');
 }
 function answerReg(chosen,correct,exp,btn){
+  const qText = document.querySelector('.reg-q')?.textContent?.slice(0,60) || '';
+  recordRegents(chosen === correct, qText);
   document.querySelectorAll('.reg-ch').forEach(c=>c.style.pointerEvents='none');
   const fb=document.getElementById('reg-fb');
   const cont=document.getElementById('btn-continue');

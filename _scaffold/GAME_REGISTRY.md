@@ -40,20 +40,24 @@ Google Site — Algebra 1 Learning Suite (DOE Domain)
 ---
 
 ### 🟢 Game 1: Junkyard Algebra
-| Field         | Value                                              |
-|---------------|----------------------------------------------------|
-| Status        | ✅ SHIPPED                                         |
-| Standard      | NYS Algebra 1 — A-APR.1                           |
-| Mechanic      | 5-tier progression: like terms → distribution →    |
-|               | stacked polynomials → FOIL → mixed synthesis       |
-| Architecture  | Single-file HTML, vanilla JS, localStorage         |
-| Storage Key   | `junkyardProgress`                                 |
-| PII           | None — fully anonymous                             |
-| Google Site   | /polynomials                                       |
+| Field         | Value                                                                        |
+|---------------|------------------------------------------------------------------------------|
+| Status        | ✅ SHIPPED                                                                   |
+| Version       | 3.0                                                                          |
+| Standard      | NYS Algebra 1 — A-APR.1                                                     |
+| Mechanic      | 4 modes: A Sorting Yard → B Merge Bay → C Expression Builder →              |
+|               | D Challenge Yard (T1 like terms · T2 distributive · T3 FOIL, 4 rounds each) |
+| Architecture  | Single-file HTML, vanilla JS, Web Audio API, localStorage                   |
+| Storage Keys  | `junkyard_player` (stable per device) · `junkyard_count` · `junkyard_session` · `autoFoilExample` (settings) |
+| PII           | None — two-tier anonymous ID only (playerId stable, sessionId per game)     |
+| Data Collected| mode, challengeTier, outcome (win/timeout), score, mergeCount,              |
+|               | origExpr, finalExpr, regentsAttempted, regentsOutcome, regentsQuestion      |
+| Sheets        | Fire-and-forget POST to Google Apps Script on game end; second POST on Regents answer |
+| Google Site   | /polynomials — deploy when ready                                            |
 | Embed Code    | `<iframe src="[URL]" width="100%" height="700px" frameborder="0"></iframe>` |
-| Context File  | `junkyard-algebra/CONTEXT.md`                      |
-| Known Issues  | None active                                        |
-| Last Updated  | [date]                                             |
+| Context File  | `junkyard/CONTEXT.md`                                                       |
+| Known Issues  | None active                                                                  |
+| Last Updated  | 2026-04-01                                                                   |
 
 ---
 

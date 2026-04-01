@@ -3,7 +3,7 @@
 # Format: GAME | STANDARDS_COVERED | STATUS | FILE | STORAGE_KEY
 # Status: SHIPPED / PLANNED / IN_DEV
 
-Junkyard Algebra        | A.APR.1                                    | SHIPPED  | junkyard_algebra.html      | junkyardProgress
+Junkyard Algebra        | A.APR.1                                    | SHIPPED  | junkyard/index.html        | junkyard_player · junkyard_count · junkyard_session
 Alchemist Factor Fusion | A.APR.1                                    | SHIPPED  | alchemist_factor_fusion.html | alchemistSession
 Mr. Favors Connections  | N-RN.3, N-Q.1/2, S-ID.1–9, A-CED.1–4, A-REI.1a/3/6a/7a, F-IF.1–9, F-BF.1a/3a, F-LE.1–5, A-APR.1, A-SSE.2/3c | SHIPPED | connections/index.html | connections_player · connections_count · connections_session
 Mr. Favors' Wordle      | A-SSE.1a, A-SSE.2, A-APR.1 (Unit 7 vocab fluency)            | SHIPPED  | wordle/index.html          | mrfavors_wordle_session
