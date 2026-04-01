@@ -10,14 +10,17 @@
 | Field            | Value                                                        |
 |------------------|--------------------------------------------------------------|
 | Game Title       | Mr. Favors' Connections: Exhaustive Regents Edition          |
-| Version          | 2.0                                                          |
-| Date             | 2026-03-30                                                   |
+| Version          | 3.0                                                          |
+| Date             | 2026-04-01                                                   |
 | Author           | Darius J. Favors ☘️                                         |
 | NYS Standards    | NYS NGLS Algebra 1 (2025–2026) — N-RN.3, N-Q.1/2, S-ID.1–9,|
 |                  | A-CED.1–4, A-REI.1a/3/6a/7a, F-IF.1–9, F-BF.1a/3a,        |
 |                  | F-LE.1–5, A-APR.1, A-SSE.2/3c                               |
 | File             | connections/index.html                                       |
-| Storage Key      | None — no localStorage, no data collection in V2            |
+| Storage Keys     | `connections_player` · `connections_count` · `connections_session` |
+| PII              | None — two-tier anonymous ID only (playerId stable, sessionId per game) |
+| Sheets URL       | Configured in `SHEETS_URL` constant — do not log or expose  |
+| Google Site      | Deployed 2026-04-01 (data collection active)                |
 | GitHub Pages URL | https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/ |
 
 ---
@@ -26,7 +29,8 @@
 
 - **Single-file HTML** — all CSS and JS inline. No external scripts except Google Fonts.
 - **No React, Vue, bundlers, or npm** — teacher must be able to open the file directly.
-- **No localStorage, no Sheets module, no audio in V2** — planned for V3.
+- **localStorage (V3)** — three keys: `connections_player` (stable playerId), `connections_count` (playCount), `connections_session` (current session JSON). No game progress is persisted — analytics only.
+- **No Sheets module in V2** — analytics module added in V3. No audio yet — planned for V4.
 - **No backend, no login, no accounts, no PII of any kind.**
 - **Light neo-brutalist theme (#FDFBF7 bg, #111111 borders)** — intentional deviation
   from DESIGN_SYSTEM.md dark theme. Documented in connections/DESIGN_BRIEF.md.
@@ -168,10 +172,13 @@ Boss level vocab is the union of all levels' vocab arrays:
 | Author comment block             | ✅ STABLE   | Above <!DOCTYPE html>                          |
 | Boss win message + retry button  | ✅ STABLE   | Retry always shown on boss; updated message    |
 | Level badge count                | ✅ STABLE   | LEVELS.reduce() — auto-updates as cats added   |
-| ARIA live regions                | ❌ MISSING  | V3 — add aria-live="polite" to #toast, #solved-container |
-| validateCategories() debug tool  | ❌ MISSING  | V3 — expose as window.validateCategories()     |
-| Audio                            | ❌ NOT IN V2 | V3 — Web Audio API                            |
-| Sheets data collection           | ❌ NOT IN V2 | V3 — use SHEETS_MODULE_TEMPLATE.md            |
+| ARIA live regions                | ❌ MISSING  | V4 — add aria-live="polite" to #toast, #solved-container |
+| validateCategories() debug tool  | ❌ MISSING  | V4 — expose as window.validateCategories()     |
+| Audio                            | ❌ PLANNED  | V4 — Web Audio API                            |
+| Analytics module                 | ✅ SHIPPED  | V3 — two-tier anon ID, per-submit tracking, Sheets POST |
+| Sheets POST                      | ✅ SHIPPED  | V3 — fire-and-forget no-cors fetch, retry queue |
+| localStorage session             | ✅ SHIPPED  | V3 — connections_player / connections_count / connections_session |
+| Google Site deploy               | ✅ SHIPPED  | 2026-04-01 — data collection active            |
 
 **Known Issues:**
 - `new Array(16).fill(0)` in `submitSelection()` is hardcoded to 16. Safe in V2
@@ -185,6 +192,66 @@ Boss level vocab is the union of all levels' vocab arrays:
   - `"b"` in L3 Y-INTERCEPT SYNONYMS and L5 PARTS OF A QUADRATIC
   - `"SUM"` in L2 WORDS MEANING ADD and L5 MATH IN THE X-METHOD
   These are flagged for the next data-revision pass.
+
+---
+
+## 8b. ANALYTICS MODULE (V3)
+
+### Two-Tier Anonymous ID
+
+| Key | localStorage key | Behavior |
+|-----|-----------------|----------|
+| `playerId` | `connections_player` | Generated once on first visit (`anon_` + 8 random chars). Never regenerates. Links all plays from this device. |
+| `sessionId` | inside session object | `anon_` + `Date.now()`. New every `initGame()`. |
+| `playCount` | `connections_count` | Integer, increments every `initSession()` call. |
+
+### Session Schema (Key: `connections_session`)
+
+```js
+{
+  sessionId:    'anon_<timestamp>',   // per game
+  playerId:     'anon_<8chars>',      // per device (stable)
+  playCount:    N,                    // total games on this device
+  timestamp:    '2026-04-01T...',     // ISO string, set at showEndGame
+  level:        'unit1',             // LEVELS[currentLevelIndex].id
+  levelTitle:   'Level 1: Number & Quantity',
+  isCapstone:   false,               // true for boss level
+  isRetry:      false,               // true if "Retry This Board"
+  outcome:      'win' | 'loss',
+  mistakesMade: 2,                   // 4 - mistakes at game end
+  totalSubmits: 6,                   // total submitSelection calls
+  oneAwayCount: 1,                   // times "one away" triggered
+  solvedCount:  4,                   // 0–4
+  cat1:         'RATIONAL NUMBERS',  // drawn category 1 title
+  cat2:         'IRRATIONAL NUMBERS',
+  cat3:         'MEASURES OF CENTER',
+  cat4:         'BOX PLOT PARTS',
+  solvedOrder:  'RATIONAL NUMBERS|BOX PLOT PARTS|...', // pipe-separated, in solve order
+  firstSubmit:  'MEAN|MEDIAN|MODE|MIDRANGE'            // pipe-separated 4 items from first attempt
+}
+```
+
+### Data Flow
+
+1. **Board generates** → `initSession(isRetry)` — stamps level, drawn categories, playerId, playCount
+2. **Each Submit click** → `recordSubmit(items, isCorrect, isOneAway)` — increments totalSubmits; captures firstSubmit on attempt #1; updates oneAwayCount and solvedOrder on each result
+3. **Game ends** → `finalizeSession(won)` → `postToSheets(_currentSession)` — sets outcome, mistakesMade, timestamp, fires to Sheets
+4. **Retry queue** — failed Sheets POSTs pushed to `_queue[]`, drained on next `postToSheets()` call
+
+### Sheets Columns (in order)
+
+`SessionID, PlayerID, Date, PlayCount, Level, LevelTitle, IsCapstone, IsRetry, Outcome, MistakesMade, TotalSubmits, OneAwayCount, SolvedCount, Cat1, Cat2, Cat3, Cat4, SolvedOrder, FirstSubmit`
+
+### Key Classroom Questions Answered
+
+| Question | Column(s) |
+|---|---|
+| Which level is hardest? | `MistakesMade` sorted by `Level` |
+| Which categories are traps? | `Cat1–4` present but absent from `SolvedOrder` |
+| Do retries improve outcomes? | `IsRetry=true` + `Outcome` correlation |
+| What do students try first? | `FirstSubmit` clustering per level |
+| How often are students "so close"? | `OneAwayCount` + `Outcome=loss` |
+| Boss level readiness? | `IsCapstone=true` win rate |
 
 ---
 
@@ -231,6 +298,7 @@ Nothing else.
 |------------|---------|-----------------------------------------------------|
 | index.html | 1.0     | V1 initial build — 6 levels, matrix engine          |
 | index.html | 2.0     | 2026-03-30 — V2: author block, DESIGN_BRIEF, Bug 3/4 fixes, Level 6 added, Level 7 boss renumbered, win message updated |
+| index.html | 3.0     | 2026-04-01 — V3: analytics module — two-tier anonymous ID (playerId + sessionId), per-submit tracking (totalSubmits, oneAwayCount, solvedOrder, firstSubmit), drawn category capture (cat1–4), fire-and-forget Sheets POST (no-cors + retry queue). Deployed to Google Site. |
 
 ---
 

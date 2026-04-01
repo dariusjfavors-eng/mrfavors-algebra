@@ -566,6 +566,8 @@
             </div>
 
             <button id="btn-play-again" class="btn-primary">Play Again</button>
+            <!-- [ANALYTICS] Manual re-download; auto-shown by triggerEndGame -->
+            <button id="btn-download-csv" class="btn-secondary" style="display:none;">⬇ Download CSV</button>
         </div>
     </div>
 
@@ -601,6 +603,115 @@
         let isProcessing = false;
         let isGameOver = false;
         let hintTimeoutId = null;
+
+        // ============================================================
+        // ANALYTICS MODULE
+        // No PII — only anonymous session data. Never blocks gameplay.
+        // ============================================================
+        const PLAYER_KEY  = 'mrfavors_wordle_player';
+        const COUNT_KEY   = 'mrfavors_wordle_count';
+        const SESSION_KEY = 'mrfavors_wordle_session';
+        const SHEETS_URL  = 'https://script.google.com/macros/s/AKfycbyQA4cXjoEf1ZoqVsOdAbr3SjIo4FaMw0x0-UkGJd663g9Cc63NVNCT2ju2XwxVM8hz1Q/exec';
+        let _queue = [];
+        let _currentSession = null;
+
+        function _getOrCreatePlayerId() {
+            let id = localStorage.getItem(PLAYER_KEY);
+            if (!id) {
+                id = 'anon_' + Math.random().toString(36).slice(2, 10);
+                localStorage.setItem(PLAYER_KEY, id);
+            }
+            return id;
+        }
+
+        // Called on first load and after every resetGame()
+        function initSession() {
+            const playerId  = _getOrCreatePlayerId();
+            const playCount = (parseInt(localStorage.getItem(COUNT_KEY) || '0', 10)) + 1;
+            localStorage.setItem(COUNT_KEY, String(playCount));
+            _currentSession = {
+                sessionId:       'anon_' + Date.now(),
+                playerId,
+                playCount,
+                word:            targetWord,
+                outcome:         null,
+                solvedOnAttempt: null,
+                attempts:        0,
+                firstGuess:      null,
+                guess1: null, guess2: null, guess3: null,
+                guess4: null, guess5: null, guess6: null,
+                timestamp:       null
+            };
+            localStorage.setItem(SESSION_KEY, JSON.stringify(_currentSession));
+        }
+
+        function _saveSession() {
+            localStorage.setItem(SESSION_KEY, JSON.stringify(_currentSession));
+        }
+
+        // Called after each valid guess is submitted
+        function recordGuess(guessString) {
+            if (!_currentSession) return;
+            _currentSession.attempts = currentRow + 1;
+            _currentSession['guess' + (currentRow + 1)] = guessString;
+            if (!_currentSession.firstGuess) _currentSession.firstGuess = guessString;
+            _saveSession();
+        }
+
+        // Called inside triggerEndGame
+        function finalizeSession(success) {
+            if (!_currentSession) return;
+            _currentSession.outcome         = success ? 'win' : 'loss';
+            _currentSession.solvedOnAttempt = success ? (currentRow + 1) : null;
+            _currentSession.attempts        = currentRow + 1;
+            _currentSession.timestamp       = new Date().toISOString();
+            _saveSession();
+        }
+
+        // Fire-and-forget POST; failed payloads go to _queue and retry next completion
+        function postToSheets(payload) {
+            const send = (data) => {
+                fetch(SHEETS_URL, {
+                    method: 'POST',
+                    mode:   'no-cors',
+                    body:   JSON.stringify(data)
+                }).catch(() => { _queue.push(data); });
+            };
+            while (_queue.length) { send(_queue.shift()); }
+            send(payload);
+        }
+
+        function generateCSV(session) {
+            const headers = [
+                'SessionID','PlayerID','Date','PlayCount',
+                'Word','Outcome','SolvedOnAttempt','Attempts',
+                'FirstGuess','Guess1','Guess2','Guess3','Guess4','Guess5','Guess6'
+            ];
+            const vals = [
+                session.sessionId, session.playerId, session.timestamp,
+                session.playCount, session.word, session.outcome,
+                session.solvedOnAttempt ?? '', session.attempts,
+                session.firstGuess ?? '',
+                session.guess1 ?? '', session.guess2 ?? '', session.guess3 ?? '',
+                session.guess4 ?? '', session.guess5 ?? '', session.guess6 ?? ''
+            ];
+            return headers.join(',') + '\n'
+                + vals.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+        }
+
+        function downloadCSV(session) {
+            if (!session) return;
+            const blob = new Blob([generateCSV(session)], { type: 'text/csv' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'wordle_report_' + Date.now() + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        // ============================================================
+        // END ANALYTICS MODULE
+        // ============================================================
 
         // --- 3. DOM SETUP & NAVIGATION ---
         const gridState = Array(maxAttempts).fill().map(() => Array(wordLength).fill(''));
@@ -818,6 +929,9 @@
                 return;
             }
 
+            // [ANALYTICS] Record this valid guess before animation begins
+            recordGuess(guessString);
+
             isProcessing = true;
             const targetArray = targetWord.split('');
             const guessArray = gridState[currentRow];
@@ -914,6 +1028,13 @@
 
         function triggerEndGame(success) {
             isGameOver = true;
+
+            // [ANALYTICS] Finalize, ship to Sheets, auto-download, show button
+            finalizeSession(success);
+            postToSheets(_currentSession);
+            downloadCSV(_currentSession);
+            document.getElementById('btn-download-csv').style.display = 'block';
+
             const outro = document.getElementById('slide-outro');
             
             document.getElementById('outro-title').textContent = success ? 'Great Job!' : 'Nice Try!';
@@ -940,6 +1061,10 @@
             
             // Pick a new random word
             targetWord = words[Math.floor(Math.random() * words.length)];
+
+            // [ANALYTICS] Fresh session for the new game; hide download button
+            initSession();
+            document.getElementById('btn-download-csv').style.display = 'none';
 
             // Reset UI components
             initMatrix();
@@ -970,6 +1095,10 @@
         initMatrix();
         initKeyboard();
         lockClue();
+
+        // [ANALYTICS] Boot session and wire manual download button
+        initSession();
+        document.getElementById('btn-download-csv').addEventListener('click', () => downloadCSV(_currentSession));
 
     </script>
 </body>

@@ -85,17 +85,20 @@ Google Site — Algebra 1 Learning Suite (DOE Domain)
 | Field         | Value                                                                          |
 |---------------|--------------------------------------------------------------------------------|
 | Status        | ✅ SHIPPED                                                                     |
-| Version       | 2.0                                                                            |
+| Version       | 3.0                                                                            |
 | Author        | Darius J. Favors ☘️                                                           |
 | Standards     | NYS NGLS Algebra 1 — N-RN.3, N-Q.1/2, S-ID.1–9,                             |
 |               | A-CED.1–4, A-REI.1a/3/6a/7a, F-IF.1–9,                                       |
 |               | F-BF.1a/3a, F-LE.1–5, A-APR.1, A-SSE.2/3c                                    |
 | Mechanic      | NYT Connections-style: find 4 groups of 4 items                               |
 |               | sharing a math connection; 7 levels + boss                                     |
-| Architecture  | Single-file HTML, vanilla JS, no localStorage                                  |
-| Storage Key   | None                                                                           |
-| PII           | None — no data collection                                                      |
-| Google Site   | /connections (planned embed)                                                   |
+| Architecture  | Single-file HTML, vanilla JS, localStorage                                     |
+| Storage Keys  | `connections_player` (stable per device) · `connections_count` · `connections_session` |
+| PII           | None — two-tier anonymous ID only (playerId stable, sessionId per game)       |
+| Data Collected| level, outcome, mistakesMade, totalSubmits, oneAwayCount, solvedCount,        |
+|               | cat1–4 (drawn categories), solvedOrder, firstSubmit, playCount, timestamp     |
+| Sheets        | Fire-and-forget POST to Google Apps Script on game end; retry queue           |
+| Google Site   | Deployed 2026-04-01 (data collection active)                                  |
 | URL           | https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/              |
 | Embed Code    | `<iframe src="https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/" width="100%" height="800px" frameborder="0"></iframe>` |
 | Context File  | connections/CONTEXT.md                                                         |
@@ -109,7 +112,33 @@ Google Site — Algebra 1 Learning Suite (DOE Domain)
 | Validation    | 4×16 truth matrix engine + collision guard                                    |
 | Debug Tool    | window.validateCategories() in browser console                                |
 | Known Issues  | See connections/CONTEXT.md section 8                                          |
-| Last Updated  | 2026-03-30                                                                    |
+| Last Updated  | 2026-04-01                                                                    |
+
+---
+
+### 🟢 Game 4: Mr. Favors' Wordle
+| Field         | Value                                                                 |
+|---------------|-----------------------------------------------------------------------|
+| Status        | ✅ SHIPPED                                                            |
+| Version       | 3.0                                                                   |
+| Standards     | NYS Algebra 1 — A-SSE.1a, A-SSE.2, A-APR.1                         |
+| Unit          | Unit 7: Factoring (vocabulary fluency)                                |
+| Mechanic      | Guess the secret 6-letter algebra vocab word in 6 tries.             |
+|               | All valid guesses drawn from 16-word Unit 7 Word Bank.               |
+|               | Color feedback: green (correct position) / gold (wrong position) / gray (absent) |
+|               | Timed hint peek per row; clue permanently revealed on row 6          |
+| Architecture  | Single-file HTML, vanilla JS, localStorage                            |
+| Storage Keys  | `mrfavors_wordle_player` (stable per device) · `mrfavors_wordle_count` · `mrfavors_wordle_session` |
+| PII           | None — two-tier anonymous ID (playerId stable, sessionId per game)   |
+| Data Collected| word, outcome, solvedOnAttempt, attempts, firstGuess, guess1–guess6, playCount, timestamp |
+| Sheets        | Fire-and-forget POST to Google Apps Script on game end; retry queue  |
+| CSV Export    | Auto-download on game end + manual "⬇ Download CSV" button           |
+| Google Site   | Deployed 2026-04-01                                                   |
+| Context File  | `wordle/CONTEXT.md`                                                   |
+| Fonts         | Inter 400/600/800 + JetBrains Mono 400/700                           |
+| Theme         | Paper/ink light — `#F8F6F0` bg, `#111111` ink (intentional deviation from DESIGN_SYSTEM.md) |
+| Known Issues  | None active                                                           |
+| Last Updated  | 2026-04-01                                                            |
 
 ---
 
@@ -245,6 +274,7 @@ When adding a new game to the Google Site:
 |-----------------------------|-----------------|----------------------------|------------|
 | Junkyard Algebra            | [TBD]           | [TBD]                                                              | [date]     |
 | Alchemist's Apprentice      | [TBD]           | [TBD]                                                              | [date]     |
-| Mr. Favors' Connections     | GitHub Pages    | https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/ | 2026-03-30 |
+| Mr. Favors' Connections     | GitHub Pages + Google Site | https://dariusjfavors-eng.github.io/mrfavors-algebra/connections/ | 2026-04-01 |
+| Mr. Favors' Wordle          | Google Sites    | [add URL when available]                                           | 2026-04-01 |
 
 *(Fill in URLs when games are deployed)*
